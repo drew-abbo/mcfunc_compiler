@@ -10,43 +10,43 @@ expose "my_namespace";
 
 // Define functions ('void' is used to facilitate variables in the future).
 void foo() {
-    // run commands like normal, just with a '/' at the start and a ';' at the
-    // end.
-    /execute as @a run say hi;
+  // run commands like normal, just with a '/' at the start and a ';' at the
+  // end.
+  /execute as @a run say hi;
 
-    // Commands can span multiple lines because whitespace is reduced.
-    /summon creeper ~ ~ ~ {
-        NoAI: 1b,
-        powered: 1b,
-        ExplosionRadius: 10b,
-        Fuse: 0,
-        ignited: 1b
-    };  // ';' indicates the end of the statement.
+  // Commands can span multiple lines because whitespace is reduced.
+  /summon creeper ~ ~ ~ {
+    NoAI: 1b,
+    powered: 1b,
+    ExplosionRadius: 10b,
+    Fuse: 0,
+    ignited: 1b
+  };  // ';' indicates the end of the statement.
 }
 
 void bar() {
-    // Run code after commands with 'run:'.
-    /execute as @a run: foo();
+  // Run code after commands with 'run:'.
+  /execute as @a run: foo();
 
-    // Implicitly define mcfunction files by opening a scope.
-    /execute as @s run: {
-        /say hi again again;
-    }
+  // Implicitly define mcfunction files by opening a scope.
+  /execute as @s run: {
+    /say hi again again;
+  }
 }
 
 // Define a function that's exposed to the user.
 void main() expose "main" {
-    /say this is an exposed function!;
-    bar();
+  /say this is an exposed function!;
+  bar();
 }
 
 // Manually write a file.
 file "loot_table/my_loot_table_1.json" =
 `{
-    "pools": [{
-        "rolls": 1,
-        "entries": [{ "type": "minecraft:item", "name": "minecraft:stone" }]
-    }]
+  "pools": [{
+    "rolls": 1,
+    "entries": [{ "type": "minecraft:item", "name": "minecraft:stone" }]
+  }]
 }`;
 
 // Copy a file from an input source directory.
@@ -58,10 +58,10 @@ file "loot_table/my_loot_table_1.json" = "my_loot_table_1.json";
 // namespace folders (reduces conflicts from multiple namespaces being compiled
 // into the same data pack).
 tick void on_tick() {
-    /effect give @a speed 1 0 true;
+  /effect give @a speed 1 0 true;
 }
 load void on_tick() {
-    /tellraw @a "This data pack is installed!";
+  /tellraw @a "This data pack is installed!";
 }
 ```
 
@@ -71,22 +71,22 @@ load void on_tick() {
 
 ```mcfunc
 void foo() {
-    // Define a snippet (like a compile time macro) (definition is scoped).
-    snippet MSG = `hello`;
+  // Define a snippet (like a compile time macro) (definition is scoped).
+  snippet MSG = `hello`;
 
-    // Snippet primitives just say "make sure this snippet exists already".
-    snippet MSG;
+  // Snippet primitives just say "make sure this snippet exists already".
+  snippet MSG;
 
-    // Snippets can be inserted into a command, other snippet definitions, or
-    // quotes.
-    /tellraw @a \${MSG};
+  // Snippets can be inserted into a command, other snippet definitions, or
+  // quotes.
+  /tellraw @a \${MSG};
 
-    // The 'NAMESPACE' and 'HIDDEN_NAMESPACE' snippets are hard coded (set by
-    // the 'expose' keyword at the top of the file).
-    /tellraw @a "Thanks for installing ${NAMESPACE}";
+  // The 'NAMESPACE' and 'HIDDEN_NAMESPACE' snippets are hard coded (set by
+  // the 'expose' keyword at the top of the file).
+  /tellraw @a "Thanks for installing ${NAMESPACE}";
 
-    // Use '&' to get the address of something (like 'foo:bar' for a function).
-    /function ${&my_function};
+  // Use '&' to get the address of something (like 'foo:bar' for a function).
+  /function ${&my_function};
 }
 ```
 
@@ -97,7 +97,7 @@ void foo() {
 import "bar.mcfunc";
 
 void foo() {
-    bar();
+  bar();
 }
 ```
 
@@ -105,18 +105,18 @@ void foo() {
 
 ```mcfunc
 void foo() {
-    // Schedule functions.
-    in 1 bar();
+  // Schedule functions.
+  in 1 bar();
 
-    // Schedule a scope or individual command.
-    in 1 {
-        /say hello;
-    }
+  // Schedule a scope or individual command.
+  in 1 {
+    /say hello;
+  }
 
-    // Replace the function/scope/command if it's already scheduled (appends by
-    // default).
-    in 1 replace
-        /say goodbye;
+  // Replace the function/scope/command if it's already scheduled (appends by
+  // default).
+  in 1 replace
+    /say goodbye;
 }
 ```
 
@@ -124,42 +124,42 @@ void foo() {
 
 ```mcfunc
 void foo() {
-    // If else statements with '&&', '||', and '!' operators.
-    // Individual conditions go in '``', the whole test must be in parenthesis.
-    if (`entity @s[type=zombie]`)
-        /tellraw @p "This is a zombie!";
-    else if (`entity @s[type=husk]` || `entity @s[type=drowned]`)
-        /tellraw @p "This is a type of zombie!";
-    else if (!`entity @s[type=player]`)
-        /tellraw @p "Cannot convert this entity to a zombie.";
-    else {
-        /tellraw @p "Converting to a zombie!";
-        /execute at @s run summon zombie ~ ~ ~;
-        /kill @s;
-    }
+  // If else statements with '&&', '||', and '!' operators.
+  // Individual conditions go in '``', the whole test must be in parenthesis.
+  if (`entity @s[type=zombie]`)
+    /tellraw @p "This is a zombie!";
+  else if (`entity @s[type=husk]` || `entity @s[type=drowned]`)
+    /tellraw @p "This is a type of zombie!";
+  else if (!`entity @s[type=player]`)
+    /tellraw @p "Cannot convert this entity to a zombie.";
+  else {
+    /tellraw @p "Converting to a zombie!";
+    /execute at @s run summon zombie ~ ~ ~;
+    /kill @s;
+  }
 
+  if (`score @s game_score matches ..0`) {
+    // Early return!
+    // stops executing 'foo()', regardless of how nested we are
+    return;
+  }
+
+  // While loops!
+  /execute at @s run: while !`block ~ ~ ~ #minecraft:air`
+    /tp @s ~ ~1 ~;
+
+  // 'true' and 'false' keywords are valid here.
+  while (true) {
     if (`score @s game_score matches ..0`) {
-        // Early return!
-        // stops executing 'foo()', regardless of how nested we are
-        return;
+      // break out of the innermost loop
+      break;
     }
-
-    // While loops!
-    /execute at @s run: while !`block ~ ~ ~ #minecraft:air`
-        /tp @s ~ ~1 ~;
-
-    // 'true' and 'false' keywords are valid here.
-    while (true) {
-        if (`score @s game_score matches ..0`) {
-            // break out of the innermost loop
-            break;
-        }
-        else {
-            /scoreboard players remove @s game_score 1;
-            // return to beginning of innermost loop
-            continue;
-        }
+    else {
+      /scoreboard players remove @s game_score 1;
+      // return to beginning of innermost loop
+      continue;
     }
+  }
 
 }
 ```
@@ -168,70 +168,70 @@ void foo() {
 
 ```mcfunc
 void foo() {
-    // Create an int variable.
-    int x;
-    // Create an assign an int variable.
-    int y = 10;
+  // Create an int variable.
+  int x;
+  // Create an assign an int variable.
+  int y = 10;
 
-    // Assign/reassign a variable with expressions with '+', '-', '*', '/', '%',
-    // '==', '!=', '>', '>=', '<', '<=', '&&', '||', '!', '=', '+=', '-=', '*=',
-    // '/=', and '%=', '++', and '--', operators with precedence (same as C) plus
-    // ability to call functions.
-    x = 10 + (y * 5);
+  // Assign/reassign a variable with expressions with '+', '-', '*', '/', '%',
+  // '==', '!=', '>', '>=', '<', '<=', '&&', '||', '!', '=', '+=', '-=', '*=',
+  // '/=', and '%=', '++', and '--', operators with precedence (same as C) plus
+  // ability to call functions.
+  x = 10 + (y * 5);
 
-    // Declare a constant (cannot change).
-    const int z = 100;
+  // Declare a constant (cannot change).
+  const int z = 100;
 
-    // Declare an exposed variable with 'is'.
-    int player_score is "@s game_score";
+  // Declare an exposed variable with 'is'.
+  int player_score is "@s game_score";
 
-    // 'bool' is an alias of 'int'.
-    bool score_is_good = true;
+  // 'bool' is an alias of 'int'.
+  bool score_is_good = true;
 
-    // Conditions with expressions (also works with while loops).
-    if (player_score < 100) {
-        score_is_good = false;
-        if (player_score < 0)
-            player_score = 0;
-    }
+  // Conditions with expressions (also works with while loops).
+  if (player_score < 100) {
+    score_is_good = false;
+    if (player_score < 0)
+      player_score = 0;
+  }
 
-    // Combine both kinds of if statements
-    if (score_is_good && `loaded ~ ~ ~`)
-        /summon item ~ ~ ~ { Item: { id: "minecraft:diamond", count: 1 } };
+  // Combine both kinds of if statements
+  if (score_is_good && `loaded ~ ~ ~`)
+    /summon item ~ ~ ~ { Item: { id: "minecraft:diamond", count: 1 } };
 
-    // For loops.
-    for (int i = 0; i < 100; i++) {
-        /give @a diamond 1;
-    }
+  // For loops.
+  for (int i = 0; i < 100; i++) {
+    /give @a diamond 1;
+  }
 
 }
 
 // Define a function that returns an int/takes in parameters.
 int add(const int a, const int b) {
-    return a + b;
+  return a + b;
 }
 
 // Create a global variable;
 int cool_number = 2;
 
 void baz() {
-    // Use a function that returns an int/takes in parameters.
-    cool_number = add(cool_number, 5) + 1;
+  // Use a function that returns an int/takes in parameters.
+  cool_number = add(cool_number, 5) + 1;
 
-    int x;
+  int x;
 
-    // You can create a reference with '&' before the name on initialization.
-    int &x_reference1 = x;
+  // You can create a reference with '&' before the name on initialization.
+  int &x_reference1 = x;
 
-    // Get the address of a variable with '&' (e.g. '@s my_objective' for int).
-    int x_reference2 is "${&x}" = 0;
-    // Get just parts of the address with '&[]' and an index (indexed 0..1).
-    /tellraw @a { "score": { "name": "${&[0]x}", "objective": "${&[1]x}" } };
+  // Get the address of a variable with '&' (e.g. '@s my_objective' for int).
+  int x_reference2 is "${&x}" = 0;
+  // Get just parts of the address with '&[]' and an index (indexed 0..1).
+  /tellraw @a { "score": { "name": "${&[0]x}", "objective": "${&[1]x}" } };
 }
 
 // Allow an input to be mutated by passing it by as a reference.
 void add_1(int& a) {
-    a += 1;
+  a += 1;
 }
 ```
 
@@ -239,50 +239,50 @@ void add_1(int& a) {
 
 ```mcfunc
 void foo() {
-    // Create an nbt variable. You can only assign nbt variables with snippets
-    // and there are no operators.
-    nbt x = `{ a: 1b, b: "hello world" }`;
+  // Create an nbt variable. You can only assign nbt variables with snippets
+  // and there are no operators.
+  nbt x = `{ a: 1b, b: "hello world" }`;
 
-    // 'object', 'array', and 'string' are all aliases of 'nbt';
-    const object my_object = `{ c: "hi!" }`;
-    const array my_array = `[1, 2, 3]`;
-    const string my_string = `"hello"`;
+  // 'object', 'array', and 'string' are all aliases of 'nbt';
+  const object my_object = `{ c: "hi!" }`;
+  const array my_array = `[1, 2, 3]`;
+  const string my_string = `"hello"`;
 
-    // Get the value based on an object's key with a snippet.
-    my_object->`c` = `"bye!"`;
-    // This also works with nbt variables as a key.
-    const string key = `c`;
-    my_object->key = `"hi again!"`;
+  // Get the value based on an object's key with a snippet.
+  my_object->`c` = `"bye!"`;
+  // This also works with nbt variables as a key.
+  const string key = `c`;
+  my_object->key = `"hi again!"`;
 
-    // Index into an array with a known index or expression.
-    my_array[0] = `100`;
-    // Index into an array by searching (this is a vanilla feature).
-    const array arr = `[{value: 5, name: "bob"}, {value: 10, name: "joe"}]`;
-    value = arr[`{value: 10}`];
+  // Index into an array with a known index or expression.
+  my_array[0] = `100`;
+  // Index into an array by searching (this is a vanilla feature).
+  const array arr = `[{value: 5, name: "bob"}, {value: 10, name: "joe"}]`;
+  value = arr[`{value: 10}`];
 
-    // Get the address of a variable using '&' (e.g. 'entity @s Pos' for nbt).
-    int x_reference is "${&x}" = 0;
-    // Get just parts of the address with '&[]' and an index (indexed 0..2).
-    /tellraw @a { "$[0]x": "$[1]x", "nbt": "$[2]x" };
+  // Get the address of a variable using '&' (e.g. 'entity @s Pos' for nbt).
+  int x_reference is "${&x}" = 0;
+  // Get just parts of the address with '&[]' and an index (indexed 0..2).
+  /tellraw @a { "$[0]x": "$[1]x", "nbt": "$[2]x" };
 
-    // Use nbt methods. You can pass variables to any of these functions.
-    x = `[4, 1, 2]`;
-    const int len = x.length();
-    x.append(x[0]);
-    x.pop(0);
-    x.insert(2, `3`);
-    x.prepend(`0`);
-    x = `{}`;
-    x.merge(`{ a: 100, b: "hi" }`);
-    if (x.has(`a`))
-        x.remove(`a`);
+  // Use nbt methods. You can pass variables to any of these functions.
+  x = `[4, 1, 2]`;
+  const int len = x.length();
+  x.append(x[0]);
+  x.pop(0);
+  x.insert(2, `3`);
+  x.prepend(`0`);
+  x = `{}`;
+  x.merge(`{ a: 100, b: "hi" }`);
+  if (x.has(`a`))
+    x.remove(`a`);
 
-    // Use macros.
-    const string hi_msg = `"Hello!"`;
-    with (hi_msg, bye_msg = `"Goodbye!"`) {
-        /tellraw @a ${hello_msg};
-        /tellraw @a ${bye_msg};
-    }
+  // Use macros.
+  const string hi_msg = `"Hello!"`;
+  with (hi_msg, bye_msg = `"Goodbye!"`) {
+    /tellraw @a ${hello_msg};
+    /tellraw @a ${bye_msg};
+  }
 }
 ```
 
@@ -420,11 +420,11 @@ So the following block of code could output the functions `foo:my_func` and
 expose "foo";
 
 void bar() expose "my_func" {
-    /say hello;
+  /say hello;
 };
 
 void baz() {
-    /say world;
+  /say world;
 };
 ```
 
@@ -444,10 +444,10 @@ the `-o` compilation flag and `$NAMESPACE` is the exposed namespace.
 // writes 'loot_table/my_loot_table_1.json' with contents
 file "loot_table/my_loot_table_1.json" =
 `{
-    "pools": [{
-        "rolls": 1,
-        "entries": [{ "type": "minecraft:item", "name": "minecraft:stone" }]
-    }]
+  "pools": [{
+    "rolls": 1,
+    "entries": [{ "type": "minecraft:item", "name": "minecraft:stone" }]
+  }]
 }`;
 ```
 
