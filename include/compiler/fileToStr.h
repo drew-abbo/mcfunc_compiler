@@ -1,3 +1,5 @@
+/// \file Has \p fileToStr for converting a file path to a string.
+
 #ifndef FILETOSTR_H
 #define FILETOSTR_H
 
