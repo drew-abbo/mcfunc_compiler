@@ -1,0 +1,8 @@
+# build directories
+build/
+release/
+
+# common dev environment things that shouldn't end up in the repo
+.vscode/
+.cache/
+.DS_Store
