@@ -9,7 +9,7 @@ this standard which are labeled in this document.
 - Lines have an 80 character width limit.
 - Use 2 spaces for indentation, never tabs.
 - `.h` and `.cpp` should be used for headers and implementation files.
-- Prefer preincrement (`++x` over `x++`);
+- Prefer post-increment (`i++` over `++i`) (different from LLVM).
 - Prefer `//` over `/*` `*/`.
 - Use `const` as often as possible (especially for function parameters).
 - Don't use `noexcept`, just document if a function throws with `/// \throws`

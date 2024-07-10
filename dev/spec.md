@@ -60,7 +60,7 @@ file "loot_table/my_loot_table_1.json" = "my_loot_table_1.json";
 tick void on_tick() {
   /effect give @a speed 1 0 true;
 }
-load void on_tick() {
+load void on_load() {
   /tellraw @a "This data pack is installed!";
 }
 ```
