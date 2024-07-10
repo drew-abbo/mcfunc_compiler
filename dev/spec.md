@@ -145,7 +145,7 @@ void foo() {
   }
 
   // While loops!
-  /execute at @s run: while !`block ~ ~ ~ #minecraft:air`
+  /execute at @s run: while (!`block ~ ~ ~ #minecraft:air`)
     /tp @s ~ ~1 ~;
 
   // 'true' and 'false' keywords are valid here.
@@ -286,6 +286,29 @@ void foo() {
 }
 ```
 
+#### Selectors
+
+```mcfunc
+void foo() {
+  // Selectors are a shorthand for tagging a single entity and using that entity
+  // for a period of time. In this example, the nearest creeper is tagged and
+  // then can be identified by this selector while in this scope, regardless of
+  // whether it stops being the nearest at any point.
+  selector NearestCreeper = `@n[type=creeper]`;
+
+  // Selectors can be used in snippets and commands with the '@' symbol.
+  // Selector names must be at least 2 characters long so as to not conflict
+  // with the vanilla syntax.
+  /effect give @NearestCreeper speed 10 0 true;
+
+  // You can still use the '[]' syntax with selectors.
+  /effect give @NearestCreeper[tag=extra_speed] speed 30 2 true;
+
+  // Selected entities are "unselected" at the end of a scope (the tag is
+  // removed). To prevent this you can create a selector in the global scope.
+}
+```
+
 #### Undesigned Language Additions
 
 Here's a list of possible future changes that have not been fully designed or
@@ -370,8 +393,9 @@ This file defines a bunch of basic functionality and features.
 
 /* ONCE SNIPPETS ARE IMPLEMENTED:
 
-snippet NAMESPACE;  // ensure hard coded snippet exists
-snippet HIDDEN_NAMESPACE;  // ensure hard coded snippet exists
+// ensure hard coded namespace snippets exist
+snippet NAMESPACE;
+snippet HIDDEN_NAMESPACE;
 
 */
 ```
