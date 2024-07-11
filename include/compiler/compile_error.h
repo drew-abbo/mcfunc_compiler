@@ -15,7 +15,8 @@
 /// \p Generic (superclass)
 /// ├── \p CouldntOpenFile
 /// └── \p SyntaxError (superclass)
-///     └── \p BadToken
+///     ├── \p NoClosingChar
+///     └── \p UnknownChar
 ///
 /// A newline is added to the end of all \p msg parameters.
 namespace compile_error {
@@ -39,19 +40,18 @@ public:
 };
 
 /// The root exception for all syntax errors. Stores an index in a file and a
-/// file path for better debug info (shouldn't be thrown).
+/// file path for better debug info.
 class SyntaxError : public Generic {
 public:
   explicit SyntaxError(const std::string& msg, const size_t indexInFile,
                        const std::filesystem::path& filePath);
 };
 
-/// Throw when there is a problem tokenizing a file.
-class BadToken : public SyntaxError {
-public:
-  explicit BadToken(const std::string& msg, const size_t indexInFile,
-                    const std::filesystem::path& filePath);
-};
+/// Throw when things like parenthesis or quotes aren't closed properly.
+using NoClosingChar = SyntaxError;
+
+/// Throw when things like parenthesis or quotes aren't closed properly.
+using UnknownChar = SyntaxError;
 
 } // namespace compile_error
 

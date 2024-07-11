@@ -1,0 +1,5 @@
+expose "my_namespace";
+
+// Define functions ('void' is used to facilitate variables in the future).
+void foo();
+/say hi;

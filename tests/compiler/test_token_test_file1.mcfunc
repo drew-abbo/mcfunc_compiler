@@ -1,0 +1,57 @@
+expose "my_namespace";
+
+// Define functions ('void' is used to facilitate variables in the future).
+void foo() {
+  // run commands like normal, just with a '/' at the start and a ';' at the
+  // end.
+  /execute as @a run say hi;
+
+  // Commands can span multiple lines because whitespace is reduced.
+  /summon creeper ~ ~ ~ {
+    NoAI: 1b,
+    powered: 1b,
+    ExplosionRadius: 10b,
+    Fuse: 0,
+    ignited: 1b
+  };  // ';' indicates the end of the statement.
+}
+
+void bar() {
+  // Run code after commands with 'run:'.
+  /execute as @a run: foo();
+
+  // Implicitly define mcfunction files by opening a scope.
+  /execute as @s run: {
+    /say hi again again;
+  }
+}
+
+// Define a function that's exposed to the user.
+void main() expose "main" {
+  /say this is an exposed function!;
+  bar();
+}
+
+// Manually write a file.
+file "loot_table/my_loot_table_1.json" =
+`{
+  "pools": [{
+    "rolls": 1,
+    "entries": [{ "type": "minecraft:item", "name": "minecraft:stone" }]
+  }]
+}`;
+
+// Copy a file from an input source directory.
+file "loot_table/my_loot_table_1.json" = "my_loot_table_1.json";
+
+// The 'tick' and 'load' keywords can be used on function definitions to add
+// them to the '#minecraft:tick' and/or '#minecraft:load' function tags. This
+// works around the fact that '.mcfunc' files can only directly write into their
+// namespace folders (reduces conflicts from multiple namespaces being compiled
+// into the same data pack).
+tick void on_tick() {
+  /effect give @a speed 1 0 true;
+}
+load void on_load() {
+  /tellraw @a "This data pack is installed!";
+}

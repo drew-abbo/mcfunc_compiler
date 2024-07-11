@@ -1,9 +1,9 @@
 #include <compiler/compile_error.h>
 
+#include <cassert>
 #include <filesystem>
 #include <fstream>
 #include <string>
-#include <cassert>
 
 using namespace compile_error;
 
@@ -59,7 +59,3 @@ SyntaxError::SyntaxError(const std::string& msg, const size_t indexInFile,
   }
   m_msg += "^ Here\n";
 }
-
-BadToken::BadToken(const std::string& msg, const size_t indexInFile,
-                   const std::filesystem::path& filePath)
-    : SyntaxError(msg, indexInFile, filePath) {}
