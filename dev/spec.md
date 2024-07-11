@@ -1,104 +1,281 @@
 # MCFunc
 
+- [Language](#language)
+  - [Future Additions](#future-additions)
+    - [Imports](#imports)
+    - [Snippets](#snippets)
+    - [Scheduling Code](#scheduling-code)
+    - [Control Flow](#control-flow)
+    - [Integer Data Type](#integer-data-type)
+    - [NBT Variables](#nbt-variables)
+    - [Selectors](#selectors)
+    - [Undesigned Language Additions](#undesigned-language-additions)
+- [CLI App](#cli-app)
+- [Advanced User Documentation](#advanced-user-documentation)
+  - [Namespaces](#namespaces)
+  - [Function File Naming Patterns](#function-file-naming-patterns)
+  - [Writing Files](#writing-files)
+- [Stages of Compilation](#stages-of-compilation)
+
 ## Language
 
 Here are all of the features of the MCFunc language:
 
+### Syntax Basics
+
+MCFunc uses C-style comments:
+
+```mcfunc
+// 1-line comments look like this.
+
+/*
+Block comments look like this (multi-line).
+*/
+```
+
+All statements in MCFunc must end with a semicolon `;`.
+
+```mcfunc
+expose "foo";
+```
+
+Whitespace quantity does not matter. Consucutive spaces, tabs, and newlines are
+all merged into a single space. The following two statements are effectively the
+same but the 1st is far more readable.
+
+```mcfunc
+// Statement 1:
+/summon creeper ~ ~ ~ {
+  NoAI: 1b,
+  ExplosionRadius: 10b,
+  Fuse: 0,
+  ignited: 1b
+};
+
+// Statement 2:
+/summon creeper ~ ~ ~ { NoAI: 1b, ExplosionRadius: 10b, Fuse: 0, ignited: 1b };
+```
+
+> [!NOTE]
+> Whitespace *is* preserved inside of strings (`"hello there"` is not the same
+> as `"hello    there"`).
+
+### Expose a Namespace
+
+The first thing in every file needs to be the namespace that the code in this
+file will live under once it's generated (like the `foo` in `foo:bar`). The
+namespace can contain lowercase letters `a`-`z`, digits `0`-`9`, underscores
+`_`, dots `.`, and dashes `-` (although it's recommended that you avoid dots `.`
+and dashes `-`). You can only expose 1 namespace per file.
+
 ```mcfunc
 // 1st thing needs to be a namespace.
 expose "my_namespace";
+```
 
-// Define functions ('void' is used to facilitate variables in the future).
-void foo() {
-  // run commands like normal, just with a '/' at the start and a ';' at the
-  // end.
-  /execute as @a run say hi;
+### Functions
 
-  // Commands can span multiple lines because whitespace is reduced.
-  /summon creeper ~ ~ ~ {
-    NoAI: 1b,
-    powered: 1b,
-    ExplosionRadius: 10b,
-    Fuse: 0,
-    ignited: 1b
-  };  // ';' indicates the end of the statement.
+Declare a function with the function's return type (always `void` for now), the
+function's name, and a pair of parenthesis `()`.
+
+```mcfunc
+// Declare the function 'myFunction'.
+void myFunction();
+```
+
+We can define the function by putting the code we want the to run in curly
+braces `{}`. We'll put a `/say` command with a "*Hello world!*" message.
+Commands in MCFunc start with a slash `/` and end with a semicolon `;`.
+
+```mcfunc
+void myFunction() {
+  /say Hello world!;
+}
+```
+
+> [!TIP]
+> You do not need a semicolon `;` at the end of a scope `{}` (like after a
+> function definition).
+
+Here's all of the code for a "*Hello world!*" data pack:
+
+```mcfunc
+expose "my_namespace";
+
+void myFunction() {
+  /say Hello world!;
+}
+```
+
+The function we defined above will not appear in-game as
+`my_namespace:myFunction`. Instead, it will appear under the namespace
+`zzz.my_namespace` with an arbitrary name (like `zzz.my_namespace:f_0`). This
+is done because it hides implementation details and makes it less likely that
+the end-user runs functions they shouldn't.
+
+To give our function with a name in-game we have to use the `expose` keyword
+after the parenthesis `()` with a function path. The function path is a string
+of elements where each element can contain letters `a`-`z`, digits `0`-`9`,
+underscores `_`, dots `.`, and dashes `-` (although it's recommended that you
+avoid dots `.` and dashes `-`) with slashes `/` separating each element (e.g.
+`"foo/bar/baz"`). We'll expose our function as `"hello_world"`. The function
+we'll see in game will now be called `my_namespace:hello_world`.
+
+```
+expose "my_namespace";
+
+void myFunction() expose "hello_world" {
+  /say Hello world!;
+}
+```
+
+> [!NOTE]
+> The `expose` keyword does not need to appear for an exposed function's
+> definition if it has already appeared on a declaration:
+>
+> ```mcfunc
+> void myFunction() expose "hello_world";
+> 
+> void myFunction() {
+>   /say Hello world!;
+> }
+> ```
+
+To call a function you just put the name of the function and parenthesis `()` as
+a statement. Functions must be declared and/or defined *before* they are called.
+
+```mcfunc
+void sayHelloWorld5Times() {
+  /say Hello world!;
+  /say Hello world!;
+  /say Hello world!;
+  /say Hello world!;
+  /say Hello world!;
 }
 
-void bar() {
-  // Run code after commands with 'run:'.
-  /execute as @a run: foo();
+void myFunction() expose "hello_world" {
+  sayHelloWorld5Times();
+}
 
-  // Implicitly define mcfunction files by opening a scope.
-  /execute as @s run: {
-    /say hi again again;
+```
+
+You can mark a function with the `tick` and/or `load` keywords if you want it
+to run every tick or when the data pack's reloads.
+
+```mcfunc
+tick void tickFunction() {
+  /say this runs every tick;
+}
+
+load void loadFunction() {
+  /say this runs every time the data pack loads/reloads;
+}
+```
+
+> [!CAUTION]
+> `tick` functions run before `load` functions. This may cause problems if a
+> `tick` function relies on things a `load` function sets up.
+
+### Commands and Scopes
+
+If you want to run a function within some context (like after an `execute`
+commmand), you can. Putting a colon `:` after a `run` argument of a command
+(e.g. `run:`) will break out of that command and allow you to run a statement.
+
+```mcfunc
+void giveStuff() {
+  /give @s diamond_sword 1;
+  /give @s shield 1;
+}
+
+void giveAllPlayersStuff() expose "give_all_players_stuff" {
+  /execute as @a run: giveStuff();
+}
+```
+
+Instead of calling a function, you can also open a scope after `run:`. This
+allows you to run multiple commands after a `run` argument without defining a
+separate function.
+
+```mcfunc
+void giveAllPlayersStuff() expose "give_all_players_stuff" {
+  /execute as @a run: {
+    /give @s diamond_sword 1;
+    /give @s shield 1;
   }
 }
+```
 
-// Define a function that's exposed to the user.
-void main() expose "main" {
-  /say this is an exposed function!;
-  bar();
+> [!TIP]
+> You do not need a semicolon `;` at the end of a scope `{}`.
+
+This can be used to make more complicated operations way more readable.
+
+```mcfunc
+void saveAllPlayerPositionsInArray() {
+  /data modify storage my_namespace:storage player_positions set value [];
+
+  /execute as @a run: {
+    /data modify storage my_namespace:storage player_positions append value {};
+    /data modify storage my_namespace:storage player_positions[-1].UUID set from
+      entity @s UUID;
+    /data modify storage my_namespace:storage player_positions[-1].pos set from
+      entity @s pos;
+  }
+
+  /tellraw @a "Player position data saved.";
 }
+```
 
-// Manually write a file.
-file "loot_table/my_loot_table_1.json" =
+### Writing Files
+
+Sometimes your data pack needs other kinds of resources (e.g. loot tables). You
+can write those files into your data pack directly with the `file` keyword and a
+file path (which starts inside the namespace directory).
+
+You can directly write the file's contents here with an equal sign `=` and the
+file's contents as a snippet in backticks <code>&#96;</code>.
+
+```mcfunc
+file "loot_table/my_loot_table.json" =
 `{
   "pools": [{
     "rolls": 1,
     "entries": [{ "type": "minecraft:item", "name": "minecraft:stone" }]
   }]
 }`;
+```
 
-// Copy a file from an input source directory.
+Alternatively, you could copy the file by assigning it (with an equal sign `=`)
+to the file path of a source file which exists inside an input directory.
+
+```mcfunc
 file "loot_table/my_loot_table_1.json" = "my_loot_table_1.json";
-
-// The 'tick' and 'load' keywords can be used on function definitions to add
-// them to the '#minecraft:tick' and/or '#minecraft:load' function tags. This
-// works around the fact that '.mcfunc' files can only directly write into their
-// namespace folders (reduces conflicts from multiple namespaces being compiled
-// into the same data pack).
-tick void on_tick() {
-  /effect give @a speed 1 0 true;
-}
-load void on_load() {
-  /tellraw @a "This data pack is installed!";
-}
 ```
 
 ### Future Additions
 
-#### Snippets
-
-```mcfunc
-void foo() {
-  // Define a snippet (like a compile time macro) (definition is scoped).
-  snippet MSG = `hello`;
-
-  // Snippet primitives just say "make sure this snippet exists already".
-  snippet MSG;
-
-  // Snippets can be inserted into a command, other snippet definitions, or
-  // quotes.
-  /tellraw @a \${MSG};
-
-  // The 'NAMESPACE' and 'HIDDEN_NAMESPACE' snippets are hard coded (set by
-  // the 'expose' keyword at the top of the file).
-  /tellraw @a "Thanks for installing ${NAMESPACE}";
-
-  // Use '&' to get the address of something (like 'foo:bar' for a function).
-  /function ${&my_function};
-}
-```
-
 #### Imports
 
 ```mcfunc
-// allow this file to use definitions from another file.
+// The 'private' keyword here tells the compiler that files outside of the same
+// directory as this one cannot import this file. For example, if this file was
+// 'src/my_lib/foo.mcfunc', 'src/my_lib/bar.mcfunc' could import this file but
+// 'src/baz.mcfunc' could not. This allows us to easily hide source files behind
+// an API without using header files.
+private export "foo";
+
+// Imports need to appear before any definitions but after 'export'. This allows
+// use to use any public members of another file.
 import "bar.mcfunc";
 
-void foo() {
+// The 'private' keyword here means that this function can only be used in this
+// file, even if another file imports this one.
+private void foo() {
   bar();
 }
+
+// You *can* import members from another namespace.
 ```
 
 #### Scheduling Code
@@ -117,6 +294,26 @@ void foo() {
   // default).
   in 1 replace
     /say goodbye;
+}
+```
+
+#### Snippets
+
+```mcfunc
+void foo() {
+  // Define a snippet (like a compile time macro) (definition is scoped).
+  snippet MSG = `hello`;
+
+  // Snippets can be inserted into a command, other snippet definitions, or
+  // quotes.
+  /tellraw @a \${MSG};
+
+  // The 'NAMESPACE' and 'HIDDEN_NAMESPACE' snippets are hard coded (set by
+  // the 'expose' keyword at the top of the file).
+  /tellraw @a "Thanks for installing ${NAMESPACE}";
+
+  // Use '&' to get the address of something (like 'foo:bar' for a function).
+  /function ${&my_function};
 }
 ```
 
@@ -325,79 +522,59 @@ Run `mcfunc` followed by a list of source files to generate a data pack in the
 `data/` folder of the current directory (will make it if it doesn't exist).
 
 ```sh
-# builds './src/main.mcfunc' into 'data/'
+# builds './src/main.mcfunc' into './data/'
 mcfunc ./src/main.mcfunc
 ```
 
-You can also just run `mcfunc` with no arguments to tell the compiler to include
-all files with the `.mcfunc` file extension in the current directory's `src/`
-folder (or any sub-directory of '`./src/`').
-
-```sh
-# builds all '.mcfunc' files in './src/' into './data/'
-mcfunc
-```
-
 You can change the output directory with the `-o` flag. If this flag appears
-multiple times the last directory will be used.
+multiple times its the last appearance will be used. If left unspecified
+`./data/` will be used.
 
 ```sh
-# builds all '.mcfunc' files in './src/' into './build/'
-mcfunc -o ./build
+# builds './src/main.mcfunc' into './build/'
+mcfunc ./src/main.mcfunc -o ./build
 ```
 
-You can add an input directory with the `-i` flag. This can be used if you want
-to include a library in another folder or if you want to use something other
-than `./src/`. If a directory cannot be found it will be ignored. Files inside
-of the output directory are completely ignored.
+You can add an input directory with the `-i` flag. This tells the compiler that
+all files with the `.mcfunc` extension inside of the set directory should be
+compiled. *This is evaluated recursively!* This means that if you set an input
+directory `./foo/`, MCFunc files in `./foo/bar/` will also be compiled. If the
+output directory is inside of an input directory it will be ignored.
 
 ```sh
 # builds all '.mcfunc' files in the current directory into './data/'
 mcfunc -i .
 ```
 
-Even when you pass no arguments, default arguments are passed. Here are the
-default arguments where `$STDLIB` is replaced with the absolute path to the
-standard library directory (operating system dependant).
+The `--hot` flag will make the compiler enter an interactive mode that tries to
+re-compile the data pack every 2.5 seconds if any source files have changed.
+This mode can be exited by pressing `Q`.
 
 ```sh
-# default arguments (implicitly passed)
-mcfunc $STDLIB/built_in.mcfunc -i $STDLIB -i ./src -o ./data
+mcfunc --hot
 ```
 
-If you want to disable the default arguments use `--clear-previous-flags` which
-tells the compiler to ignore all flags before the it.
+If you run `mcfunc` with no arguments it will search for a `build.json` file.
+This file should contain an array of arguments.
 
 ```sh
-# build without the standard library or built-in file
-mcfunc --clear-previous-flags ./src/main.mcfunc -o ./data
+# looks for arguments from a 'build.json' file.
+mcfunc
 ```
 
-> [!WARNING]
-> This is not recommended. You'll lose any features that come from the standard
-> library (including built-in features), you'll lose the default output
-> directory, and you'll need to list all input files or manually set an input
-> directory.
+Here is an example of a `build.json` file that will build a data pack from the
+files in `./src/` into `./data/`:
 
-All of this functionality allows you to use build systems like `Make` for more
-complex projects that may have multiple namespaces in the same data pack.
+```json
+// build.json
+[ "-i", "./src" ]
+```
 
-## Standard Library
+To get all of this help info use the `-h` flag.
 
-### `built_in.mcfunc`
-
-This file defines a bunch of basic functionality and features.
-
-```mcfunc
-// std/built_in.mcfunc
-
-/* ONCE SNIPPETS ARE IMPLEMENTED:
-
-// ensure hard coded namespace snippets exist
-snippet NAMESPACE;
-snippet HIDDEN_NAMESPACE;
-
-*/
+```sh
+# print help info
+mcfunc -h
 ```
 
 ## Advanced User Documentation
@@ -416,7 +593,7 @@ expose "foo";
 ```
 
 This sets the string of characters that appear before `:` for `.mcfunction`
-files in-game (e.g. `foo` in the in-game function `foo:bar`).
+files in-game (e.g. `foo` in `foo:bar`).
 
 ### Function File Naming Patterns
 
@@ -496,3 +673,32 @@ you use a resource that should be defined in another file.
 // ensures that 'loot_table/my_loot_table_1.json' is defined somewhere
 file "loot_table/my_loot_table_1.json";
 ```
+
+## Stages of Compilation
+
+1. **Tokenization** - All input files are read through and convered into tokens
+  (small syntax elements like a semicolon `;`).
+1. **Namespace and Import Resolution** - Tokens are peeked into to evaluate the
+  initial `export` statement and imports (which have to appear at the top of the
+  file). All files are labeled with the namespace their code lives under and
+  import dependency trees are generated. These trees lay out what needs to be
+  evaluated first and also allows for later files that do not depend on each
+  other to be evaluated in parallel (e.g. if `foo` imports `bar`, `bar` must be
+  evaluated before `foo`).
+1. **Syntax Analysis** - Each file is individually evaluated in the order
+  specified by the import dependency trees. The syntax is checked for validity,
+  a symbol table is created, and code is grouped into more broad actions like
+  "write file" or "run command". This stage is done in parallel for all files.
+1. **Linking** - All files are able to be evaluated together, allowing for
+  things like imports to work. If any symbols are missing after this step
+  compilation fails.
+1. **Optimization (Optional)** - With a symbol table that's complete with
+  definitions lots of optimizations (like inlining) can occur. This stage can be
+  enabled or disabled. Other minor optimizations may occur in previous steps
+  regardless.
+1. **Translation** - Translation is done to convert every operation into a file
+  write operation. This includes things like giving functions addresses and
+  converting all non-command operations (like function calls) into commands.
+  The output of this step should be a list of file paths with contents that need
+  to be generated.
+1. **Code Generation** - The data pack is generated from the symbol table.
