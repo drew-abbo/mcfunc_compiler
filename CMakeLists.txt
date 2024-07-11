@@ -6,6 +6,18 @@ cmake_minimum_required(VERSION 3.12)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# set compiler (gcc vs clang)
+set(
+    CMAKE_C_COMPILER
+    # "gcc"
+    "clang"
+)
+set(
+    CMAKE_CXX_COMPILER
+    # "g++"
+    "clang++"
+)
+
 project(
     mcfunc      # project & main executable name
     C CXX       # language(s) (C & C++)
