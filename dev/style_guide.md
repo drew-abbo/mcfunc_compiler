@@ -6,7 +6,7 @@ this standard which are labeled in this document.
 
 ## The Basics
 
-- Lines have an 80 character width limit.
+- Lines have an 100 character width limit (limit is 80 for comments).
 - Use 2 spaces for indentation, never tabs.
 - `.h` and `.cpp` should be used for headers and implementation files.
 - Prefer post-increment (`i++` over `++i`) (different from LLVM).

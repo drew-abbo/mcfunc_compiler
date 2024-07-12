@@ -5,9 +5,9 @@
 #define TOKEN_H
 
 #include <cassert>
+#include <filesystem>
 #include <memory>
 #include <string>
-#include <filesystem>
 #include <vector>
 
 /// A single piece of source code like a left parenthesis '(' or or a keyword.
@@ -16,24 +16,24 @@ public:
   /// Used to represents a kind/type of token.
   enum Kind {
     // symbols:
-    SEMICOLON,      // ';'
-    L_PAREN,        // '('
-    R_PAREN,        // ')'
-    L_BRACE,        // '{'
-    R_BRACE,        // '}'
-    ASSIGN,         // '='
-    COMMAND_PAUSE,  // Indicates a command ended with 'run:' and not ';'
+    SEMICOLON,     // ';'
+    L_PAREN,       // '('
+    R_PAREN,       // ')'
+    L_BRACE,       // '{'
+    R_BRACE,       // '}'
+    ASSIGN,        // '='
+    COMMAND_PAUSE, // Indicates a command ended with 'run:' and not ';'
     // contain contents:
-    STRING,         // A string in quotes ('"' not included, single line)
-    SNIPPET,        // A snippet in backticks ('`' not included, can span lines)
-    COMMAND,        // A command starting with a slash ('/' not included)
-    WORD,           // Any word like 'foo' (like a function name for example)
+    STRING,  // A string in quotes ('"' not included, single line)
+    SNIPPET, // A snippet in backticks ('`' not included, can span lines)
+    COMMAND, // A command starting with a slash ('/' not included)
+    WORD,    // Any word like 'foo' (like a function name for example)
     // keywords:
-    EXPOSE,         // 'expose' keyword
-    FILE,           // 'file' keyword
-    TICK,           // 'tick' keyword
-    LOAD,           // 'load' keyword
-    VOID,           // 'void' keyword
+    EXPOSE, // 'expose' keyword
+    FILE,   // 'file' keyword
+    TICK,   // 'tick' keyword
+    LOAD,   // 'load' keyword
+    VOID,   // 'void' keyword
   };
 
 public:
@@ -41,16 +41,15 @@ public:
   /// \param indexInFile The index of this token in the file it came from.
   /// \param filePathIndex The index of the file in \p visitedFiles that this
   /// token is from.
-  Token(const Kind tokenKind, const size_t indexInFile,
-        const size_t filePathIndex);
+  Token(const Kind tokenKind, const size_t indexInFile, const size_t filePathIndex);
 
   /// \param tokenKind The type of token that this is.
   /// \param indexInFile The index of this token in the file it came from.
   /// \param filePathIndex The index of the file in \p visitedFiles that this
   /// token is from.
   /// \param contents The contents for tokens like \p STRING that store text.
-  Token(const Kind tokenKind, const size_t indexInFile,
-        const size_t filePathIndex, std::string contents);
+  Token(const Kind tokenKind, const size_t indexInFile, const size_t filePathIndex,
+        std::string contents);
 
   Token(Token&& other) noexcept;
   Token& operator=(Token&& other) noexcept;
