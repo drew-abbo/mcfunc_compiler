@@ -3,7 +3,6 @@
 #include <cassert>
 #include <cctype>
 #include <filesystem>
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -12,21 +11,17 @@
 #include <compiler/visitedFiles.h>
 
 Token::Token(const Kind tokenKind, const size_t indexInFile, const size_t filePathIndex)
-    : m_tokenKind(tokenKind), m_indexInFile(indexInFile), m_filePathIndex(filePathIndex),
-      m_contents(nullptr) {
-  assert(m_tokenContentsMatchKind() && "Token should have contents.");
-}
+    : m_tokenKind(tokenKind), m_indexInFile(indexInFile), m_filePathIndex(filePathIndex) {}
 
 Token::Token(const Kind tokenKind, const size_t indexInFile, const size_t filePathIndex,
-             std::string contents)
+             const std::string& contents)
     : m_tokenKind(tokenKind), m_indexInFile(indexInFile), m_filePathIndex(filePathIndex),
-      m_contents(std::make_unique<std::string>(std::move(contents))) {
-  assert(m_tokenContentsMatchKind() && "Token shouldn't have contents.");
-}
+      m_contents(contents) {}
 
-Token::Token(Token&& other) noexcept
-    : m_tokenKind(other.m_tokenKind), m_indexInFile(other.m_indexInFile),
-      m_filePathIndex(other.m_filePathIndex), m_contents(std::move(other.m_contents)) {}
+Token::Token(const Kind tokenKind, const size_t indexInFile, const size_t filePathIndex,
+             std::string&& contents)
+    : m_tokenKind(tokenKind), m_indexInFile(indexInFile), m_filePathIndex(filePathIndex),
+      m_contents(std::move(contents)) {}
 
 Token::Kind Token::kind() const { return m_tokenKind; }
 
@@ -40,32 +35,43 @@ const std::filesystem::path& Token::filePathTemporary() const {
   return visitedFiles[m_filePathIndex];
 }
 
-const std::string& Token::contents() const {
-  assert(m_tokenContentsMatchKind() && "Attempted to get token contents when there are none.");
-  return *m_contents;
-}
+const std::string& Token::contents() const { return m_contents; }
 
-bool Token::m_tokenContentsMatchKind() const {
-  switch (m_tokenKind) {
-  case SEMICOLON:
-  case L_PAREN:
-  case R_PAREN:
-  case L_BRACE:
-  case R_BRACE:
-  case ASSIGN:
-  case COMMAND_PAUSE:
-  case EXPOSE:
-  case FILE:
-  case TICK:
-  case LOAD:
-  case VOID:
-    return m_contents == nullptr;
-  case STRING:
-  case SNIPPET:
-  case COMMAND:
-  case WORD:
-    return m_contents != nullptr;
+std::string tokenDebugStr(const Token& t) {
+  switch (t.kind()) {
+  case Token::SEMICOLON:
+    return "SEMICOLON";
+  case Token::L_PAREN:
+    return "L_PAREN";
+  case Token::R_PAREN:
+    return "R_PAREN";
+  case Token::L_BRACE:
+    return "L_BRACE";
+  case Token::R_BRACE:
+    return "R_BRACE";
+  case Token::ASSIGN:
+    return "ASSIGN";
+  case Token::COMMAND_PAUSE:
+    return "COMMAND_PAUSE";
+  case Token::EXPOSE:
+    return "EXPOSE";
+  case Token::FILE:
+    return "FILE";
+  case Token::TICK:
+    return "TICK";
+  case Token::LOAD:
+    return "LOAD";
+  case Token::VOID:
+    return "VOID";
+
+  case Token::STRING:
+    return "STRING(" + t.contents() + ')';
+  case Token::SNIPPET:
+    return "SNIPPET(" + t.contents() + ')';
+  case Token::COMMAND:
+    return "COMMAND(" + t.contents() + ')';
+  case Token::WORD:
+    return "WORD(" + t.contents() + ')';
   }
-  assert(false && "Not all 'Token::Kind' cases are covered.");
-  return false;
+  return "UNKNOWN";
 }

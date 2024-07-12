@@ -21,22 +21,25 @@ struct ClosingChar {
 
 /// Makes sure \p c == \p closingCharStack.back() and \p closingCharStack.size()
 /// is at least \p minSize or else it throws.
-static void handleCharStack(const char c,
-                            std::vector<ClosingChar>& closingCharStack,
-                            const std::filesystem::path& filePath,
+static void handleCharStack(const char c, std::vector<ClosingChar>& closingCharStack,
+                            const size_t indexInFile, const std::filesystem::path& filePath,
                             const size_t minSize = 0);
 
 /// Checks if \p c matches r"[a-zA-Z0-9_]".
 static bool isWordChar(const char c) { return std::isalnum(c) || c == '_'; }
 
 /// Returns length of the word and the token which can be 'WORD' or a keyword.
-static std::string getWord(const std::string& str, const size_t& i,
-                           const size_t filePathIndex);
+static std::string getWord(const std::string& str, const size_t& i, const size_t filePathIndex);
 
 /// Returns the length of what's in quotes given the index of the opening quote.
 static size_t getStringContentLength(const std::string& str, const size_t i,
                                      const std::filesystem::path& filePath,
                                      const bool allowNewlines);
+
+/// Returns the length of the comment given the index of a starting '/' (length
+/// includes starting characters but not the ending newline or '/'). 0 is
+/// returned if \p i isn't the start of a comment.
+static size_t getLengthOfPossibleComment(const std::string& str, const size_t i);
 
 } // namespace tokenize_helper
 
@@ -77,11 +80,11 @@ std::vector<Token> tokenize(const std::filesystem::path& filePath) {
 
     case ')':
       ret.emplace_back(Token(Token::R_PAREN, i, filePathIndex));
-      tokenize_helper::handleCharStack(str[i], closingCharStack, filePath);
+      tokenize_helper::handleCharStack(str[i], closingCharStack, i, filePath);
       break;
     case '}':
       ret.emplace_back(Token(Token::R_BRACE, i, filePathIndex));
-      tokenize_helper::handleCharStack(str[i], closingCharStack, filePath);
+      tokenize_helper::handleCharStack(str[i], closingCharStack, i, filePath);
       break;
 
     // quotes and snippets
@@ -90,33 +93,21 @@ std::vector<Token> tokenize(const std::filesystem::path& filePath) {
       const bool isSnippet = str[i] == '`';
       const size_t contentLength =
           tokenize_helper::getStringContentLength(str, i, filePath, isSnippet);
-      ret.emplace_back(Token((isSnippet) ? Token::SNIPPET : Token::STRING, i,
-                             filePathIndex, str.substr(i + 1, contentLength)));
+      ret.emplace_back(Token((isSnippet) ? Token::SNIPPET : Token::STRING, i, filePathIndex,
+                             str.substr(i + 1, contentLength)));
       i += contentLength + 1;
       break;
     }
 
-    // comments commands and 'COMMAND_PAUSE' tokens
+    // comments and commands
     case '/': {
       if (i + 1 == str.size())
-        throw compile_error::NoClosingChar("Command never ends.", i, filePath);
+        throw compile_error::BadClosingChar("Command never ends.", i, filePath);
 
       // comments
-      if (str[i + 1] == '/') {
-        do {
-          i++;
-        } while (i < str.size() && str[i] != '\n');
-        break;
-      }
-      if (str[i + 1] == '*') {
-        i += 2;
-        while (i + 1 < str.size()) {
-          if (str[i] == '*' && str[i + 1] == '/') {
-            i++;
-            break;
-          }
-          i++;
-        }
+      const size_t commentLenth = tokenize_helper::getLengthOfPossibleComment(str, i);
+      if (commentLenth != 0) {
+        i += commentLenth;
         break;
       }
 
@@ -125,66 +116,96 @@ std::vector<Token> tokenize(const std::filesystem::path& filePath) {
       const size_t closingCharStackStartSize = closingCharStack.size();
       // Go until we're outside of all quotes/parens/braces and we find either a
       // semicolon or 'run:' followed by whitespace.
+      std::string commandContents;
       for (size_t j = i + 1; j < str.size(); j++) {
         switch (str[j]) {
         // parens/braces/brackets in commands
         case '(':
           closingCharStack.push_back({')', j});
+          commandContents += str[j];
           break;
         case '{':
           closingCharStack.push_back({'}', j});
+          commandContents += str[j];
           break;
         case '[':
           closingCharStack.push_back({']', j});
+          commandContents += str[j];
           break;
         case ')':
         case '}':
         case ']':
-          tokenize_helper::handleCharStack(str[j], closingCharStack, filePath,
+          tokenize_helper::handleCharStack(str[j], closingCharStack, j, filePath,
                                            closingCharStackStartSize);
+          commandContents += str[j];
           break;
 
         // strings in commands
         case '"':
-        case '\'':
-          j +=
-              tokenize_helper::getStringContentLength(str, j, filePath, false) +
-              1;
+        case '\'': {
+          const size_t strLen = tokenize_helper::getStringContentLength(str, j, filePath, false);
+          commandContents += str.substr(j, strLen + 2);
+          j += strLen + 1;
           break;
+        }
+
+        // possible comments
+        case '/': {
+          const size_t commentLenth = tokenize_helper::getLengthOfPossibleComment(str, j);
+          if (commentLenth != 0) {
+            // possibly add a space in place of the comment
+            if (!commandContents.empty() && commandContents.back() != ' ')
+              commandContents += ' ';
+            j += commentLenth;
+          } else
+            commandContents += '/';
+          break;
+        }
 
         // possible command end (';')
         case ';':
-          if (closingCharStack.size() != closingCharStackStartSize)
+          if (closingCharStack.size() != closingCharStackStartSize) {
+            commandContents += str[j];
             break;
-          ret.emplace_back(Token(Token::COMMAND, i, filePathIndex,
-                                 str.substr(i + 1, (j - i) - 1)));
+          }
+          ret.emplace_back(Token(Token::COMMAND, i, filePathIndex, std::move(commandContents)));
           ret.emplace_back(Token(Token::SEMICOLON, j, filePathIndex));
           i = j;
           goto foundCommandEnd;
 
-        // possible command pause if the previous chars match 'run:'
         case ' ':
         case '\n':
         case '\t':
-          if (closingCharStack.size() != closingCharStackStartSize)
+          // all whitespace becomes 1 space (consecutive whitespace is ignored)
+          if (!commandContents.empty() && str[j - 1] != ' ' && str[j - 1] != '\n' &&
+              str[j - 1] != '\t')
+            commandContents += ' ';
+
+          // possible command pause (if after 'run:')
+          if (closingCharStack.size() != closingCharStackStartSize || j - 4 <= i ||
+              std::strncmp(&str.c_str()[j - 4], "run:", 4) != 0)
             break;
-          if (j - 4 > i && std::strncmp(&str.c_str()[j - 4], "run:", 4) == 0 &&
-              std::isspace(str[j])) {
-            ret.emplace_back(Token(Token::COMMAND, i, filePathIndex,
-                                   str.substr(i + 1, (j - i) - 2)));
-            ret.emplace_back(Token(Token::COMMAND_PAUSE, j - 1, filePathIndex));
-            i = j;
-            goto foundCommandEnd;
-          }
-          break;
+          // remove the ':' and the space we just added
+          commandContents.resize(commandContents.size() - 2);
+          ret.emplace_back(Token(Token::COMMAND, i, filePathIndex, std::move(commandContents)));
+          ret.emplace_back(Token(Token::COMMAND_PAUSE, j - 1, filePathIndex));
+          i = j;
+          goto foundCommandEnd;
 
         default:
+          commandContents += str[j];
           break;
         }
+
         assert(closingCharStack.size() >= closingCharStackStartSize &&
                "Closing char stack became smaller than start size in command.");
       }
-      throw compile_error::NoClosingChar("Command never ends.", i, filePath);
+      if (closingCharStack.size() > closingCharStackStartSize) {
+        throw compile_error::BadClosingChar(std::string("Command never ends because of missing '") +
+                                                closingCharStack.back().c + "'.",
+                                            closingCharStack.back().index, filePath);
+      }
+      throw compile_error::BadClosingChar("Command never ends.", i, filePath);
     foundCommandEnd:
       break;
     }
@@ -205,20 +226,25 @@ std::vector<Token> tokenize(const std::filesystem::path& filePath) {
         kind = Token::LOAD;
       else if (word == "void")
         kind = Token::VOID;
-      else
-        kind = Token::WORD;
 
-      if (kind == Token::WORD) {
+      // if it's not a keyword
+      else {
         const int size = word.size();
         ret.emplace_back(Token::WORD, i, filePathIndex, std::move(word));
         i += size - 1;
-      } else {
-        ret.emplace_back(kind, i, filePathIndex);
-        i += word.size() - 1;
+        break;
       }
+
+      ret.emplace_back(kind, i, filePathIndex);
+      i += word.size() - 1;
       break;
     }
   }
+  if (!closingCharStack.empty())
+    throw compile_error::BadClosingChar(std::string("Missing closing counterpart for '") +
+                                            str[closingCharStack.back().index] + "'.",
+                                        closingCharStack.back().index, filePath);
+
   return ret;
 }
 
@@ -228,25 +254,28 @@ std::vector<Token> tokenize(const std::filesystem::path& filePath) {
 
 static void tokenize_helper::handleCharStack(
     const char c, std::vector<tokenize_helper::ClosingChar>& closingCharStack,
-    const std::filesystem::path& filePath, const size_t minSize) {
+    const size_t indexInFile, const std::filesystem::path& filePath, const size_t minSize) {
 
-  if (closingCharStack.size() <= minSize || closingCharStack.back().c != c) {
-    throw compile_error::NoClosingChar(std::string("Missing closing '") + c +
-                                           "'.",
-                                       closingCharStack.back().index, filePath);
+  if (closingCharStack.size() <= minSize) {
+    throw compile_error::BadClosingChar(std::string("Missing opening counterpart for '") + c + "'.",
+                                        indexInFile, filePath);
+  }
+
+  if (closingCharStack.back().c != c) {
+    throw compile_error::BadClosingChar(std::string("Missing opening counterpart for '") +
+                                            closingCharStack.back().c + "'.",
+                                        closingCharStack.back().index, filePath);
   }
   closingCharStack.pop_back();
 };
 
-static std::string tokenize_helper::getWord(const std::string& str,
-                                            const size_t& i,
+static std::string tokenize_helper::getWord(const std::string& str, const size_t& i,
                                             const size_t filePathIndex) {
   if (!tokenize_helper::isWordChar(str[i])) {
     std::string msg = "Unexpected character";
     // show char in error message if it's printable.
     msg += (std::isprint(str[i])) ? std::string(" '") + str[i] + "'." : ".";
-    throw compile_error::UnknownChar(std::move(msg), i,
-                                     visitedFiles[filePathIndex]);
+    throw compile_error::UnknownChar(std::move(msg), i, visitedFiles[filePathIndex]);
   }
 
   for (size_t j = i + 1; j < str.size(); j++) {
@@ -256,9 +285,9 @@ static std::string tokenize_helper::getWord(const std::string& str,
   return str.substr(i);
 }
 
-static size_t tokenize_helper::getStringContentLength(
-    const std::string& str, const size_t i,
-    const std::filesystem::path& filePath, const bool allowNewlines) {
+static size_t tokenize_helper::getStringContentLength(const std::string& str, const size_t i,
+                                                      const std::filesystem::path& filePath,
+                                                      const bool allowNewlines) {
   assert((str[i] == '"' || str[i] == '`' || str[i] == '\'') &&
          "'getStringContentLength()' is only for strings.");
 
@@ -267,14 +296,36 @@ static size_t tokenize_helper::getStringContentLength(
       return (j - i) - 1;
 
     if (!allowNewlines && str[j] == '\n')
-      goto failToGetStringContents;
+      throw compile_error::BadClosingChar("Expected closing quote before newline.", j, filePath);
 
-    if (str[j] == '\\' && j + 1 < str.size() &&
-        (allowNewlines || str[j + 1] != '\n')) {
+    if (str[j] == '\\' && j + 1 < str.size() && (allowNewlines || str[j + 1] != '\n')) {
       j++; // skip next char
     }
   }
 
-failToGetStringContents:
-  throw compile_error::NoClosingChar("Missing closing quote.", i, filePath);
+  throw compile_error::BadClosingChar("Missing closing quote.", i, filePath);
+}
+
+static size_t tokenize_helper::getLengthOfPossibleComment(const std::string& str, const size_t i) {
+  if (i + 1 >= str.size())
+    return 0;
+
+  // '//'
+  if (str[i + 1] == '/') {
+    size_t j;
+    for (j = i + 2; j < str.size() && str[j] != '\n'; j++) {
+    }
+    return j - i;
+  }
+
+  // '/*'
+  if (str[i + 1] == '*') {
+    for (size_t j = i + 3; j < str.size(); j++) {
+      if (str[j] == '/' && str[j - 1] == '*')
+        return j - i;
+    }
+    return str.size() - i;
+  }
+
+  return 0;
 }

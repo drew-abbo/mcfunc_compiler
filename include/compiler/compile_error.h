@@ -15,7 +15,7 @@
 /// \p Generic (superclass)
 /// ├── \p CouldntOpenFile
 /// └── \p SyntaxError (superclass)
-///     ├── \p NoClosingChar
+///     ├── \p BadClosingChar
 ///     └── \p UnknownChar
 ///
 /// A newline is added to the end of all \p msg parameters.
@@ -48,7 +48,7 @@ public:
 };
 
 /// Throw when things like parenthesis or quotes aren't closed properly.
-using NoClosingChar = SyntaxError;
+using BadClosingChar = SyntaxError;
 
 /// Throw when things like parenthesis or quotes aren't closed properly.
 using UnknownChar = SyntaxError;

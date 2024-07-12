@@ -6,7 +6,6 @@
 
 #include <cassert>
 #include <filesystem>
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -49,10 +48,9 @@ public:
   /// token is from.
   /// \param contents The contents for tokens like \p STRING that store text.
   Token(const Kind tokenKind, const size_t indexInFile, const size_t filePathIndex,
-        std::string contents);
-
-  Token(Token&& other) noexcept;
-  Token& operator=(Token&& other) noexcept;
+        const std::string& contents);
+  Token(const Kind tokenKind, const size_t indexInFile, const size_t filePathIndex,
+        std::string&& contents);
 
   /// The type of token that this is.
   Kind kind() const;
@@ -78,17 +76,15 @@ private:
   Kind m_tokenKind;
   size_t m_indexInFile;
   size_t m_filePathIndex;
-  std::unique_ptr<std::string> m_contents;
-
-private:
-  /// Whether the token contents match the kind of token that this is (e.g. a
-  /// \p STRING token should have contents but a \p SEMICOLON shouldn't.)
-  bool m_tokenContentsMatchKind() const;
+  std::string m_contents;
 };
 
 /// Opens a file, adds it to \p visitedFiles, and converts its syntax to tokens.
 /// \throws compile_error::Generic (or a subclass of it) when the file's syntax
 /// is invalid or it cannot be opened.
 std::vector<Token> tokenize(const std::filesystem::path& filePath);
+
+/// Returns a string to represent the token like 'R_PAREN' or 'COMMAND(say hi)'.
+std::string tokenDebugStr(const Token& t);
 
 #endif // TOKEN_H
