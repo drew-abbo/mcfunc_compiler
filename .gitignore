@@ -6,3 +6,6 @@ release/
 .vscode/
 .cache/
 .DS_Store
+
+# file to test the compiler with
+test.mcfunc

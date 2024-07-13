@@ -2,38 +2,30 @@
 
 #include <cassert>
 #include <cctype>
-#include <filesystem>
 #include <string>
-#include <vector>
 
 #include <compiler/compile_error.h>
 #include <compiler/fileToStr.h>
-#include <compiler/visitedFiles.h>
+#include <compiler/sourceFiles.h>
 
-Token::Token(const Kind tokenKind, const size_t indexInFile, const size_t filePathIndex)
-    : m_tokenKind(tokenKind), m_indexInFile(indexInFile), m_filePathIndex(filePathIndex) {}
+Token::Token(const Kind tokenKind, const size_t indexInFile, const size_t sourceFileIndex)
+    : m_tokenKind(tokenKind), m_indexInFile(indexInFile), m_sourceFileIndex(sourceFileIndex) {}
 
-Token::Token(const Kind tokenKind, const size_t indexInFile, const size_t filePathIndex,
+Token::Token(const Kind tokenKind, const size_t indexInFile, const size_t sourceFileIndex,
              const std::string& contents)
-    : m_tokenKind(tokenKind), m_indexInFile(indexInFile), m_filePathIndex(filePathIndex),
+    : m_tokenKind(tokenKind), m_indexInFile(indexInFile), m_sourceFileIndex(sourceFileIndex),
       m_contents(contents) {}
 
-Token::Token(const Kind tokenKind, const size_t indexInFile, const size_t filePathIndex,
+Token::Token(const Kind tokenKind, const size_t indexInFile, const size_t sourceFileIndex,
              std::string&& contents)
-    : m_tokenKind(tokenKind), m_indexInFile(indexInFile), m_filePathIndex(filePathIndex),
+    : m_tokenKind(tokenKind), m_indexInFile(indexInFile), m_sourceFileIndex(sourceFileIndex),
       m_contents(std::move(contents)) {}
 
 Token::Kind Token::kind() const { return m_tokenKind; }
 
 size_t Token::indexInFile() const { return m_indexInFile; }
 
-size_t Token::filePathIndex() const { return m_filePathIndex; }
-
-std::filesystem::path Token::filePath() const { return visitedFiles[m_filePathIndex]; }
-
-const std::filesystem::path& Token::filePathTemporary() const {
-  return visitedFiles[m_filePathIndex];
-}
+size_t Token::sourceFileIndex() const { return m_sourceFileIndex; }
 
 const std::string& Token::contents() const { return m_contents; }
 

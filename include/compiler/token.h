@@ -5,7 +5,6 @@
 #define TOKEN_H
 
 #include <cassert>
-#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -39,18 +38,18 @@ public:
 public:
   /// \param tokenKind The type of token that this is.
   /// \param indexInFile The index of this token in the file it came from.
-  /// \param filePathIndex The index of the file in \p visitedFiles that this
+  /// \param sourceFileIndex The index of the file in \p sourceFiles that this
   /// token is from.
-  Token(const Kind tokenKind, const size_t indexInFile, const size_t filePathIndex);
+  Token(const Kind tokenKind, const size_t indexInFile, const size_t sourceFileIndex);
 
   /// \param tokenKind The type of token that this is.
   /// \param indexInFile The index of this token in the file it came from.
-  /// \param filePathIndex The index of the file in \p visitedFiles that this
+  /// \param sourceFileIndex The index of the file in \p sourceFiles that this
   /// token is from.
   /// \param contents The contents for tokens like \p STRING that store text.
-  Token(const Kind tokenKind, const size_t indexInFile, const size_t filePathIndex,
+  Token(const Kind tokenKind, const size_t indexInFile, const size_t sourceFileIndex,
         const std::string& contents);
-  Token(const Kind tokenKind, const size_t indexInFile, const size_t filePathIndex,
+  Token(const Kind tokenKind, const size_t indexInFile, const size_t sourceFileIndex,
         std::string&& contents);
 
   /// The type of token that this is.
@@ -59,16 +58,8 @@ public:
   /// The index of this token in the file it came from.
   size_t indexInFile() const;
 
-  /// The index of the file in \p visitedFiles that this token is from.
-  size_t filePathIndex() const;
-
-  /// The file path of the file this token is from.
-  std::filesystem::path filePath() const;
-
-  /// The file path of the file this token is from as a temporary reference.
-  /// \warning DON'T STORE THIS REFERENCE OR MODIFY \p visitedFiles WHILE IT'S
-  /// ACTIVE. This function should really only be passed to constructors.
-  const std::filesystem::path& filePathTemporary() const;
+  /// The index of the file in \p sourceFiles that this token is from.
+  size_t sourceFileIndex() const;
 
   /// The contents for this token if it's like \p STRING and stores text.
   const std::string& contents() const;
@@ -76,14 +67,14 @@ public:
 private:
   Kind m_tokenKind;
   size_t m_indexInFile;
-  size_t m_filePathIndex;
+  size_t m_sourceFileIndex;
   std::string m_contents;
 };
 
-/// Opens a file, adds it to \p visitedFiles, and converts its syntax to tokens.
+/// Opens a file, adds it to \p sourceFiles , and converts its syntax to tokens.
 /// \throws compile_error::Generic (or a subclass of it) when the file's syntax
 /// is invalid or it cannot be opened.
-std::vector<Token> tokenize(const std::filesystem::path& filePath);
+std::vector<Token> tokenize(const size_t sourceFileIndex);
 
 /// Returns a string to represent the token like 'R_PAREN' or 'COMMAND(say hi)'.
 std::string tokenDebugStr(const Token& t);
