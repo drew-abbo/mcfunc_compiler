@@ -6,8 +6,7 @@ It also outlines planned features.
 
 - [Stages of Compilation](#stages-of-compilation)
   - [Tokenization](#tokenization)
-  - [Namespace and Import Resolution](#namespace-and-import-resolution)
-  - [Syntax Analysis and Initial Symbol Table Generation](#syntax-analysis-and-initial-symbol-table-generation)
+  - [Syntax Analysis and Symbol Table Generation](#syntax-analysis-and-symbol-table-generation)
   - [Semantic Analysis](#semantic-analysis)
   - [Linking](#linking)
   - [Optimization](#optimization)
