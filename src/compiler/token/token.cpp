@@ -8,15 +8,15 @@
 #include <compiler/fileToStr.h>
 #include <compiler/sourceFiles.h>
 
-Token::Token(const Kind tokenKind, const size_t indexInFile, const size_t sourceFileIndex)
+Token::Token(Kind tokenKind, size_t indexInFile, size_t sourceFileIndex)
     : m_tokenKind(tokenKind), m_indexInFile(indexInFile), m_sourceFileIndex(sourceFileIndex) {}
 
-Token::Token(const Kind tokenKind, const size_t indexInFile, const size_t sourceFileIndex,
+Token::Token(Kind tokenKind, size_t indexInFile, size_t sourceFileIndex,
              const std::string& contents)
     : m_tokenKind(tokenKind), m_indexInFile(indexInFile), m_sourceFileIndex(sourceFileIndex),
       m_contents(contents) {}
 
-Token::Token(const Kind tokenKind, const size_t indexInFile, const size_t sourceFileIndex,
+Token::Token(Kind tokenKind, size_t indexInFile, size_t sourceFileIndex,
              std::string&& contents)
     : m_tokenKind(tokenKind), m_indexInFile(indexInFile), m_sourceFileIndex(sourceFileIndex),
       m_contents(std::move(contents)) {}

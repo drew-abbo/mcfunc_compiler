@@ -40,17 +40,15 @@ public:
   /// \param indexInFile The index of this token in the file it came from.
   /// \param sourceFileIndex The index of the file in \p sourceFiles that this
   /// token is from.
-  Token(const Kind tokenKind, const size_t indexInFile, const size_t sourceFileIndex);
+  Token(Kind tokenKind, size_t indexInFile, size_t sourceFileIndex);
 
   /// \param tokenKind The type of token that this is.
   /// \param indexInFile The index of this token in the file it came from.
   /// \param sourceFileIndex The index of the file in \p sourceFiles that this
   /// token is from.
   /// \param contents The contents for tokens like \p STRING that store text.
-  Token(const Kind tokenKind, const size_t indexInFile, const size_t sourceFileIndex,
-        const std::string& contents);
-  Token(const Kind tokenKind, const size_t indexInFile, const size_t sourceFileIndex,
-        std::string&& contents);
+  Token(Kind tokenKind, size_t indexInFile, size_t sourceFileIndex, const std::string& contents);
+  Token(Kind tokenKind, size_t indexInFile, size_t sourceFileIndex, std::string&& contents);
 
   /// The type of token that this is.
   Kind kind() const;
@@ -74,7 +72,7 @@ private:
 /// Opens a file, adds it to \p sourceFiles , and converts its syntax to tokens.
 /// \throws compile_error::Generic (or a subclass of it) when the file's syntax
 /// is invalid or it cannot be opened.
-std::vector<Token> tokenize(const size_t sourceFileIndex);
+std::vector<Token> tokenize(size_t sourceFileIndex);
 
 /// Returns a string to represent the token like 'R_PAREN' or 'COMMAND(say hi)'.
 std::string tokenDebugStr(const Token& t);

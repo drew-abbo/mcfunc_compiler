@@ -15,34 +15,33 @@ namespace tokenize_helper {
 
 /// Stores a character like '}' and the index of its opening counterpart.
 struct ClosingChar {
-  const char c;
-  const size_t index;
+  char c;
+  size_t index;
 };
 
 /// Makes sure \p c == \p closingCharStack.back() and \p closingCharStack.size()
 /// is at least \p minSize or else it throws.
-static void handleCharStack(const char c, std::vector<ClosingChar>& closingCharStack,
-                            const size_t indexInFile, const size_t sourceFileIndex,
-                            const size_t minSize = 0);
+static void handleCharStack(char c, std::vector<ClosingChar>& closingCharStack, size_t indexInFile,
+                            size_t sourceFileIndex, size_t minSize = 0);
 
 /// Checks if \p c matches r"[a-zA-Z0-9_]".
-static bool isWordChar(const char c) { return std::isalnum(c) || c == '_'; }
+static bool isWordChar(char c) { return std::isalnum(c) || c == '_'; }
 
 /// Returns length of the word and the token which can be 'WORD' or a keyword.
-static std::string getWord(const std::string& str, const size_t& i, const size_t sourceFileIndex);
+static std::string getWord(const std::string& str, size_t& i, size_t sourceFileIndex);
 
 /// Returns the length of what's in quotes given the index of the opening quote.
-static size_t getStringContentLength(const std::string& str, const size_t i,
-                                     const size_t sourceFileIndex, const bool allowNewlines);
+static size_t getStringContentLength(const std::string& str, size_t i, size_t sourceFileIndex,
+                                     bool allowNewlines);
 
 /// Returns the length of the comment given the index of a starting '/' (length
 /// includes starting characters but not the ending newline or '/'). 0 is
 /// returned if \p i isn't the start of a comment.
-static size_t getLengthOfPossibleComment(const std::string& str, const size_t i);
+static size_t getLengthOfPossibleComment(const std::string& str, size_t i);
 
 } // namespace tokenize_helper
 
-std::vector<Token> tokenize(const size_t sourceFileIndex) {
+std::vector<Token> tokenize(size_t sourceFileIndex) {
   const std::string str = fileToStr(sourceFiles[sourceFileIndex].pathRef());
 
   std::vector<Token> ret;
@@ -254,8 +253,8 @@ std::vector<Token> tokenize(const size_t sourceFileIndex) {
 // ---------------------------------------------------------------------------//
 
 static void tokenize_helper::handleCharStack(
-    const char c, std::vector<tokenize_helper::ClosingChar>& closingCharStack,
-    const size_t indexInFile, const size_t sourceFileIndex, const size_t minSize) {
+    char c, std::vector<tokenize_helper::ClosingChar>& closingCharStack, size_t indexInFile,
+    size_t sourceFileIndex, size_t minSize) {
 
   if (closingCharStack.size() <= minSize) {
     throw compile_error::BadClosingChar(std::string("Missing opening counterpart for '") + c + "'.",
@@ -270,8 +269,8 @@ static void tokenize_helper::handleCharStack(
   closingCharStack.pop_back();
 };
 
-static std::string tokenize_helper::getWord(const std::string& str, const size_t& i,
-                                            const size_t sourceFileIndex) {
+static std::string tokenize_helper::getWord(const std::string& str, size_t& i,
+                                            size_t sourceFileIndex) {
   if (!tokenize_helper::isWordChar(str[i])) {
     std::string msg = "Unexpected character";
     // show char in error message if it's printable.
@@ -286,9 +285,8 @@ static std::string tokenize_helper::getWord(const std::string& str, const size_t
   return str.substr(i);
 }
 
-static size_t tokenize_helper::getStringContentLength(const std::string& str, const size_t i,
-                                                      const size_t sourceFileIndex,
-                                                      const bool allowNewlines) {
+static size_t tokenize_helper::getStringContentLength(const std::string& str, size_t i,
+                                                      size_t sourceFileIndex, bool allowNewlines) {
   assert((str[i] == '"' || str[i] == '`' || str[i] == '\'') &&
          "'getStringContentLength()' is only for strings.");
 
@@ -309,7 +307,7 @@ static size_t tokenize_helper::getStringContentLength(const std::string& str, co
                                       sourceFiles[sourceFileIndex].pathRef());
 }
 
-static size_t tokenize_helper::getLengthOfPossibleComment(const std::string& str, const size_t i) {
+static size_t tokenize_helper::getLengthOfPossibleComment(const std::string& str, size_t i) {
   if (i + 1 >= str.size())
     return 0;
 

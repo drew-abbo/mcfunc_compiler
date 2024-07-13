@@ -18,7 +18,7 @@ public:
   /// Generates a new unique ID object. Every \p UniqueID has a different ID
   /// value.
   /// \param kind The kind of object that this ID is for.
-  UniqueID(const Kind kind);
+  UniqueID(Kind kind);
 
   /// String representation of this ID (e.g. 'S_00001' is a \p SOURCE_FILE ID).
   const char* str() const;
@@ -29,8 +29,8 @@ public:
   /// The ID number.
   uint64_t value() const;
 
-  bool operator==(const UniqueID& other) const;
-  bool operator!=(const UniqueID& other) const;
+  bool operator==(UniqueID other) const;
+  bool operator!=(UniqueID other) const;
 
 private:
   union {

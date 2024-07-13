@@ -7,7 +7,7 @@
 
 UniqueID globalLibraryID = UniqueID(UniqueID::Kind::LIBRARY);
 
-SourceFile::SourceFile(const std::filesystem::path& filePath, const UniqueID libraryID)
+SourceFile::SourceFile(const std::filesystem::path& filePath, UniqueID libraryID)
     : m_filePath(filePath), m_fileID(UniqueID::Kind::SOURCE_FILE), m_libraryID(libraryID) {}
 
 std::filesystem::path SourceFile::path() const { return m_filePath; }

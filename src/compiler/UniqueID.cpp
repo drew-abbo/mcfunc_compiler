@@ -12,7 +12,7 @@ static uint32_t getNextIdValue() {
   return nextIdValue.fetch_add(1);
 }
 
-UniqueID::UniqueID(const Kind kind) {
+UniqueID::UniqueID(Kind kind) {
   const uint32_t val = getNextIdValue();
 
   // there's is a maximum ID value of 1,048,575
@@ -35,7 +35,7 @@ UniqueID::Kind UniqueID::kind() const { return static_cast<Kind>(m_idStr[0]); }
 
 uint64_t UniqueID::value() const { return (m_idValue & 0x0000ffffffffffff00) >> 8; }
 
-bool UniqueID::operator==(const UniqueID& other) const { return m_idValue == other.m_idValue; }
-bool UniqueID::operator!=(const UniqueID& other) const { return m_idValue != other.m_idValue; }
+bool UniqueID::operator==(UniqueID other) const { return m_idValue == other.m_idValue; }
+bool UniqueID::operator!=(UniqueID other) const { return m_idValue != other.m_idValue; }
 
 const char* UniqueID::str() const { return m_idStr; }

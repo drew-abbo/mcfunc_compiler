@@ -14,7 +14,7 @@ Generic::Generic(const std::string& msg) : m_msg(msg + '\n') {}
 CouldntOpenFile::CouldntOpenFile(const std::filesystem::path& filePath)
     : Generic("Failed to open file '" + filePath.string() + "'.") {}
 
-SyntaxError::SyntaxError(const std::string& msg, const size_t indexInFile,
+SyntaxError::SyntaxError(const std::string& msg, size_t indexInFile,
                          const std::filesystem::path& filePath)
     : Generic(msg) {
 

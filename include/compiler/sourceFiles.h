@@ -16,7 +16,7 @@ class SourceFile {
 public:
   /// \param filePath Relative or absolute path to the file.
   /// \param libraryID The ID of the library this file is from.
-  SourceFile(const std::filesystem::path& filePath, const UniqueID libraryID = globalLibraryID);
+  SourceFile(const std::filesystem::path& filePath, UniqueID libraryID = globalLibraryID);
 
   /// Get a copy of the file path.
   std::filesystem::path path() const;

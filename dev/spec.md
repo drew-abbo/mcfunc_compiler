@@ -369,7 +369,7 @@ void foo() {
 
 // Define a function that returns an int/takes in parameters.
 // Function parameters can have default values.
-int add(const int a, const int b = 5) {
+int add(int a, int b = 5) {
   return a + b;
 }
 

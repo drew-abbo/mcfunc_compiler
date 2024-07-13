@@ -11,7 +11,8 @@ this standard which are labeled in this document.
 - `.h` and `.cpp` should be used for headers and implementation files.
 - Prefer post-increment (`i++` over `++i`) (different from LLVM).
 - Prefer `//` over `/*` `*/`.
-- Use `const` as often as possible (especially for function parameters).
+- Use `const` as often as possible *but* do not use `const` for function
+  parameters that are passed in by value (still use when passing by reference).
 - Don't use `noexcept`, just document if a function throws with `/// \throws`
   and avoid exceptions wherever reasonable.
 
@@ -174,7 +175,7 @@ should have a doc comment. Here are some examples:
 /// \param [out] result filled with bar sequence on foo success.
 ///
 /// \returns true on success.
-bool fooBar(const bool baz, std::string &str, const std::vector<int> &result);
+bool fooBar(bool baz, std::string &str, const std::vector<int>& result);
 ```
 
 ```cpp
