@@ -14,6 +14,8 @@ It also outlines planned features.
   - [Code Generation](#code-generation)
 - [Advanced User Documentation](#advanced-user-documentation)
   - [Function File Naming Patterns](#function-file-naming-patterns)
+  - [Tick and Load Functions](#tick-and-load-functions)
+  - [File Write Restrictions](#file-write-restrictions)
 - [Future Additions](#future-additions)
   - [Future Language Additions](#future-language-additions)
     - [Scheduling Code](#scheduling-code)

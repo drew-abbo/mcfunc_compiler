@@ -22,6 +22,7 @@ bug-prone.
   - [Linking a Library Directory](#linking-a-library-directory)
   - [Build System](#build-system)
   - [Hot Reloading](#hot-reloading)
+- [Recommended Workflow](#recommended-workflow)
 
 </details>
 
