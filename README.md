@@ -200,8 +200,7 @@ expose "my_namespace";
 > [!TIP]
 > This statement can appear exactly 1 time during compilation. It's recommended
 > that you expose your namespace in your "main" file.
-
-> [!NOTE]
+> 
 > A namespace can contain lowercase letters `a`-`z`, digits `0`-`9`, underscores
 > `_`, dots `.`, and dashes `-` (although it's recommended that you avoid dots
 > `.` and dashes `-`). Namespaces cannot start with `zzz__.`.
@@ -217,8 +216,8 @@ void myFunction();
 ```
 
 We can define the function by putting the code we want the to run in curly
-braces `{}`. We'll have this command run a `/say` command. Commands in MCFunc
-start with a slash `/` and end with a semicolon `;`.
+braces `{}` after the parenthesis `()`. We'll have this function run a `/say`
+command. Commands in MCFunc start with a slash `/` and end with a semicolon `;`.
 
 ```mcfunc
 void myFunction() {
@@ -247,8 +246,9 @@ This is done because it hides implementation details and makes it less likely
 that the end-user runs functions they shouldn't.
 
 To give our function a name in-game we have to use the `expose` keyword after
-the parenthesis `()` with a function path. We'll expose our function as `hello_world`. The function we'll
-see in game will now be called `my_namespace:hello_world`.
+the parenthesis `()` with a function path. We'll expose our function as
+`hello_world`. The function we'll see in game will now be called
+`my_namespace:hello_world`.
 
 ```mcfunc
 expose "my_namespace";
@@ -259,16 +259,17 @@ void myFunction() expose "hello_world" {
 ```
 
 > [!NOTE]
-> The function path that gets exposed is a string of elements where each element
-> can contain letters `a`-`z`, digits `0`-`9`, underscores `_`, dots `.`, and
-> dashes `-` (although it's recommended that you avoid dots `.` and dashes `-`)
-> with slashes `/` separating each element (e.g. `"foo/bar/baz"`). An element
-> cannot be named with only dots `.` (e.g. `"..."` is invalid).
-
-> [!NOTE]
+> The function path should be a string of elements where each element can
+> contain letters `a`-`z`, digits `0`-`9`, underscores `_`, dots `.`, and dashes
+> `-` (although it's recommended that you avoid dots `.` and dashes `-`) with
+> slashes `/` separating each element (e.g. `"foo/bar/baz"`). An element cannot
+> be named with only dots `.` (e.g. `"..."` is invalid). Every slash `/` must
+> have an element around it.
+> 
 > The `expose` keyword does not need to appear for an exposed function's
-> definition if it has already appeared on a declaration (and vice versa):
->
+> definition if it has already appeared on a declaration (and vice versa). This
+> is valid:
+> 
 > ```mcfunc
 > void myFunction() expose "hello_world";
 > 
@@ -281,6 +282,10 @@ To call a function you just put the name of the function with parenthesis `()`
 as a statement.
 
 ```mcfunc
+void myFunction() expose "hello_world" {
+  sayHelloWorld5Times();
+}
+
 void sayHelloWorld5Times() {
   /say Hello world!;
   /say Hello world!;
@@ -288,25 +293,10 @@ void sayHelloWorld5Times() {
   /say Hello world!;
   /say Hello world!;
 }
-
-void myFunction() expose "hello_world" {
-  sayHelloWorld5Times();
-}
 ```
 
 > [!TIP]
-> Functions do not need to be declared before they are called. The following is
-> completely valid:
->
-> ```mcfunc
-> void bar() {
->   foo();
-> }
-> 
-> void foo() {
->   /say foo;
-> }
-> ```
+> Functions do not need to be declared before they are called.
 
 The `tick` keyword means that function should be placed in the `#minecraft:tick`
 function tag. The same is true for the `load` keyword and the `#minecraft:load`
@@ -322,20 +312,20 @@ load void loadFunction() {
 }
 ```
 
-> [!CAUTION]
+> [!NOTE]
 > `tick` functions run before `load` functions. This may cause problems if a
 > `tick` function relies on things a `load` function sets up.
-
-> [!NOTE]
-> `tick` and `load` can both be applied to the same function. They must appear
-> before the return type (e.g. `void tick` is invalid). They also must appear
-> on every declaration/definition of a function.
+> 
+> The `tick` and `load` keywords can both be applied to the same function. They
+> must appear before the return type (e.g. `void tick` is invalid). They also
+> must appear on every declaration/definition of a function.
 
 ### Commands and Scopes
 
 If you want to run a function within some context (like after an `execute`
-commmand), you can. Putting a colon `:` after a `run` argument of a command
-(e.g. `run:`) will break out of that command and allow you to run a statement.
+commmand), you can. Putting a colon `:` after a `run` argument (`run:`) of a
+command will break out of that command and allow you to chain another statement
+(like a function call).
 
 ```mcfunc
 void giveAllPlayersStuff() expose "give_all_players_stuff" {
@@ -389,7 +379,7 @@ path.
 file "loot_table/my_loot_table.json";
 ```
 
-Directly writing the file's contents can be done with an equal sign `=` and the
+Directly writing a file's contents can be done with an equal sign `=` and the
 file's contents as a snippet in backticks <code>&#96;</code>.
 
 ```mcfunc
@@ -414,7 +404,7 @@ file "loot_table/my_loot_table_1.json" = "my_loot_table_1.json";
 > (e.g. `data/foo/` if the namespace was set to `foo`).
 >
 > Files being copied in must be input files or must exist inside of an input
-> directory.
+> directory or library.
 
 ### Imports
 
@@ -426,7 +416,7 @@ import "foo.mcfunc";
 ```
 
 Importing a file allows you to use all members of that file that are not marked
-as `private` in the current file.
+as `private`.
 
 ```mcfunc
 // foo.mcfunc
@@ -443,13 +433,12 @@ private void bar() {
 ```
 
 > [!NOTE]
-> File members declared with `private` must be defined in the same file.
-
-> [!NOTE]
+> File members declared with the `private` keyword must be defined in the same
+> file.
+> 
 > The `private` keyword must appear before the return type (e.g. `void private`
 > is invalid). It also must appear on every declaration/definition of a member.
-
-> [!NOTE]
+> 
 > Files imported by imported files are not accessible in an impprting file (e.g.
 > if `a` imports `b` and `b` imports `c`, members of `c` cannot be used in `a`
 > unless `a` also imports `c`).
@@ -468,11 +457,17 @@ mcfunc -h
 ### Direcly Passing Source Files
 
 Run `mcfunc` followed by a list of source files to generate a data pack in the
-`data/` folder of the current directory (will make it if it doesn't exist).
+`./data/` folder of the current directory (it will be made if it doesn't exist).
 
 ```sh
 # builds './src/main.mcfunc' into './data/'
 mcfunc ./src/main.mcfunc
+```
+
+Files passed in this way can be imported by the file name without the path.
+
+```mcfunc
+import "main.mcfunc";
 ```
 
 Files that do not have the `.mcfunc` extension will not be compiled but they can
@@ -480,21 +475,21 @@ be copied into the data pack with the `file` keyword.
 
 ```sh
 # builds './src/main.mcfunc' into './data/'
-mcfunc ./src/foo.json ./src/foo.json
+mcfunc ./src/foo.mcfunc ./src/bar.json
 ```
 
 ```mcfunc
 expose "example";
 
-// copies './src/foo.json' into './data/example/foo.json'
-file "foo.json" = "src/foo.json";
+// copies './src/bar.json' into the data pack as './data/example/baz.json'
+file "baz.json" = "bar.json";
 ```
 
 ### Changing the Output Directory
 
 You can change the output directory with the `-o` flag. If this flag appears
-multiple times its the last appearance will be used. If left unspecified
-`./data/` will be used.
+multiple times its last appearance will be used. If left unspecified `./data/`
+will be used.
 
 ```sh
 # builds './src/main.mcfunc' into './build/'
@@ -503,16 +498,23 @@ mcfunc ./src/main.mcfunc -o ./build
 
 ### Adding an Input Directory
 
-You can add an input directory with the `-i` flag. This tells the compiler that
-all files with the `.mcfunc` extension inside of the set directory should be
-compiled. *This is evaluated recursively!* This means that if you set an input
-directory `./foo/`, MCFunc files in `./foo/bar/` will also be compiled. If the
-output directory is inside of an input directory it will be ignored.
+You can add an input directory with the `-i` flag. This is similar to directly
+passing every file in the directory to the compiler. *This is evaluated*
+*recursively!* This means that if you set an input directory `./foo/`, MCFunc
+files in `./foo/bar/` will also be compiled.
 
 ```sh
 # builds files in the current directory into './data/'
 mcfunc -i .
 ```
+
+The difference between this and manually passing every file in a directory to
+the compiler is that sub-directories are preserved for the import path (e.g. if
+`./src/` was set as an import path `./src/foo/bar.mcfunc` would need to be
+imported with `"foo/bar.mcfunc"` not just `"bar.mcfunc"`).
+
+If the output directory will be ignored if it's inside of or is an input
+directory.
 
 ### Linking a Library Directory
 
@@ -527,13 +529,20 @@ directory is isolated until the linking stage of compilation.
 mcfunc -i ./src -l ./my_lib
 ```
 
-This is useful if you want to use an API/library because it will stop internal
-files from being imported. As an example, let's say your main code was in
-`./src/` but that code uses functions from a library in the `./math/` directory.
-The `./math/` directory may have a bunch of implementation files but it should
-also have a single file that declares everything meant to be imported (e.g.
-`math.mcfunc`). This file could be passed to the compiler separately and the
-rest of the library files could be linked in.
+Files or directories explicitly included (either listed or included with `-i`)
+from a library will not be isolated (e.g. if the directory `./my_lib/` was
+linked in as a library but the file `./my_lib/foo.mcfunc` was listed,
+`./my_lib/foo.mcfunc` will not be isolated and will be free to be imported by
+other code). This is useful if you want to use an API/library because you can
+block the importing of API/library files and only allow a single interface file
+to be accessed (like a C header file).
+
+As an example, let's say your main code was in `./src/` but that code uses
+functions from a library in the `./math/` directory. The `./math/` directory may
+have a bunch of implementation files but it should also have a single file that
+declares everything meant to be imported (e.g. `./math/math.mcfunc`). This file
+could be passed to the compiler separately and the rest of the library files
+could be linked in.
 
 ```sh
 # builds files in './src/' and './math/' into './data/' but only allows
@@ -544,22 +553,26 @@ mcfunc -i ./src -l ./math ./math/math.mcfunc
 ### Build System
 
 If you run `mcfunc` with none of the above arguments it will search for a
-`build.json` file in the current directory. This file should contain an array of
+`build.jsonc` file in the current directory. This file should contain an array of
 arguments that the compiler should use. This way you don't need to type out a
 long command every single time.
 
 ```sh
-# uses arguments from a 'build.json' file
+# uses arguments from a 'build.jsonc' file
 mcfunc
 ```
 
-Here is an example of a `build.json` file that will build a data pack from the
-files in `./src/` into `./data/`:
+Here is an example of a `build.jsonc` file that will build a data pack from the
+files in `./src/` into `./data/` (recommended workflow):
 
 ```json
-// build.json
+// build.jsonc
 [ "-i", "./src" ]
 ```
+
+> [!NOTE]
+> The only difference between `json` and `jsonc` files is that `jsonc` files
+> allow C-style comments.
 
 ### Hot Reloading
 
@@ -568,6 +581,57 @@ re-compile the data pack every 2.5 seconds if any source files have changed.
 This mode can be exited by pressing `Q`.
 
 ```sh
-# uses arguments from a 'build.json' file and runs them in "hot reload" mode
+# uses arguments from a 'build.jsonc' file and runs them in "hot reload" mode
 mcfunc --hot
 ```
+
+## Recommended Workflow
+
+The recommended directory structure for MCFunc projects is this:
+
+```
+.
+├── data/
+├── libs/
+├── src/
+├── build.jsonc
+└── pack.mcmeta
+```
+
+- `data/` is your output directory.
+- `libs/` should contain sub-directories for libraries or APIs. You likely don't
+  need this for simple projects.
+- `src/` is where all of your `.mcfunc` files and any resource files (e.g. loot
+  tables) should go.
+- `build.jsonc` is here so you don't have to type out a long build command every
+  time you want to compile.
+- `pack.mcmeta` tells the game info about your data pack.
+
+Ideally you're directly working inside of a data pack folder in the `datapacks/`
+directory of a Minecraft save. That way you can take advantage of things like
+hot reloading for testing.
+
+To send your data pack folder to a friend just zip the contents of the project
+(only `./data/` and `./pack.mcmeta` if they don't need the source code) and send
+it to them.
+
+As for your `build.jsonc` file, here is a simple one (no libraries):
+
+```json
+[ "-i", "./src" ]
+```
+
+If you have libraries you'll need to add a bit to this file for each of them.
+As an example, let's say we have a library in the `./libs/math/` directory with
+an interface file `./libs/math/math.mcfunc`:
+
+```json
+[
+  "-i", "./src",
+  "-l", "./libs/math", "./libs/math/math.mcfunc"  // import as "math.mcfunc"
+]
+```
+
+For more complicated projects with multiple namespaces you may want to employ a
+build system like Make since you'll need to compile each namespace with a
+separate command.

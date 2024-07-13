@@ -57,7 +57,7 @@ members of non-library files are not prepended with anything (they're global).
 All members of files in a library directory (even public ones) are prepended
 with a library ID. If a library file is brought into the global scope then the
 file is marked as globally importable but it's members will still have that
-library ID.
+library ID. A file write/copy is always global no matter what.
 
 ### Semantic Analysis
 
@@ -65,6 +65,11 @@ Next we validate that all symbols used are declared. This includes checking the
 current file's symbol table and checking the symbol tables for imported files.
 Because the symbol tables for all files already exist, this can be done in
 parallel.
+
+The number of times a function is called is also tracked. This can help
+optimiation remove functions that may end up unused after inlining. Exposed
+functions are gived an automatic `+1` to their use counter so that they cannot
+be removed (although they can be inlined).
 
 Note that functions called do not need to be *defined* to be used, only
 declared. The following will work even though there's no importing between
@@ -122,7 +127,6 @@ The data pack can now be generated through a series of file write operations.
 
 ---
 
-
 ## Advanced User Documentation
 
 ### Function File Naming Patterns
@@ -164,6 +168,48 @@ top of the autofill list that appears when you type `/function` in-game.
 Additionally, since the name would be made up of arbitrary numbers and letters
 the chance that a user runs an internal function that could break something is
 reduced.
+
+### Tick and Load Functions
+
+When a function is labeled with the `tick`/`load` keyword it's symbol name is
+saved in a list. After compilation is finished and the function has an address
+it will be *added* to any existing `minecraft/tags/function/tick.json` or
+`minecraft/tags/function/load.json` files. This means these files will be opened
+up, read, functions from the namespace that's currently being compiled will be
+removed, and the new functions will be added. This is done so that you can
+safely compile multiple namespaces into the same data pack separately. Anything
+in the `minecraft` namespace is a shared resource between all functions.
+
+### File Write Restrictions
+
+File paths must be Unix-style and use `/` (not the Windows style `\`). This
+keeps it consistent with the game and with the way strings work in MCFunc (`\`
+is the escape character).
+
+You can only write files into the namespace directory of your data pack. You
+can't use exact file paths or make use of the `..`/`.` directories at all.
+
+This means that none of the following file write operations are allowed:
+
+```mcfunc
+// '\' is an escape character
+file "foo\bar.json" = ``;
+
+// can't write files there
+file "../foo" = ``;
+file "/bin" = ``;
+file "C:/Windows/System32" = ``;
+```
+
+At the start of compilation the contents of the namespace folder and the hidden
+namespace folder are removed. As compilation goes on files and directories will
+be created. If there is any conflict here compilation will fail. This means that
+the following will not work:
+
+```mcfunc
+void foo() expose "foo/bar";  // creates a directory 'function/foo'
+file "function/foo" = ``;     // creates a file 'function/foo'
+```
 
 ---
 
