@@ -23,16 +23,17 @@ public:
     ASSIGN,        // '='
     COMMAND_PAUSE, // Indicates a command ended with 'run:' and not ';'
     // contain contents:
-    STRING,  // A string in quotes ('"' not included, single line)
-    SNIPPET, // A snippet in backticks ('`' not included, can span lines)
-    COMMAND, // A command starting with a slash ('/' not included)
-    WORD,    // Any word like 'foo' (like a function name for example)
+    STRING,     // A string in quotes ('"' not included, single line)
+    SNIPPET,    // A snippet in backticks ('`' not included, can span lines)
+    COMMAND,    // A command starting with a slash ('/' not included)
+    WORD,       // Any word like 'foo' (like a function name for example)
     // keywords:
-    EXPOSE, // 'expose' keyword
-    FILE,   // 'file' keyword
-    TICK,   // 'tick' keyword
-    LOAD,   // 'load' keyword
-    VOID,   // 'void' keyword
+    EXPOSE_KW,  // 'expose' keyword
+    FILE_KW,    // 'file' keyword
+    TICK_KW,    // 'tick' keyword
+    LOAD_KW,    // 'load' keyword
+    IMPORT_KW,  // 'import' keyword
+    VOID_KW,    // 'void' keyword
   };
 
 public:

@@ -53,16 +53,18 @@ std::string tokenDebugStr(const Token& t) {
     return "ASSIGN";
   case Token::COMMAND_PAUSE:
     return "COMMAND_PAUSE";
-  case Token::EXPOSE:
-    return "EXPOSE";
-  case Token::FILE:
-    return "FILE";
-  case Token::TICK:
-    return "TICK";
-  case Token::LOAD:
-    return "LOAD";
-  case Token::VOID:
-    return "VOID";
+  case Token::EXPOSE_KW:
+    return "EXPOSE_KW";
+  case Token::FILE_KW:
+    return "FILE_KW";
+  case Token::TICK_KW:
+    return "TICK_KW";
+  case Token::LOAD_KW:
+    return "LOAD_KW";
+  case Token::IMPORT_KW:
+    return "IMPORT_KW";
+  case Token::VOID_KW:
+    return "VOID_KW";
 
   case Token::STRING:
     return "STRING(" + t.contents() + ')';

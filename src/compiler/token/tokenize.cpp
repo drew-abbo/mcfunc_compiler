@@ -213,28 +213,28 @@ std::vector<Token> tokenize(const std::filesystem::path& filePath) {
     // word or keyword or invalid char
     default:
       std::string word = tokenize_helper::getWord(str, i, filePathIndex);
-      Token::Kind kind;
 
       // look for keywords
+      Token::Kind kind;
       if (word == "expose")
-        kind = Token::EXPOSE;
+        kind = Token::EXPOSE_KW;
       else if (word == "file")
-        kind = Token::FILE;
+        kind = Token::FILE_KW;
       else if (word == "tick")
-        kind = Token::TICK;
+        kind = Token::TICK_KW;
       else if (word == "load")
-        kind = Token::LOAD;
+        kind = Token::LOAD_KW;
+      else if (word == "import")
+        kind = Token::IMPORT_KW;
       else if (word == "void")
-        kind = Token::VOID;
-
-      // if it's not a keyword
-      else {
+        kind = Token::VOID_KW;
+      else {  // if it's not a keyword:
         const int size = word.size();
         ret.emplace_back(Token::WORD, i, filePathIndex, std::move(word));
         i += size - 1;
         break;
       }
-
+      // if it was a keyword:
       ret.emplace_back(kind, i, filePathIndex);
       i += word.size() - 1;
       break;

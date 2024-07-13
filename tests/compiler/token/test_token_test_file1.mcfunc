@@ -55,3 +55,5 @@ tick void on_tick() {
 load void on_load() {
   /tellraw @a "This data pack is installed!";
 }
+
+import "foo.mcfunc";
