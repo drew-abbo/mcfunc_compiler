@@ -45,7 +45,7 @@ load void init() {
 tick void gameLoop() {
   // if the game is running check for dead players
   /execute if score #game_is_running werewolf_game.game_info matches 1 run: {
-    /execute as @a[scores={werewolf_game.is_dead=1..}] run {
+    /execute as @a[scores={werewolf_game.is_dead=1..}] run: {
       /scoreboard players reset @s werewolf_game.is_dead;
       /gamemode spectator @s;
       /title @s { "text": "You Died", "color": "red" };

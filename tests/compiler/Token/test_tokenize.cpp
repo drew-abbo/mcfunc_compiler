@@ -21,7 +21,7 @@ TEST(test_token, test_tokenize) {
   // test a valid file
   // ------------------------------------------------------------------------ //
 
-  sourceFiles.emplace_back(std::filesystem::path("..") / "tests" / "compiler" / "tokenize" /
+  sourceFiles.emplace_back(std::filesystem::path("..") / "tests" / "compiler" / "Token" /
                            "test_token_test_file1.mcfunc");
 
   std::vector<Token> result;
@@ -138,21 +138,21 @@ TEST(test_token, test_tokenize) {
   // ------------------------------------------------------------------------ //
 
   const std::vector<std::filesystem::path> goodFilePathsBadSyntaxFiles = {
-      std::filesystem::path("..") / "tests" / "compiler" / "tokenize" /
+      std::filesystem::path("..") / "tests" / "compiler" / "Token" /
           "test_token_test_file2.mcfunc",
-      std::filesystem::path("..") / "tests" / "compiler" / "tokenize" /
+      std::filesystem::path("..") / "tests" / "compiler" / "Token" /
           "test_token_test_file3.mcfunc",
-      std::filesystem::path("..") / "tests" / "compiler" / "tokenize" /
+      std::filesystem::path("..") / "tests" / "compiler" / "Token" /
           "test_token_test_file4.mcfunc",
-      std::filesystem::path("..") / "tests" / "compiler" / "tokenize" /
+      std::filesystem::path("..") / "tests" / "compiler" / "Token" /
           "test_token_test_file5.mcfunc",
-      std::filesystem::path("..") / "tests" / "compiler" / "tokenize" /
+      std::filesystem::path("..") / "tests" / "compiler" / "Token" /
           "test_token_test_file6.mcfunc",
-      std::filesystem::path("..") / "tests" / "compiler" / "tokenize" /
+      std::filesystem::path("..") / "tests" / "compiler" / "Token" /
           "test_token_test_file7.mcfunc",
-      std::filesystem::path("..") / "tests" / "compiler" / "tokenize" /
+      std::filesystem::path("..") / "tests" / "compiler" / "Token" /
           "test_token_test_file8.mcfunc",
-      std::filesystem::path("..") / "tests" / "compiler" / "tokenize" /
+      std::filesystem::path("..") / "tests" / "compiler" / "Token" /
           "test_token_test_file9.mcfunc",
   };
 

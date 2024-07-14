@@ -6,19 +6,19 @@
 #include <filesystem>
 #include <vector>
 
-#include <compiler/UniqueID.h>
 #include <compiler/Token.h>
+#include <compiler/UniqueID.h>
 #include <compiler/statement.h>
 
-// The library ID for source files that live in the global scope (source files
-// that aren't from a library).
-extern UniqueID globalLibraryID;
-
+/// Represents a single source file.
 class SourceFile {
 public:
   /// \param filePath Relative or absolute path to the file.
   /// \param libraryID The ID of the library this file is from.
-  SourceFile(const std::filesystem::path& filePath, UniqueID libraryID = globalLibraryID);
+  SourceFile(const std::filesystem::path& filePath, UniqueID libraryID);
+
+  /// \param filePath Relative or absolute path to the file.
+  SourceFile(const std::filesystem::path& filePath);
 
   /// Get a copy of the file path.
   std::filesystem::path path() const;
@@ -54,9 +54,24 @@ private:
   std::vector<statement::Generic*> m_statements;
 };
 
+/// The exact same as \p std::vector<SourceFile> except there's only 1 instance
+/// of it.
+class SourceFilesSingletonType : public std::vector<SourceFile> {
+public:
+  /// This class is a singleton. Only 1 instance of it exists.
+  static SourceFilesSingletonType& getSingletonInstance();
+  SourceFilesSingletonType(const SourceFilesSingletonType&) = delete;
+  SourceFilesSingletonType(SourceFilesSingletonType&&) = delete;
+  void operator=(const SourceFilesSingletonType&) = delete;
+  void operator=(SourceFilesSingletonType&&) = delete;
+
+private:
+  SourceFilesSingletonType() = default;
+};
+
 /// Use this variable to track what files have been visited so that things like
 /// tokens don't need to store an entire \p SourceFile object when they could
 /// just store an index for the file they're from.
-extern std::vector<SourceFile> sourceFiles;
+extern SourceFilesSingletonType& sourceFiles;
 
 #endif // SOURCEFILES_H

@@ -4,13 +4,18 @@
 
 #include <vector>
 
-#include <compiler/UniqueID.h>
 #include <compiler/Token.h>
+#include <compiler/UniqueID.h>
 
-UniqueID globalLibraryID = UniqueID(UniqueID::Kind::LIBRARY);
+static const UniqueID globalLibraryID = UniqueID(UniqueID::Kind::LIBRARY);
+
+// SourceFile
 
 SourceFile::SourceFile(const std::filesystem::path& filePath, UniqueID libraryID)
     : m_filePath(filePath), m_fileID(UniqueID::Kind::SOURCE_FILE), m_libraryID(libraryID) {}
+
+SourceFile::SourceFile(const std::filesystem::path& filePath)
+    : m_filePath(filePath), m_fileID(UniqueID::Kind::SOURCE_FILE), m_libraryID(globalLibraryID) {}
 
 std::filesystem::path SourceFile::path() const { return m_filePath; }
 
@@ -27,13 +32,20 @@ UniqueID SourceFile::libraryID() const {
 
 const std::vector<Token>& SourceFile::tokens() const { return m_tokens; }
 
-const std::vector<statement::Generic*> SourceFile::statements() const {
-  return m_statements;
-}
+const std::vector<statement::Generic*> SourceFile::statements() const { return m_statements; }
 
 SourceFile::~SourceFile() {
   for (statement::Generic* stmnt : m_statements)
     delete stmnt;
 }
 
-std::vector<SourceFile> sourceFiles;
+// SourceFilesSingleton_t
+
+SourceFilesSingletonType& SourceFilesSingletonType::getSingletonInstance() {
+  static SourceFilesSingletonType instance;
+  return instance;
+}
+
+// sourceFiles
+
+SourceFilesSingletonType& sourceFiles = SourceFilesSingletonType::getSingletonInstance();

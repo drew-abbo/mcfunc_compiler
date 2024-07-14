@@ -111,7 +111,8 @@ std::vector<Token> tokenize(size_t sourceFileIndex) {
       // inside of the command.
       const size_t closingCharStackStartSize = closingCharStack.size();
       // Go until we're outside of all quotes/parens/braces and we find either a
-      // semicolon or 'run:' followed by whitespace.
+      // semicolon or 'run:' followed by whitespace, preceded by a non-word
+      /// character.
       std::string commandContents;
       for (size_t j = i + 1; j < str.size(); j++) {
         switch (str[j]) {
@@ -179,8 +180,8 @@ std::vector<Token> tokenize(size_t sourceFileIndex) {
             commandContents += ' ';
 
           // possible command pause (if after 'run:')
-          if (closingCharStack.size() != closingCharStackStartSize || j - 4 <= i ||
-              std::strncmp(&str.c_str()[j - 4], "run:", 4) != 0)
+          if (closingCharStack.size() != closingCharStackStartSize || j <= i + 5 ||
+              std::strncmp(&str.c_str()[j - 5], " run:", 5) != 0)
             break;
           // remove the ':' and the space we just added
           commandContents.resize(commandContents.size() - 2);
