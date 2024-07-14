@@ -7,6 +7,8 @@
 #include <vector>
 
 #include <compiler/UniqueID.h>
+#include <compiler/Token.h>
+#include <compiler/statement.h>
 
 // The library ID for source files that live in the global scope (source files
 // that aren't from a library).
@@ -36,10 +38,20 @@ public:
   /// The library ID for this file if it's a part of a library.
   UniqueID libraryID() const;
 
+  /// The tokens (groups of characters) in this file.
+  const std::vector<Token>& tokens() const;
+
+  /// The statements (collections of tokens) for this file.
+  const std::vector<statement::Generic*> statements() const;
+
+  ~SourceFile();
+
 private:
   std::filesystem::path m_filePath;
   UniqueID m_fileID;
   UniqueID m_libraryID;
+  std::vector<Token> m_tokens;
+  std::vector<statement::Generic*> m_statements;
 };
 
 /// Use this variable to track what files have been visited so that things like

@@ -1,4 +1,4 @@
-#include <compiler/token.h>
+#include <compiler/Token.h>
 
 #include <cassert>
 #include <cctype>
@@ -16,8 +16,7 @@ Token::Token(Kind tokenKind, size_t indexInFile, size_t sourceFileIndex,
     : m_tokenKind(tokenKind), m_indexInFile(indexInFile), m_sourceFileIndex(sourceFileIndex),
       m_contents(contents) {}
 
-Token::Token(Kind tokenKind, size_t indexInFile, size_t sourceFileIndex,
-             std::string&& contents)
+Token::Token(Kind tokenKind, size_t indexInFile, size_t sourceFileIndex, std::string&& contents)
     : m_tokenKind(tokenKind), m_indexInFile(indexInFile), m_sourceFileIndex(sourceFileIndex),
       m_contents(std::move(contents)) {}
 
@@ -26,6 +25,32 @@ Token::Kind Token::kind() const { return m_tokenKind; }
 size_t Token::indexInFile() const { return m_indexInFile; }
 
 size_t Token::sourceFileIndex() const { return m_sourceFileIndex; }
+
+bool Token::hasContents() const {
+  switch (m_tokenKind) {
+  case Token::SEMICOLON:
+  case Token::L_PAREN:
+  case Token::R_PAREN:
+  case Token::L_BRACE:
+  case Token::R_BRACE:
+  case Token::ASSIGN:
+  case Token::COMMAND_PAUSE:
+  case Token::EXPOSE_KW:
+  case Token::FILE_KW:
+  case Token::TICK_KW:
+  case Token::LOAD_KW:
+  case Token::IMPORT_KW:
+  case Token::VOID_KW:
+    return false;
+
+  case Token::STRING:
+  case Token::SNIPPET:
+  case Token::COMMAND:
+  case Token::WORD:
+    return true;
+  }
+  assert(false && "this point should never be reached");
+}
 
 const std::string& Token::contents() const { return m_contents; }
 

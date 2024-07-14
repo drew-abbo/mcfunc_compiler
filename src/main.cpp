@@ -5,7 +5,7 @@
 
 #include <compiler/compile_error.h>
 #include <compiler/sourceFiles.h>
-#include <compiler/token.h>
+#include <compiler/Token.h>
 #include <vector>
 
 int main() {

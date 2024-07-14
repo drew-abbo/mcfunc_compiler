@@ -1,4 +1,4 @@
-#include <compiler/token.h>
+#include <compiler/Token.h>
 
 #include <cctype>
 #include <cstring>

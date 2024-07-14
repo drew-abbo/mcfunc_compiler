@@ -59,6 +59,9 @@ public:
   /// The index of the file in \p sourceFiles that this token is from.
   size_t sourceFileIndex() const;
 
+  // Whether or not this kind of token has contents.
+  bool hasContents() const;
+
   /// The contents for this token if it's like \p STRING and stores text.
   const std::string& contents() const;
 
