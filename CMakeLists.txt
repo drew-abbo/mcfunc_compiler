@@ -25,11 +25,11 @@ set(MAIN_FILE ${SRC_DIR}/main.cpp)
 
 # flags that are always set
 set(COMPILE_OPTIONS
-    # -fno-exceptions         # disables exceptions
-    -Wall -Wextra           # more warnings
-    -Wnon-virtual-dtor      # warns of virtual class with non-virtual destructor
-    -Wcast-align            # warns about misalignments from casts
-    -Werror                 # warnings are errors that stop compilation
+    # -fno-exceptions             # disables exceptions
+    -Wall -Wextra -Wpedantic    # more warnings
+    -Wnon-virtual-dtor          # warns about non-virtual destructors
+    -Wcast-align                # warns about misalignments from casts
+    -Werror                     # warnings are errors that stop compilation
 )
 set(EXTRA_LIBS)
 

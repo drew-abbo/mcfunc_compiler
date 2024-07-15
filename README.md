@@ -5,7 +5,7 @@ offers major improvements on the vanilla `.mcfunction` syntax in an attempt to
 make the data pack creation process easier, faster, more modular, and less
 bug-prone.
 
-<details><summary>Table of Contents</summary>
+<details open><summary>Table of Contents</summary>
 
 - [Installation](#installation)
 - [Language](#language)
@@ -23,6 +23,7 @@ bug-prone.
   - [Build System](#build-system)
   - [Hot Reloading](#hot-reloading)
 - [Recommended Workflow](#recommended-workflow)
+- [Building This Project](#building-this-project)
 
 </details>
 
@@ -636,3 +637,39 @@ an interface file `./libs/math/math.mcfunc`:
 For more complicated projects with multiple namespaces you may want to employ a
 build system like Make since you'll need to compile each namespace with a
 separate command.
+
+## Building This Project
+
+To build this project you must be using a Unix system like Linux or Mac OS (use
+[WSL](https://learn.microsoft.com/en-us/windows/wsl/install) if you're on
+Windows). You also need to have Python 3, CMake, Git, Make, and either GCC or
+Clang installed. Make sure your compiler is updated to work with C++ 17.
+
+You can build the project by running the [build.py](./build.py) script from the
+root project directory. This will also run all of the tests.
+
+```sh
+# build the project and run all tests
+python3 ./build.py
+```
+
+This will build the executables `mcfunc` and `run_tests` in the `./build`
+directory. Run these executables from the root project directory.
+
+```sh
+# run the main executable (debug)
+./build/mcfunc
+```
+
+To build in release mode run the python script with `release` as an argument.
+This will build the executables in `./release` instead of `./build`.
+
+```sh
+# build the project in release mode and run all tests
+python3 ./build.py release
+```
+
+```sh
+# run the main executable (release)
+./release/mcfunc
+```

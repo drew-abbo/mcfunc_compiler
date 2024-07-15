@@ -21,7 +21,7 @@ TEST(test_token, test_tokenize) {
   // test a valid file
   // ------------------------------------------------------------------------ //
 
-  sourceFiles.emplace_back(std::filesystem::path("..") / "tests" / "compiler" / "Token" /
+  sourceFiles.emplace_back(std::filesystem::path(".") / "tests" / "compiler" / "Token" /
                            "test_token_test_file1.mcfunc");
 
   std::vector<Token> result;

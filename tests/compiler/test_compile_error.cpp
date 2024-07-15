@@ -25,7 +25,7 @@ TEST(test_compile_error, test_syntax_error) {
   // ------------------------------------------------------------------------ //
 
   const auto goodFilePath =
-      std::filesystem::path("..") / "tests" / "compiler" / "test_compile_error_test_file.mcfunc";
+      std::filesystem::path(".") / "tests" / "compiler" / "test_compile_error_test_file.mcfunc";
 
   ASSERT_TRUE(std::filesystem::exists(goodFilePath))
       << "'goodFilePath' was not found. Make sure you're running tests from "
