@@ -10,7 +10,7 @@
 
 int main() {
 
-  sourceFiles.emplace_back(std::filesystem::path("..") / "test.mcfunc");
+  sourceFiles.emplace_back(std::filesystem::path(".") / "test.mcfunc");
 
   std::vector<Token> tokens;
 

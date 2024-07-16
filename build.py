@@ -1,3 +1,5 @@
+#!/bin/python3
+
 import sys
 import subprocess
 import os
@@ -123,7 +125,7 @@ run_build_command("cmake --build .", in_dir=BUILD_DIR)
 # build success
 elapsed_time = time.time() - START_TIME
 print(f"""{Text.BIG_SUCCESS}{f" BUILD FINISHED IN {elapsed_time:.1f} SECONDS ":=^80}{Text.RESET}""")
-print(f"Executables are in './{BUILD_DIR}/'.")
+print(f"Executables are in './{BUILD_DIR}'.")
 
 
 # run tests

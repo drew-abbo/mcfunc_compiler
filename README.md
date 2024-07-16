@@ -620,6 +620,7 @@ it to them.
 As for your `build.jsonc` file, here is a simple one (no libraries):
 
 ```json
+// build.jsonc
 [ "-i", "./src" ]
 ```
 
@@ -628,6 +629,7 @@ As an example, let's say we have a library in the `./libs/math/` directory with
 an interface file `./libs/math/math.mcfunc`:
 
 ```json
+// build.jsonc
 [
   "-i", "./src",
   "-l", "./libs/math", "./libs/math/math.mcfunc"  // import as "math.mcfunc"
@@ -650,11 +652,14 @@ root project directory. This will also run all of the tests.
 
 ```sh
 # build the project and run all tests
-python3 ./build.py
+./build.py
 ```
 
+> [!IMPORTANT]
+> Make sure you aren't in the build directory when you run the build script.
+
 This will build the executables `mcfunc` and `run_tests` in the `./build`
-directory. Run these executables from the root project directory.
+directory. You can run these executables from the root project directory.
 
 ```sh
 # run the main executable (debug)
@@ -662,11 +667,11 @@ directory. Run these executables from the root project directory.
 ```
 
 To build in release mode run the python script with `release` as an argument.
-This will build the executables in `./release` instead of `./build`.
+Build files will end up in `./release` instead of `./build`.
 
 ```sh
 # build the project in release mode and run all tests
-python3 ./build.py release
+./build.py release
 ```
 
 ```sh
