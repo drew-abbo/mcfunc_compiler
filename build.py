@@ -120,9 +120,14 @@ if CMAKE_UNINITIALIZED:
     else:
         run_build_command("cmake -DCMAKE_BUILD_TYPE=Release ..", in_dir=BUILD_DIR)
 
-# build
 run_build_command("cmake .", in_dir=BUILD_DIR)
-run_build_command("cmake --build .", in_dir=BUILD_DIR)
+
+# build (use all almost all cpu cores but leave 1 free)
+build_command = "cmake --build ."
+CPU_COUNT = os.cpu_count()
+if CPU_COUNT is not None and CPU_COUNT >= 2:
+    build_command += f" --parallel {CPU_COUNT}"
+run_build_command(build_command, in_dir=BUILD_DIR)
 
 # build success
 elapsed_time = time.time() - START_TIME
