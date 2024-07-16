@@ -44,7 +44,7 @@ public:
 class SyntaxError : public Generic {
 public:
   explicit SyntaxError(const std::string& msg, const size_t indexInFile,
-                       const std::filesystem::path& filePath);
+                       const std::filesystem::path& filePath, size_t numChars = 1);
 };
 
 /// Throw when things like parenthesis or quotes aren't closed properly.
