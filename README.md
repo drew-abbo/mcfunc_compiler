@@ -23,7 +23,7 @@ bug-prone.
   - [Build System](#build-system)
   - [Hot Reloading](#hot-reloading)
 - [Recommended Workflow](#recommended-workflow)
-- [Building This Project](#building-this-project)
+- [Building This Project From Source](#building-this-project-from-source)
 
 </details>
 
