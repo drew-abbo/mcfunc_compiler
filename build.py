@@ -112,7 +112,9 @@ else:
 
 # set up cmake
 if CMAKE_UNINITIALIZED:
-    print(f"Initializing a {Text.BIG_IMPORTANT}{BUILD_TYPE}{Text.RESET} build in '{BUILD_DIR}'.\n")
+    print(
+        f"Initializing a {Text.BIG_IMPORTANT}{BUILD_TYPE}{Text.RESET} build in './{BUILD_DIR}'.\n"
+    )
     if BUILD_TYPE == "debug":
         run_build_command("cmake -DCMAKE_BUILD_TYPE=Debug ..", in_dir=BUILD_DIR)
     else:

@@ -459,10 +459,10 @@ mcfunc -h
 ### Direcly Passing Source Files
 
 Run `mcfunc` followed by a list of source files to generate a data pack in the
-`./data/` folder of the current directory (it will be made if it doesn't exist).
+`./data` folder of the current directory (it will be made if it doesn't exist).
 
 ```sh
-# builds './src/main.mcfunc' into './data/'
+# builds './src/main.mcfunc' into './data'
 mcfunc ./src/main.mcfunc
 ```
 
@@ -476,7 +476,7 @@ Files that do not have the `.mcfunc` extension will not be compiled but they can
 be copied into the data pack with the `file` keyword.
 
 ```sh
-# builds './src/main.mcfunc' into './data/'
+# builds './src/main.mcfunc' into './data'
 mcfunc ./src/foo.mcfunc ./src/bar.json
 ```
 
@@ -490,11 +490,11 @@ file "baz.json" = "bar.json";
 ### Changing the Output Directory
 
 You can change the output directory with the `-o` flag. If this flag appears
-multiple times its last appearance will be used. If left unspecified `./data/`
+multiple times its last appearance will be used. If left unspecified `./data`
 will be used.
 
 ```sh
-# builds './src/main.mcfunc' into './build/'
+# builds './src/main.mcfunc' into './build'
 mcfunc ./src/main.mcfunc -o ./build
 ```
 
@@ -502,78 +502,80 @@ mcfunc ./src/main.mcfunc -o ./build
 
 You can add an input directory with the `-i` flag. This is similar to directly
 passing every file in the directory to the compiler. *This is evaluated*
-*recursively!* This means that if you set an input directory `./foo/`, MCFunc
-files in `./foo/bar/` will also be compiled.
+*recursively!* This means that if you set an input directory `./foo`, MCFunc
+files in `./foo/bar` will also be compiled.
 
 ```sh
-# builds files in the current directory into './data/'
+# builds files in the current directory into './data'
 mcfunc -i .
 ```
 
 The difference between this and manually passing every file in a directory to
 the compiler is that sub-directories are preserved for the import path (e.g. if
-`./src/` was set as an import path `./src/foo/bar.mcfunc` would need to be
+`./src` was set as an import path `./src/foo/bar.mcfunc` would need to be
 imported with `"foo/bar.mcfunc"` not just `"bar.mcfunc"`).
 
-If the output directory will be ignored if it's inside of or is an input
-directory.
+The output directory will be ignored if it's inside of/is an input directory.
 
 ### Linking a Library Directory
 
 You can link a library directory with the `-l` flag. This works the same as the
 `-i` flag except that files from this directory will only be able to import
-files that are also inside of the directory and no outside directories will be
-able to import from this one. The `-l` flag is basically `-i` except the
-directory is isolated until the linking stage of compilation.
+files that are also inside of the directory. Additionally, and source files from
+outside directories will be able to import from this one. The `-l` flag is
+basically `-i` except the directory is isolated until the linking stage of
+compilation.
 
 ```sh
-# builds files in the current directory into './data/'
+# builds files in './src' into './data' and links the './my_lib' library
 mcfunc -i ./src -l ./my_lib
 ```
 
 Files or directories explicitly included (either listed or included with `-i`)
-from a library will not be isolated (e.g. if the directory `./my_lib/` was
-linked in as a library but the file `./my_lib/foo.mcfunc` was listed,
+from a library will not be isolated (e.g. if the directory `./my_lib` was linked
+in as a library but the file `./my_lib/foo.mcfunc` was separately listed,
 `./my_lib/foo.mcfunc` will not be isolated and will be free to be imported by
 other code). This is useful if you want to use an API/library because you can
 block the importing of API/library files and only allow a single interface file
-to be accessed (like a C header file).
+to be accessed (like a C header file). This also reduces the possiblility of
+name collisions since only public members of files explicitly brought into the
+global scope can cause any interference.
 
-As an example, let's say your main code was in `./src/` but that code uses
-functions from a library in the `./math/` directory. The `./math/` directory may
+As an example, let's say your main code was in `./src` but that code uses
+functions from a library in the `./math` directory. The `./math` directory may
 have a bunch of implementation files but it should also have a single file that
 declares everything meant to be imported (e.g. `./math/math.mcfunc`). This file
 could be passed to the compiler separately and the rest of the library files
 could be linked in.
 
 ```sh
-# builds files in './src/' and './math/' into './data/' but only allows
-# './math/math.mcfunc' to be imported by files in './src/'
+# builds files in './src' and './math' into './data' separately allows
+# './math/math.mcfunc' to be imported by files in './src' as '"math.mcfunc"'
 mcfunc -i ./src -l ./math ./math/math.mcfunc
 ```
 
 ### Build System
 
 If you run `mcfunc` with none of the above arguments it will search for a
-`build.jsonc` file in the current directory. This file should contain an array of
-arguments that the compiler should use. This way you don't need to type out a
-long command every single time.
+`build.jsonc` file in the current directory. This file should contain an array
+of arguments that the compiler should use. This way you don't need to type out a
+long command every single time you want to compile.
 
 ```sh
-# uses arguments from a 'build.jsonc' file
+# builds using arguments from a 'build.jsonc' file
 mcfunc
 ```
 
 Here is an example of a `build.jsonc` file that will build a data pack from the
-files in `./src/` into `./data/` (recommended workflow):
+files in `./src/` into `./data/`:
 
-```json
+```jsonc
 // build.jsonc
 [ "-i", "./src" ]
 ```
 
 > [!NOTE]
-> The only difference between `json` and `jsonc` files is that `jsonc` files
+> The main difference between `json` and `jsonc` files is that `jsonc` files
 > allow C-style comments.
 
 ### Hot Reloading
@@ -583,7 +585,7 @@ re-compile the data pack every 2.5 seconds if any source files have changed.
 This mode can be exited by pressing `Q`.
 
 ```sh
-# uses arguments from a 'build.jsonc' file and runs them in "hot reload" mode
+# builds in "hot reload" mode using arguments from a 'build.jsonc' file
 mcfunc --hot
 ```
 
@@ -600,35 +602,37 @@ The recommended directory structure for MCFunc projects is this:
 └── pack.mcmeta
 ```
 
-- `data/` is your output directory.
-- `libs/` should contain sub-directories for libraries or APIs. You likely don't
+- `data` is your output directory (where the compiled data pack will go).
+- `libs` should contain sub-directories for libraries or APIs. You likely don't
   need this for simple projects.
-- `src/` is where all of your `.mcfunc` files and any resource files (e.g. loot
+- `src` is where all of your `.mcfunc` files and any resource files (e.g. loot
   tables) should go.
 - `build.jsonc` is here so you don't have to type out a long build command every
   time you want to compile.
-- `pack.mcmeta` tells the game info about your data pack.
+- `pack.mcmeta` holds info about your data pack for the game
+  ([here's a generator](https://misode.github.io/pack-mcmeta/)).
 
 Ideally you're directly working inside of a data pack folder in the `datapacks/`
 directory of a Minecraft save. That way you can take advantage of things like
 hot reloading for testing.
 
 To send your data pack folder to a friend just zip the contents of the project
-(only `./data/` and `./pack.mcmeta` if they don't need the source code) and send
+(only `./data` and `./pack.mcmeta` if they don't need the source code) and send
 it to them.
 
-As for your `build.jsonc` file, here is a simple one (no libraries):
+As for your `build.jsonc` file, you can use this if you don't need any libraries
+(this also means you don't need the `libs` folder):
 
-```json
+```jsonc
 // build.jsonc
 [ "-i", "./src" ]
 ```
 
 If you have libraries you'll need to add a bit to this file for each of them.
-As an example, let's say we have a library in the `./libs/math/` directory with
+As an example, let's say we have a library in the `./libs/math` directory with
 an interface file `./libs/math/math.mcfunc`:
 
-```json
+```jsonc
 // build.jsonc
 [
   "-i", "./src",
@@ -636,16 +640,19 @@ an interface file `./libs/math/math.mcfunc`:
 ]
 ```
 
-For more complicated projects with multiple namespaces you may want to employ a
-build system like Make since you'll need to compile each namespace with a
-separate command.
+For more complicated projects with multiple namespaces you may want to write
+your own build script since you'll need to compile each namespace with a
+separate build command (I'd recommend Python for that).
 
-## Building This Project
+## Building This Project From Source
 
 To build this project you must be using a Unix system like Linux or Mac OS (use
 [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) if you're on
-Windows). You also need to have Python 3, CMake, Git, Make, and either GCC or
-Clang installed. Make sure your compiler is updated to work with C++ 17.
+Windows).
+
+You need to have Python 3, CMake, Git, and either GCC or Clang installed. I'd
+recommend you have Make installed since it has been tested here but other CMake
+generators may work. Make sure your compiler is updated to work with C++ 17.
 
 You can build the project by running the [build.py](./build.py) script from the
 root project directory. This will also run all of the tests.
@@ -656,10 +663,12 @@ root project directory. This will also run all of the tests.
 ```
 
 > [!IMPORTANT]
-> Make sure you aren't in the build directory when you run the build script.
+> Make sure you aren't already in the build directory when you run the build
+> script.
 
-This will build the executables `mcfunc` and `run_tests` in the `./build`
-directory. You can run these executables from the root project directory.
+The build script will build the executables `mcfunc` and `run_tests` in the
+`./build` directory. You can run these executables from the root project
+directory.
 
 ```sh
 # run the main executable (debug)
