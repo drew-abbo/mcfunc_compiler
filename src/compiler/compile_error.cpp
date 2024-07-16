@@ -116,7 +116,7 @@ static std::string errorMessageWithLine(const std::string& msg,
 
   return style_text::styleAsError("Error: ") + msg + '\n' +
          highlightOnLine(std::move(lnCol.line), lnCol.ln, lnCol.col, style_text::error, numChars) +
-         '\n' + style_text::styleAsCode(fullFilePathStr + ':' + lnStr + ':' + colStr + " (ln " +
+         '\n' + style_text::styleAsCode(fullFilePathStr + ':' + lnStr + ':' + colStr) + " (ln " +
          lnStr + ", col " + colStr + ").";
 }
 

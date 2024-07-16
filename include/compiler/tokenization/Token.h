@@ -1,12 +1,9 @@
-/// \file Contains the types and functions for working with and generating
-/// tokens (pieces of source code).
+/// \file Contains the \p Token type (a token is a small piece of source code).
 
 #ifndef TOKEN_H
 #define TOKEN_H
 
-#include <cassert>
 #include <string>
-#include <vector>
 
 /// A single piece of source code like a left parenthesis '(' or or a keyword.
 class Token {
@@ -72,11 +69,6 @@ private:
   size_t m_sourceFileIndex;
   std::string m_contents;
 };
-
-/// Opens a file, adds it to \p sourceFiles , and converts its syntax to tokens.
-/// \throws compile_error::Generic (or a subclass of it) when the file's syntax
-/// is invalid or it cannot be opened.
-std::vector<Token> tokenize(size_t sourceFileIndex);
 
 /// Returns a string to represent the token like 'R_PAREN' or 'COMMAND(say hi)'.
 std::string tokenDebugStr(const Token& t);

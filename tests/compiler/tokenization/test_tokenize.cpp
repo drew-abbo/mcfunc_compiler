@@ -2,9 +2,10 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-#include <compiler/Token.h>
 #include <compiler/compile_error.h>
 #include <compiler/sourceFiles.h>
+#include <compiler/tokenization/Token.h>
+#include <compiler/tokenization/tokenize.h>
 
 TEST(test_token, test_tokenize) {
 
@@ -21,7 +22,7 @@ TEST(test_token, test_tokenize) {
   // test a valid file
   // ------------------------------------------------------------------------ //
 
-  sourceFiles.emplace_back(std::filesystem::path(".") / "tests" / "compiler" / "Token" /
+  sourceFiles.emplace_back(std::filesystem::path(".") / "tests" / "compiler" / "tokenization" /
                            "test_token_test_file1.mcfunc");
 
   std::vector<Token> result;
@@ -144,21 +145,21 @@ TEST(test_token, test_tokenize) {
   // ------------------------------------------------------------------------ //
 
   const std::vector<std::filesystem::path> goodFilePathsBadSyntaxFiles = {
-      std::filesystem::path("..") / "tests" / "compiler" / "Token" /
+      std::filesystem::path("..") / "tests" / "compiler" / "tokenization" /
           "test_token_test_file2.mcfunc",
-      std::filesystem::path("..") / "tests" / "compiler" / "Token" /
+      std::filesystem::path("..") / "tests" / "compiler" / "tokenization" /
           "test_token_test_file3.mcfunc",
-      std::filesystem::path("..") / "tests" / "compiler" / "Token" /
+      std::filesystem::path("..") / "tests" / "compiler" / "tokenization" /
           "test_token_test_file4.mcfunc",
-      std::filesystem::path("..") / "tests" / "compiler" / "Token" /
+      std::filesystem::path("..") / "tests" / "compiler" / "tokenization" /
           "test_token_test_file5.mcfunc",
-      std::filesystem::path("..") / "tests" / "compiler" / "Token" /
+      std::filesystem::path("..") / "tests" / "compiler" / "tokenization" /
           "test_token_test_file6.mcfunc",
-      std::filesystem::path("..") / "tests" / "compiler" / "Token" /
+      std::filesystem::path("..") / "tests" / "compiler" / "tokenization" /
           "test_token_test_file7.mcfunc",
-      std::filesystem::path("..") / "tests" / "compiler" / "Token" /
+      std::filesystem::path("..") / "tests" / "compiler" / "tokenization" /
           "test_token_test_file8.mcfunc",
-      std::filesystem::path("..") / "tests" / "compiler" / "Token" /
+      std::filesystem::path("..") / "tests" / "compiler" / "tokenization" /
           "test_token_test_file9.mcfunc",
   };
 

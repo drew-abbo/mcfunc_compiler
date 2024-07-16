@@ -4,7 +4,7 @@
 #ifndef STATEMENT_H
 #define STATEMENT_H
 
-#include <compiler/Token.h>
+#include <compiler/tokenization/Token.h>
 #include <optional>
 #include <vector>
 

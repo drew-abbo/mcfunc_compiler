@@ -1,9 +1,9 @@
-#include <compiler/statement.h>
+#include <compiler/syntax_analysis/statement.h>
 
-#include <optional>
+#include <cassert>
 #include <vector>
 
-#include <compiler/Token.h>
+#include <compiler/tokenization/Token.h>
 #include <compiler/sourceFiles.h>
 
 using namespace statement;

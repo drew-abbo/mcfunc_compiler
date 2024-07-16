@@ -6,9 +6,9 @@
 #include <filesystem>
 #include <vector>
 
-#include <compiler/Token.h>
+#include <compiler/tokenization/Token.h>
 #include <compiler/UniqueID.h>
-#include <compiler/statement.h>
+#include <compiler/syntax_analysis/statement.h>
 
 /// Represents a single source file.
 class SourceFile {

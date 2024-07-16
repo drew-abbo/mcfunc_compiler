@@ -1,11 +1,13 @@
-#include <compiler/Token.h>
+#include <compiler/tokenization/tokenize.h>
 
 #include <cctype>
 #include <cstring>
 #include <string>
 #include <utility>
 #include <vector>
+#include <cassert>
 
+#include <compiler/tokenization/Token.h>
 #include <compiler/compile_error.h>
 #include <compiler/fileToStr.h>
 #include <compiler/sourceFiles.h>

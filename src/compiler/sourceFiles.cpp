@@ -1,10 +1,10 @@
-#include "compiler/statement.h"
+#include "compiler/syntax_analysis/statement.h"
 #include <cassert>
 #include <compiler/sourceFiles.h>
 
 #include <vector>
 
-#include <compiler/Token.h>
+#include <compiler/tokenization/Token.h>
 #include <compiler/UniqueID.h>
 
 static const UniqueID globalLibraryID = UniqueID(UniqueID::Kind::LIBRARY);
