@@ -97,7 +97,7 @@ protected:
 };
 
 /// A namespace expose statement (e.g. \code expose "foo"; \endcode).
-class NamespaceExpose : Generic {
+class NamespaceExpose : public Generic {
 public:
   NamespaceExpose(size_t firstTokenIndex, size_t sourceFileIndex);
 
@@ -109,7 +109,7 @@ public:
 };
 
 /// An import file statement (e.g. \code import "foo.mcfunc"; \endcode).
-class ImportFile : Generic {
+class ImportFile : public Generic {
 public:
   ImportFile(size_t firstTokenIndex, size_t sourceFileIndex);
 
@@ -121,7 +121,7 @@ public:
 };
 
 /// A file write statement (e.g. \code file "foo.txt" = "bar.txt"; \endcode).
-class FileWrite : Generic {
+class FileWrite : public Generic {
 public:
   FileWrite(size_t firstTokenIndex, bool isDefined, size_t sourceFileIndex);
 
@@ -157,7 +157,7 @@ protected:
 };
 
 /// A function call as a statement (e.g. \code foo(); \endcode).
-class FunctionCall : Generic {
+class FunctionCall : public Generic {
 public:
   FunctionCall(size_t firstTokenIndex, size_t sourceFileIndex);
 
@@ -169,7 +169,7 @@ public:
 };
 
 /// A scope as a statement (statement group) (e.g. \code { /say hi; } \endcode).
-class Scope : Generic {
+class Scope : public Generic {
 public:
   Scope(size_t firstTokenIndex, size_t tokenCount, bool hasBraceTokens,
         const std::vector<Generic*>& scopeStatements, size_t sourceFileIndex);
@@ -192,20 +192,23 @@ protected:
   std::vector<Generic*> m_scopeStatements;
 };
 
-class FunctionDeclare : Generic {
+class FunctionDeclare : public Generic {
 public:
-  FunctionDeclare(size_t firstTokenIndex, size_t tokenCount, bool m_isTickFunc, bool m_isLoadFunc,
-                  size_t sourceFileIndex);
-  FunctionDeclare(size_t firstTokenIndex, size_t tokenCount, bool m_isTickFunc, bool m_isLoadFunc,
-                  const Scope& definitionScope, size_t sourceFileIndex);
-  FunctionDeclare(size_t firstTokenIndex, size_t tokenCount, bool m_isTickFunc, bool m_isLoadFunc,
-                  Scope&& definitionScope, size_t sourceFileIndex);
+  FunctionDeclare(size_t firstTokenIndex, size_t tokenCount, bool isTickFunc, bool isLoadFunc,
+                  bool isPrivateFunc, size_t sourceFileIndex);
+  FunctionDeclare(size_t firstTokenIndex, size_t tokenCount, bool isTickFunc, bool isLoadFunc,
+                  bool isPrivateFunc, const Scope& definitionScope, size_t sourceFileIndex);
+  FunctionDeclare(size_t firstTokenIndex, size_t tokenCount, bool isTickFunc, bool isLoadFunc,
+                  bool isPrivateFunc, Scope&& definitionScope, size_t sourceFileIndex);
 
   // Whether this function was declared with the 'tick' keyword.
   bool isTickFunc() const;
 
   // Whether this function was declared with the 'load' keyword.
   bool isLoadFunc() const;
+
+  // Whether this function was declared with the 'private' keyword.
+  bool isPrivateFunc() const;
 
   /// Whether or not this statement defines the function.
   bool isDefined() const;
@@ -216,11 +219,12 @@ public:
 protected:
   bool m_isTickFunc;
   bool m_isLoadFunc;
+  bool m_isPrivateFunc;
   std::optional<Scope> m_definitionScope;
 };
 
 /// A command as a statement (e.g. \code /say hi; \endcode).
-class Command : Generic {
+class Command : public Generic {
 public:
   Command(size_t firstTokenIndex, size_t sourceFileIndex);
 
@@ -236,11 +240,10 @@ protected:
 };
 
 /// A commmand with a chained statement (e.g. \code '/execute as @a run: { /say hi; }' \endcode).
-class CommandAndScope : Command {
+class CommandAndScope : public Command {
 public:
-  CommandAndScope(size_t firstTokenIndex, size_t tokenCount, const Scope& scope,
-                  size_t sourceFileIndex);
-  CommandAndScope(size_t firstTokenIndex, size_t tokenCount, Scope&& scope, size_t sourceFileIndex);
+  CommandAndScope(size_t firstTokenIndex, const Scope& scope, size_t sourceFileIndex);
+  CommandAndScope(size_t firstTokenIndex, Scope&& scope, size_t sourceFileIndex);
 
   /// \p Scope reference to the scope statement that this command runs.
   const Scope& scope() const;

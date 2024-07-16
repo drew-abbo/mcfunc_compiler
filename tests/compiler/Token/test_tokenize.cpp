@@ -110,6 +110,12 @@ TEST(test_token, test_tokenize) {
       Token(Token::IMPORT_KW, 1560, sourceFiles.size() - 1),
       Token(Token::STRING, 1567, sourceFiles.size() - 1, "foo.mcfunc"),
       Token(Token::SEMICOLON, 1579, sourceFiles.size() - 1),
+      Token(Token::PRIVATE_KW, 1581, sourceFiles.size() - 1),
+      Token(Token::VOID_KW, 1589, sourceFiles.size() - 1),
+      Token(Token::WORD, 1594, sourceFiles.size() - 1, "foo"),
+      Token(Token::L_PAREN, 1597, sourceFiles.size() - 1),
+      Token(Token::R_PAREN, 1598, sourceFiles.size() - 1),
+      Token(Token::SEMICOLON, 1599, sourceFiles.size() - 1),
   };
 
   ASSERT_EQ(result.size(), expectedTokens.size())

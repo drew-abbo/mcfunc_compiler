@@ -36,7 +36,7 @@ SyntaxError::SyntaxError(const std::string& msg, size_t indexInFile,
   std::string line;
   while (std::getline(file, line)) {
     ln += 1;
-    const int lineLen = line.size() + 1;
+    const size_t lineLen = line.size() + 1;
     if (i + lineLen > indexInFile) {
       col = indexInFile - i + 1;
       break;

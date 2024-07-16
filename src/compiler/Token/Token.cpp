@@ -39,6 +39,7 @@ bool Token::hasContents() const {
   case Token::FILE_KW:
   case Token::TICK_KW:
   case Token::LOAD_KW:
+  case Token::PRIVATE_KW:
   case Token::IMPORT_KW:
   case Token::VOID_KW:
     return false;
@@ -50,6 +51,7 @@ bool Token::hasContents() const {
     return true;
   }
   assert(false && "this point should never be reached");
+  return false;
 }
 
 const std::string& Token::contents() const { return m_contents; }
@@ -78,6 +80,8 @@ std::string tokenDebugStr(const Token& t) {
     return "TICK_KW";
   case Token::LOAD_KW:
     return "LOAD_KW";
+  case Token::PRIVATE_KW:
+    return "PRIVATE_KW";
   case Token::IMPORT_KW:
     return "IMPORT_KW";
   case Token::VOID_KW:
@@ -92,5 +96,6 @@ std::string tokenDebugStr(const Token& t) {
   case Token::WORD:
     return "WORD(" + t.contents() + ')';
   }
+  assert(false && "this point should never be reached");
   return "UNKNOWN";
 }

@@ -224,12 +224,14 @@ std::vector<Token> tokenize(size_t sourceFileIndex) {
         kind = Token::TICK_KW;
       else if (word == "load")
         kind = Token::LOAD_KW;
+      else if (word == "private")
+        kind = Token::PRIVATE_KW;
       else if (word == "import")
         kind = Token::IMPORT_KW;
       else if (word == "void")
         kind = Token::VOID_KW;
       else { // if it's not a keyword:
-        const int size = word.size();
+        const size_t size = word.size();
         ret.emplace_back(Token::WORD, i, sourceFileIndex, std::move(word));
         i += size - 1;
         break;

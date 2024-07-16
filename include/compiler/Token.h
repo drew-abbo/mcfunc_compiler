@@ -31,6 +31,7 @@ public:
     FILE_KW,    // 'file' keyword
     TICK_KW,    // 'tick' keyword
     LOAD_KW,    // 'load' keyword
+    PRIVATE_KW, // 'private' keyword
     IMPORT_KW,  // 'import' keyword
     VOID_KW,    // 'void' keyword
   };

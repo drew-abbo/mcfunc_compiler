@@ -182,14 +182,12 @@ Command::Command(size_t firstTokenIndex, size_t tokenCount, Kind kind, size_t so
 
 // CommandAndScope
 
-CommandAndScope::CommandAndScope(size_t firstTokenIndex, size_t tokenCount, const Scope& scope,
-                                 size_t sourceFileIndex)
-    : Command(firstTokenIndex, tokenCount, Kind::COMMAND_AND_SCOPE, sourceFileIndex),
+CommandAndScope::CommandAndScope(size_t firstTokenIndex, const Scope& scope, size_t sourceFileIndex)
+    : Command(firstTokenIndex, 2 + scope.tokenCount(), Kind::COMMAND_AND_SCOPE, sourceFileIndex),
       m_scope(scope) {}
 
-CommandAndScope::CommandAndScope(size_t firstTokenIndex, size_t tokenCount, Scope&& scope,
-                                 size_t sourceFileIndex)
-    : Command(firstTokenIndex, tokenCount, Kind::COMMAND_AND_SCOPE, sourceFileIndex),
+CommandAndScope::CommandAndScope(size_t firstTokenIndex, Scope&& scope, size_t sourceFileIndex)
+    : Command(firstTokenIndex, 2 + scope.tokenCount(), Kind::COMMAND_AND_SCOPE, sourceFileIndex),
       m_scope(std::move(scope)) {}
 
 const Scope& CommandAndScope::scope() const { return m_scope; }
@@ -197,13 +195,30 @@ const Scope& CommandAndScope::scope() const { return m_scope; }
 // FunctionDeclare
 
 FunctionDeclare::FunctionDeclare(size_t firstTokenIndex, size_t tokenCount, bool isTickFunc,
-                                 bool isLoadFunc, size_t sourceFileIndex)
+                                 bool isLoadFunc, bool isPrivateFunc, size_t sourceFileIndex)
     : Generic(firstTokenIndex, tokenCount, Kind::FUNCTION_DECLARE, sourceFileIndex),
-      m_isTickFunc(isTickFunc), m_isLoadFunc(isLoadFunc), m_definitionScope(std::nullopt) {}
+      m_isTickFunc(isTickFunc), m_isLoadFunc(isLoadFunc), m_isPrivateFunc(isPrivateFunc),
+      m_definitionScope(std::nullopt) {}
+
+FunctionDeclare::FunctionDeclare(size_t firstTokenIndex, size_t tokenCount, bool isTickFunc,
+                                 bool isLoadFunc, bool isPrivateFunc,
+                                 const Scope& definitionScope, size_t sourceFileIndex)
+    : Generic(firstTokenIndex, tokenCount, Kind::FUNCTION_DECLARE, sourceFileIndex),
+      m_isTickFunc(isTickFunc), m_isLoadFunc(isLoadFunc), m_isPrivateFunc(isPrivateFunc),
+      m_definitionScope(definitionScope) {}
+
+FunctionDeclare::FunctionDeclare(size_t firstTokenIndex, size_t tokenCount, bool isTickFunc,
+                                 bool isLoadFunc, bool isPrivateFunc, Scope&& definitionScope,
+                                 size_t sourceFileIndex)
+    : Generic(firstTokenIndex, tokenCount, Kind::FUNCTION_DECLARE, sourceFileIndex),
+      m_isTickFunc(isTickFunc), m_isLoadFunc(isLoadFunc), m_isPrivateFunc(isPrivateFunc),
+      m_definitionScope(std::move(definitionScope)) {}
 
 bool FunctionDeclare::isTickFunc() const { return m_isTickFunc; }
 
 bool FunctionDeclare::isLoadFunc() const { return m_isLoadFunc; }
+
+bool FunctionDeclare::isPrivateFunc() const { return m_isPrivateFunc; }
 
 bool FunctionDeclare::isDefined() const { return m_definitionScope.has_value(); }
 

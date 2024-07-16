@@ -57,3 +57,4 @@ load void on_load() {
 }
 
 import "foo.mcfunc";
+private void foo();
