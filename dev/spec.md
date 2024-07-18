@@ -180,7 +180,7 @@ it will be *added* to any existing `minecraft/tags/function/tick.json` or
 up, read, functions from the namespace that's currently being compiled will be
 removed, and the new functions will be added. This is done so that you can
 safely compile multiple namespaces into the same data pack separately. Anything
-in the `minecraft` namespace is a shared resource between all functions.
+in the `minecraft` namespace is a shared resource between all namespaces.
 
 ### File Write Restrictions
 
@@ -209,8 +209,8 @@ be created. If there is any conflict here compilation will fail. This means that
 the following will not work:
 
 ```mcfunc
-void foo() expose "foo/bar";  // creates a directory 'function/foo'
-file "function/foo" = ``;     // creates a file 'function/foo'
+void foo() expose "foo.mcfunction";
+file "function/foo.mcfunction" = ``;
 ```
 
 ---
