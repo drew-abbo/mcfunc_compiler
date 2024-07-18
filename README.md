@@ -200,7 +200,7 @@ expose "my_namespace";
 ```
 
 > [!TIP]
-> This statement can appear exactly 1 time during compilation. It's recommended
+> This statement must appear exactly 1 time during compilation. It's recommended
 > that you expose your namespace in your "main" file.
 > 
 > A namespace can contain lowercase letters `a`-`z`, digits `0`-`9`, underscores
@@ -441,7 +441,7 @@ private void bar() {
 > The `private` keyword must appear before the return type (e.g. `void private`
 > is invalid). It also must appear on every declaration/definition of a member.
 > 
-> Files imported by imported files are not accessible in an impprting file (e.g.
+> Files imported by imported files are not accessible in an importing file (e.g.
 > if `a` imports `b` and `b` imports `c`, members of `c` cannot be used in `a`
 > unless `a` also imports `c`).
 
