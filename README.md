@@ -19,9 +19,8 @@ bug-prone.
   - [Direcly Passing Source Files](#direcly-passing-source-files)
   - [Changing the Output Directory](#changing-the-output-directory)
   - [Adding an Input Directory](#adding-an-input-directory)
-  - [Linking a Library Directory](#linking-a-library-directory)
-  - [Build System](#build-system)
   - [Hot Reloading](#hot-reloading)
+  - [Build System](#build-system)
 - [Recommended Workflow](#recommended-workflow)
 - [Building This Project From Source](#building-this-project-from-source)
 
@@ -417,26 +416,29 @@ You can import members of other MCFunc files into this data pack with the
 import "foo.mcfunc";
 ```
 
-Importing a file allows you to use all members of that file that are not marked
-as `private`.
+Importing a file allows you to use all members of that file that are marked as
+`public`.
 
 ```mcfunc
 // foo.mcfunc
 
 // This function can be used by files that import "foo.mcfunc".
-void foo() {
+public void foo() {
   bar();
 }
 
 // This function *cannot* be used by files that import "foo.mcfunc".
-private void bar() {
+void bar() {
   /say bar;
 }
 ```
 
 > [!NOTE]
-> File members declared with the `private` keyword must be defined in the same
-> file.
+> File members declared without the `public` keyword must be defined in the same
+> file. File members declared as `public` do not need to be defined in the same
+> file that they are declared in (e.g. `foo()` can be declared in `a` and
+> defined in `b` (even if there is no importing between `a` and `b`) so long as
+> `foo()` is public).
 > 
 > The `private` keyword must appear before the return type (e.g. `void private`
 > is invalid). It also must appear on every declaration/definition of a member.
@@ -517,67 +519,6 @@ imported with `"foo/bar.mcfunc"` not just `"bar.mcfunc"`).
 
 The output directory will be ignored if it's inside of/is an input directory.
 
-### Linking a Library Directory
-
-You can link a library directory with the `-l` flag. This works the same as the
-`-i` flag except that files from this directory will only be able to import
-files that are also inside of the directory. Additionally, source files from
-outside directories will be able to import from this one. The `-l` flag is
-basically `-i` except the directory is isolated until the linking stage of
-compilation.
-
-```sh
-# builds files in './src' into './data' and links the './my_lib' library
-mcfunc -i ./src -l ./my_lib
-```
-
-Files or directories explicitly included (either listed or included with `-i`)
-from a library will not be isolated (e.g. if the directory `./my_lib` was linked
-in as a library but the file `./my_lib/foo.mcfunc` was separately listed,
-`./my_lib/foo.mcfunc` will not be isolated and will be free to be imported by
-other code). This is useful if you want to use an API/library because you can
-block the importing of API/library files and only allow a single interface file
-to be accessed (like a C header file). This also reduces the possiblility of
-name collisions since only public members of files explicitly brought into the
-global scope can cause any interference.
-
-As an example, let's say your main code was in `./src` but that code uses
-functions from a library in the `./math` directory. The `./math` directory may
-have a bunch of implementation files but it should also have a single file that
-declares everything meant to be imported (e.g. `./math/math.mcfunc`). This file
-could be passed to the compiler separately and the rest of the library files
-could be linked in.
-
-```sh
-# builds files in './src' and './math' into './data' separately allows
-# './math/math.mcfunc' to be imported by files in './src' as '"math.mcfunc"'
-mcfunc -i ./src -l ./math ./math/math.mcfunc
-```
-
-### Build System
-
-If you run `mcfunc` with none of the above arguments it will search for a
-`build.jsonc` file in the current directory. This file should contain an array
-of arguments that the compiler should use. This way you don't need to type out a
-long command every single time you want to compile.
-
-```sh
-# builds using arguments from a 'build.jsonc' file
-mcfunc
-```
-
-Here is an example of a `build.jsonc` file that will build a data pack from the
-files in `./src/` into `./data/`:
-
-```jsonc
-// build.jsonc
-[ "-i", "./src" ]
-```
-
-> [!NOTE]
-> The main difference between `json` and `jsonc` files is that `jsonc` files
-> allow C-style comments.
-
 ### Hot Reloading
 
 The `--hot` flag will make the compiler enter an interactive mode that tries to
@@ -585,9 +526,39 @@ re-compile the data pack every 2.5 seconds if any source files have changed.
 This mode can be exited by pressing `Q`.
 
 ```sh
-# builds in "hot reload" mode using arguments from a 'build.jsonc' file
+# builds './src' into './data' in "hot reload" mode
+mcfunc -i ./src --hot
+```
+
+### Build System
+
+When you run `mcfunc` it will search for a `build.jsonc` file in the current
+directory. This file should contain an array of arguments that should be
+prepended to the build command. The `build.jsonc` file removes the need to
+manually type out a long command every time you want to build.
+
+```sh
+# builds using arguments from a 'build.jsonc' file
+mcfunc
+```
+
+```sh
+# builds using arguments from a 'build.jsonc' file in "hot reload" mode
 mcfunc --hot
 ```
+
+Here is an example of a `build.jsonc` file that will build a data pack from the
+files in `./src` into `./data`:
+
+```jsonc
+// build.jsonc
+[ "-i", "./src" ]
+```
+
+> [!NOTE]
+> A `build.json` file will not be looked for, only `build.jsonc`. The main
+> difference between `json` and `jsonc` files is that `jsonc` files allow
+> C-style comments.
 
 ## Recommended Workflow
 
@@ -607,8 +578,7 @@ The recommended directory structure for MCFunc projects is this:
   need this for simple projects.
 - `src` is where all of your `.mcfunc` files and any resource files (e.g. loot
   tables) should go.
-- `build.jsonc` is here so you don't have to type out a long build command every
-  time you want to compile.
+- `build.jsonc` so that you can just run `mcfunc` to compile.
 - `pack.mcmeta` holds info about your data pack for the game
   ([here's a generator](https://misode.github.io/pack-mcmeta/)).
 
@@ -628,21 +598,20 @@ As for your `build.jsonc` file, you can use this if you don't need any libraries
 [ "-i", "./src" ]
 ```
 
-If you have libraries you'll need to add a bit to this file for each of them.
-As an example, let's say we have a library in the `./libs/math` directory with
-an interface file `./libs/math/math.mcfunc`:
+If you have libraries you'll need to add each of them separately:
 
 ```jsonc
 // build.jsonc
 [
   "-i", "./src",
-  "-l", "./libs/math", "./libs/math/math.mcfunc"  // import as "math.mcfunc"
+  "-i", "./libs/my_library_1",  // my_library_1
+  "-i", "./libs/my_library_2",  // my_library_2
 ]
 ```
 
 For more complicated projects with multiple namespaces you may want to write
 your own build script since you'll need to compile each namespace with a
-separate build command (I'd recommend Python for that).
+separate build command (I'd recommend Python for cross platform compatibility).
 
 ## Building This Project From Source
 

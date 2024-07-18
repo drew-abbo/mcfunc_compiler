@@ -18,6 +18,7 @@ It also outlines planned features.
   - [File Write Restrictions](#file-write-restrictions)
 - [Future Additions](#future-additions)
   - [Future Language Additions](#future-language-additions)
+    - [Modules and Aliases](#modules-and-aliases)
     - [Scheduling Code](#scheduling-code)
     - [Snippets](#snippets)
     - [Control Flow](#control-flow)
@@ -42,24 +43,8 @@ like a semicolon `;`).
 
 Each file is individually evaluated and its syntax is checked for validity.
 During this process code is grouped into more broad "statements" like
-"write file" or "call function". Imports are checked and each file is labeled
-with the files it depends on. What each file declares/defines is saved into a
-symbol table for the file.
-
-Every symbol on the symbol table has at least these parts (some have more):
-
-- The symbol's name and scope (where it comes from/where it can be used).
-- The type of symbol that it is (e.g. "function" or "file_write").
-- The symbol's definition (or lack thereof).
-
-The scope part of a symbol's name is a collection of unique IDs prepended to the
-name. Private members are prepended with a file ID. Members of a scope (e.g.
-something declared in a function) are prepended with a scope ID. Non-private
-members of non-library files are not prepended with anything (they're global).
-All members of files in a library directory (even public ones) are prepended
-with a library ID. If a library file is brought into the global scope then the
-file is marked as globally importable but it's members will still have that
-library ID. A file write/copy is always global no matter what.
+"write file" or "call function". What each file declares, defines, and uses is
+saved in a collection of symbol tables.
 
 ### Semantic Analysis
 
@@ -71,7 +56,7 @@ parallel.
 The number of times a function is called is also tracked. This can help
 optimiation remove functions that may end up unused after inlining. Exposed
 functions are gived an automatic `+1` to their use counter so that they cannot
-be removed (although they can be inlined).
+be removed (they can still be inlined).
 
 Note that functions called do not need to be *defined* to be used, only
 declared. The following will work even though there's no importing between
@@ -80,13 +65,13 @@ declared. The following will work even though there's no importing between
 ```mcfunc
 // foo.mcfunc
 
-void foo();
+public void foo();
 ```
 
 ```mcfunc
 // foo_implementation.mcfunc
 
-void foo() {
+public void foo() {
   /say foo;
 }
 ```
@@ -135,11 +120,11 @@ The data pack can now be generated through a series of file write operations.
 
 Any `.mcfunction` files created that don't represent exposed functions will
 follow the following naming pattern where `$HIDDEN_NAMESPACE` is the exposed
-namespace with `zzz__.` in front of it and `$SYMBOL_ID` is an arbitrary
-hexadecimal number used for identification.
+namespace with `zzz__.` in front of it and `$SYMBOL_ID` is an arbitrary id used
+for identification.
 
 ```
-$HIDDEN_NAMESPACE:f_$SYMBOL_ID
+$HIDDEN_NAMESPACE:$SYMBOL_ID
 ```
 
 Exposed functions instead follow the following naming pattern where `$NAMESPACE`
@@ -173,7 +158,7 @@ reduced.
 
 ### Tick and Load Functions
 
-When a function is labeled with the `tick`/`load` keyword it's symbol name is
+When a function is labeled with the `tick`/`load` keyword its symbol name is
 saved in a list. After compilation is finished and the function has an address
 it will be *added* to any existing `minecraft/tags/function/tick.json` or
 `minecraft/tags/function/load.json` files. This means these files will be opened
@@ -218,6 +203,60 @@ file "function/foo.mcfunction" = ``;
 ## Future Additions
 
 ### Future Language Additions
+
+#### Modules and Aliases
+
+```mcfunc
+// A module is a way to group code so that there isn't name conflicts with
+// global members.
+
+// Modules can only be imported if they are declared with the 'public' keyword.
+public module my_mod {
+
+public void foo() {
+  /say foo;
+}
+
+public void baz() {
+  /say baz;
+}
+
+} // my_mod
+
+void bar() {
+  // You can use public members of a module with the '::' operator.
+  my_mod::foo();
+}
+
+// You can add declarations to modules later (even in different files).
+public module my_mod {
+
+// This is a different 'bar()' function from the one above.
+public void bar();
+
+} // my_mod
+
+// You can define public module members outside of the module they are from.
+void my_mod::bar() {
+  /say bar 2;
+}
+
+// You can use the 'using' keyword to pull a member out of a namespace.
+using my_mod::baz;
+
+// You can do the same thing with an entire module.
+using module my_mod;
+
+void blah() {
+  baz();  // This actually calls 'my_mod::baz'.
+}
+
+// You can also use the 'using' keyword to create aliases for anything.
+using cool_baz = my_mod::baz;
+
+// Modules are a requirement before any kind of library (including the standard
+// library) can be created.
+```
 
 #### Scheduling Code
 
@@ -473,7 +512,6 @@ void foo() {
 Here's a list of possible future changes that have not been fully designed or
 thought through yet.
 
-- Modules (so you could have `foo::bar()`) with public and private members.
 - Structs/classes with methods, constructors, and destructors.
 - The ability to dynamically pass around and call functions.
 - Switch case statements.

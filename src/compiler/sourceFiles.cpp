@@ -1,4 +1,3 @@
-#include "compiler/syntax_analysis/statement.h"
 #include <cassert>
 #include <compiler/sourceFiles.h>
 
@@ -31,13 +30,6 @@ UniqueID SourceFile::libraryID() const {
 }
 
 const std::vector<Token>& SourceFile::tokens() const { return m_tokens; }
-
-const std::vector<statement::Generic*> SourceFile::statements() const { return m_statements; }
-
-SourceFile::~SourceFile() {
-  for (statement::Generic* stmnt : m_statements)
-    delete stmnt;
-}
 
 // SourceFilesSingleton_t
 

@@ -11,26 +11,26 @@ public:
   /// Used to represents a kind/type of token.
   enum Kind {
     // symbols:
-    SEMICOLON,     // ';'
-    L_PAREN,       // '('
-    R_PAREN,       // ')'
-    L_BRACE,       // '{'
-    R_BRACE,       // '}'
-    ASSIGN,        // '='
-    COMMAND_PAUSE, // Indicates a command ended with 'run:' and not ';'
+    SEMICOLON,      // ';'
+    L_PAREN,        // '('
+    R_PAREN,        // ')'
+    L_BRACE,        // '{'
+    R_BRACE,        // '}'
+    ASSIGN,         // '='
+    COMMAND_PAUSE,  // Indicates a command ended with 'run:' and not ';'
     // contain contents:
-    STRING,     // A string in quotes ('"' not included, single line)
-    SNIPPET,    // A snippet in backticks ('`' not included, can span lines)
-    COMMAND,    // A command starting with a slash ('/' not included)
-    WORD,       // Any word like 'foo' (like a function name for example)
+    STRING,         // A string in quotes ('"' not included, single line)
+    SNIPPET,        // A snippet in backticks ('`' not included, can span lines)
+    COMMAND,        // A command starting with a slash ('/' not included)
+    WORD,           // Any word like 'foo' (like a function name for example)
     // keywords:
-    EXPOSE_KW,  // 'expose' keyword
-    FILE_KW,    // 'file' keyword
-    TICK_KW,    // 'tick' keyword
-    LOAD_KW,    // 'load' keyword
-    PRIVATE_KW, // 'private' keyword
-    IMPORT_KW,  // 'import' keyword
-    VOID_KW,    // 'void' keyword
+    EXPOSE_KW,      // 'expose' keyword
+    FILE_KW,        // 'file' keyword
+    TICK_KW,        // 'tick' keyword
+    LOAD_KW,        // 'load' keyword
+    PUBLIC_KW,      // 'public' keyword
+    IMPORT_KW,      // 'import' keyword
+    VOID_KW,        // 'void' keyword
   };
 
 public:

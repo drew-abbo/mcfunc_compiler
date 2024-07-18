@@ -1,16 +1,16 @@
 #include <compiler/tokenization/tokenize.h>
 
+#include <cassert>
 #include <cctype>
 #include <cstring>
 #include <string>
 #include <utility>
 #include <vector>
-#include <cassert>
 
-#include <compiler/tokenization/Token.h>
 #include <compiler/compile_error.h>
 #include <compiler/fileToStr.h>
 #include <compiler/sourceFiles.h>
+#include <compiler/tokenization/Token.h>
 
 #include <cli/style_text.h>
 
@@ -228,8 +228,8 @@ std::vector<Token> tokenize(size_t sourceFileIndex) {
         kind = Token::TICK_KW;
       else if (word == "load")
         kind = Token::LOAD_KW;
-      else if (word == "private")
-        kind = Token::PRIVATE_KW;
+      else if (word == "public")
+        kind = Token::PUBLIC_KW;
       else if (word == "import")
         kind = Token::IMPORT_KW;
       else if (word == "void")
@@ -281,7 +281,8 @@ static void tokenize_helper::handleCharStack(
 static std::string tokenize_helper::getWord(const std::string& str, size_t& i,
                                             size_t sourceFileIndex) {
   if (!tokenize_helper::isWordChar(str[i])) {
-    throw compile_error::UnknownChar("Unexpected character.", i, sourceFiles[sourceFileIndex].pathRef());
+    throw compile_error::UnknownChar("Unexpected character.", i,
+                                     sourceFiles[sourceFileIndex].pathRef());
   }
 
   for (size_t j = i + 1; j < str.size(); j++) {

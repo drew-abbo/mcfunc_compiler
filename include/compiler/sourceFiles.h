@@ -8,7 +8,6 @@
 
 #include <compiler/tokenization/Token.h>
 #include <compiler/UniqueID.h>
-#include <compiler/syntax_analysis/statement.h>
 
 /// Represents a single source file.
 class SourceFile {
@@ -41,17 +40,11 @@ public:
   /// The tokens (groups of characters) in this file.
   const std::vector<Token>& tokens() const;
 
-  /// The statements (collections of tokens) for this file.
-  const std::vector<statement::Generic*> statements() const;
-
-  ~SourceFile();
-
 private:
   std::filesystem::path m_filePath;
   UniqueID m_fileID;
   UniqueID m_libraryID;
   std::vector<Token> m_tokens;
-  std::vector<statement::Generic*> m_statements;
 };
 
 /// The exact same as \p std::vector<SourceFile> except there's only 1 instance

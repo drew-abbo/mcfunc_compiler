@@ -39,7 +39,7 @@ bool Token::hasContents() const {
   case Token::FILE_KW:
   case Token::TICK_KW:
   case Token::LOAD_KW:
-  case Token::PRIVATE_KW:
+  case Token::PUBLIC_KW:
   case Token::IMPORT_KW:
   case Token::VOID_KW:
     return false;
@@ -80,8 +80,8 @@ std::string tokenDebugStr(const Token& t) {
     return "TICK_KW";
   case Token::LOAD_KW:
     return "LOAD_KW";
-  case Token::PRIVATE_KW:
-    return "PRIVATE_KW";
+  case Token::PUBLIC_KW:
+    return "PUBLIC_KW";
   case Token::IMPORT_KW:
     return "IMPORT_KW";
   case Token::VOID_KW:
