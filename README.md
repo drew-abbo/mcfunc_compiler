@@ -521,7 +521,7 @@ The output directory will be ignored if it's inside of/is an input directory.
 
 You can link a library directory with the `-l` flag. This works the same as the
 `-i` flag except that files from this directory will only be able to import
-files that are also inside of the directory. Additionally, and source files from
+files that are also inside of the directory. Additionally, source files from
 outside directories will be able to import from this one. The `-l` flag is
 basically `-i` except the directory is isolated until the linking stage of
 compilation.
@@ -612,13 +612,13 @@ The recommended directory structure for MCFunc projects is this:
 - `pack.mcmeta` holds info about your data pack for the game
   ([here's a generator](https://misode.github.io/pack-mcmeta/)).
 
-Ideally you're directly working inside of a data pack folder in the `datapacks/`
+Ideally you're directly working inside of a data pack folder in the `datapacks`
 directory of a Minecraft save. That way you can take advantage of things like
 hot reloading for testing.
 
 To send your data pack folder to a friend just zip the contents of the project
-(only `./data` and `./pack.mcmeta` if they don't need the source code) and send
-it to them.
+(only `data` and `pack.mcmeta` if they don't need the source code) and send it
+to them.
 
 As for your `build.jsonc` file, you can use this if you don't need any libraries
 (this also means you don't need the `libs` folder):
