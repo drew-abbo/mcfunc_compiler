@@ -16,7 +16,8 @@ Token::Token(Kind tokenKind, size_t indexInFile, size_t sourceFileIndex,
     : m_tokenKind(tokenKind), m_indexInFile(indexInFile), m_sourceFileIndex(sourceFileIndex),
       m_contents(contents) {}
 
-Token::Token(Kind tokenKind, size_t indexInFile, size_t sourceFileIndex, std::string&& contents)
+Token::Token(Kind tokenKind, size_t indexInFile, size_t sourceFileIndex,
+             std::string&& contents)
     : m_tokenKind(tokenKind), m_indexInFile(indexInFile), m_sourceFileIndex(sourceFileIndex),
       m_contents(std::move(contents)) {}
 
@@ -25,6 +26,8 @@ Token::Kind Token::kind() const { return m_tokenKind; }
 size_t Token::indexInFile() const { return m_indexInFile; }
 
 size_t Token::sourceFileIndex() const { return m_sourceFileIndex; }
+
+const SourceFile& Token::sourceFile() const { return sourceFiles[m_sourceFileIndex]; }
 
 bool Token::hasContents() const {
   switch (m_tokenKind) {

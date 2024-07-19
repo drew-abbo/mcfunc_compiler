@@ -3,13 +3,12 @@
 #ifndef TOKENIZE_H
 #define TOKENIZE_H
 
-#include <vector>
+#include <cstddef>
 
-#include <compiler/tokenization/Token.h>
-
-/// Opens a file, adds it to \p sourceFiles , and converts its syntax to tokens.
+/// Opens a file, tokenizes it, and then merges its contents into \p sourceFiles
+/// at index \param[out] sourceFileIndex.
 /// \throws compile_error::Generic (or a subclass of it) when the file's syntax
 /// is invalid or it cannot be opened.
-std::vector<Token> tokenize(size_t sourceFileIndex);
+void tokenize(size_t sourceFileIndex);
 
 #endif // TOKENIZE_H

@@ -7,21 +7,20 @@
 #include <compiler/sourceFiles.h>
 #include <compiler/tokenization/Token.h>
 #include <compiler/tokenization/tokenize.h>
-#include <vector>
 
 int main() {
 
   sourceFiles.emplace_back(std::filesystem::path(".") / "test.mcfunc");
 
-  std::vector<Token> tokens;
-
   // try and tokenize the file
   try {
-    tokens = tokenize(sourceFiles.size() - 1);
+    tokenize(sourceFiles.size() - 1);
   } catch (const compile_error::Generic& e) {
     std::cout << e.what();
     return EXIT_FAILURE;
   }
+
+  const auto& tokens = sourceFiles.back().tokens();
 
   // print tokens in a somewhat readable way
   std::string indent;

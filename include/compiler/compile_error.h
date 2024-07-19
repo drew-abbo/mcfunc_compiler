@@ -8,15 +8,18 @@
 #include <filesystem>
 #include <string>
 
+#include <compiler/tokenization/Token.h>
+
 /// Contains exceptions that can be thrown during compilation to stop the
 /// process. All exceptions can be caught by catching \p compile_error::Generic
 /// which all other exceptions inherit from.
 ///
 /// \p Generic (superclass)
 /// ├── \p CouldntOpenFile
-/// └── \p SyntaxError (superclass)
-///     ├── \p BadClosingChar
-///     └── \p UnknownChar
+/// ├── \p SyntaxError (superclass)
+/// │   ├── \p BadClosingChar
+/// │   └── \p UnknownChar
+/// └── \p DeclarationConflict
 ///
 /// A newline is added to the end of all \p msg parameters.
 namespace compile_error {
@@ -39,8 +42,8 @@ public:
   explicit CouldntOpenFile(const std::filesystem::path& filePath);
 };
 
-/// The root exception for all syntax errors. Stores an index in a file and a
-/// file path for better debug info.
+/// The root exception for all syntax errors. Has an index in a file and a file
+/// path for better debug info.
 class SyntaxError : public Generic {
 public:
   explicit SyntaxError(const std::string& msg, const size_t indexInFile,
@@ -52,6 +55,17 @@ using BadClosingChar = SyntaxError;
 
 /// Throw when things like parenthesis or quotes aren't closed properly.
 using UnknownChar = SyntaxError;
+
+/// Throw when 2 declarations do not match or when something is redefined.
+class DeclarationConflict : public Generic {
+public:
+  explicit DeclarationConflict(const std::string& msg, const size_t indexInFile1,
+                               const size_t indexInFile2, const std::filesystem::path& filePath1,
+                               const std::filesystem::path& filePath2, size_t numChars1 = 1,
+                               size_t numChars2 = 1);
+
+  explicit DeclarationConflict(const std::string& msg, const Token& token1, const Token& token2);
+};
 
 } // namespace compile_error
 

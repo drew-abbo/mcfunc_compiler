@@ -6,15 +6,24 @@
 #include <string>
 
 #include <cli/style_text.h>
+#include <compiler/sourceFiles.h>
+#include <compiler/tokenization/Token.h>
 
 using namespace compile_error;
 
-/// Print an error message like this:
+/// Get this:
 ///   Error: This is an error message.
-///   '/home/name/example/foo/src/main.mcfunc'.
-static std::string basicErrorMessage(const char* msg, const std::filesystem::path& filePath) {
-  return style_text::styleAsError("Error: ") + msg + '\n' +
-         style_text::styleAsCode(std::filesystem::absolute(filePath.lexically_normal()).string()) +
+static std::string errorMessage(const char* msg) {
+  return style_text::styleAsError("Error: ") + msg;
+}
+static std::string basicErrorMessage(const std::string& msg) {
+  return style_text::styleAsError("Error: ") + msg;
+}
+
+/// Get this:
+///   '/home/name/example/foo/src/filePath.main'.
+static std::string filePathLine(const std::filesystem::path& filePath) {
+  return style_text::styleAsCode(std::filesystem::absolute(filePath.lexically_normal()).string()) +
          '.';
 }
 
@@ -92,41 +101,105 @@ static std::string highlightOnLine(std::string&& line, size_t ln, size_t col,
   return lineNumberStr + " | " + std::move(line) + arrowLine;
 }
 
-/// Prints an error message like this:
-///   Error: This is an error message.
+/// Get this:
 ///      40 | hello world
 ///         |       ^~~~~
 ///   '/home/name/example/foo/src/filePath.main:40:7' (ln 40, col 7).
-static std::string errorMessageWithLine(const std::string& msg,
-                                        const std::filesystem::path& filePath, size_t indexInFile,
-                                        size_t numChars = 1) {
+static std::string highlightedLineAndPath(const std::filesystem::path& filePath, size_t indexInFile,
+                                          size_t numChars = 1) {
   const std::string fullFilePathStr =
       std::filesystem::absolute(filePath.lexically_normal()).string();
   LnCol lnCol = getLnColFromFile(filePath, indexInFile);
 
   if (!lnCol.isValid()) {
     // If there's an error reading or finding the line just include the index
-    return style_text::styleAsError("Error: ") + msg + "\nLine display failed.\nLocated at " +
-           style_text::styleAsCode(fullFilePathStr) + " (index " + std::to_string(indexInFile) +
-           ").";
+    return "Line display failed.\nLocated at " + style_text::styleAsCode(fullFilePathStr) +
+           " (index " + std::to_string(indexInFile) + ").";
   }
 
   const std::string lnStr = std::to_string(lnCol.ln);
   const std::string colStr = std::to_string(lnCol.col);
 
-  return style_text::styleAsError("Error: ") + msg + '\n' +
-         highlightOnLine(std::move(lnCol.line), lnCol.ln, lnCol.col, style_text::error, numChars) +
+  return highlightOnLine(std::move(lnCol.line), lnCol.ln, lnCol.col, style_text::error, numChars) +
          '\n' + style_text::styleAsCode(fullFilePathStr + ':' + lnStr + ':' + colStr) + " (ln " +
          lnStr + ", col " + colStr + ").";
 }
+static std::string highlightedLineAndPath(const Token& token) {
+  size_t numChars;
+  switch (token.kind()) {
+  case Token::SEMICOLON:
+  case Token::L_PAREN:
+  case Token::R_PAREN:
+  case Token::L_BRACE:
+  case Token::R_BRACE:
+  case Token::ASSIGN:
+  case Token::COMMAND_PAUSE:
+    numChars = 1;
+    break;
+
+  case Token::STRING:
+  case Token::SNIPPET:
+  case Token::COMMAND:
+  case Token::WORD:
+    numChars = token.contents().size();
+    break;
+
+  case Token::EXPOSE_KW:
+    numChars = 6;
+    break;
+  case Token::FILE_KW:
+    numChars = 4;
+    break;
+  case Token::TICK_KW:
+    numChars = 4;
+    break;
+  case Token::LOAD_KW:
+    numChars = 4;
+    break;
+  case Token::PUBLIC_KW:
+    numChars = 6;
+    break;
+  case Token::IMPORT_KW:
+    numChars = 6;
+    break;
+  case Token::VOID_KW:
+    numChars = 4;
+    break;
+  }
+
+  return highlightedLineAndPath(token.sourceFile().path(), token.indexInFile(), numChars);
+}
+
+// Generic
 
 const char* Generic::what() const noexcept { return m_msg.c_str(); }
 
 Generic::Generic(const std::string& msg) : m_msg(msg + '\n') {}
 
+// CouldntOpenFile
+
 CouldntOpenFile::CouldntOpenFile(const std::filesystem::path& filePath)
-    : Generic(basicErrorMessage("Failed to open file.", filePath)) {}
+    : Generic(errorMessage("Failed to open file.") + '\n' + filePathLine(filePath)) {}
+
+// SyntaxError
 
 SyntaxError::SyntaxError(const std::string& msg, size_t indexInFile,
                          const std::filesystem::path& filePath, size_t numChars)
-    : Generic(errorMessageWithLine(msg, filePath, indexInFile, numChars)) {}
+    : Generic(basicErrorMessage(msg) + '\n' +
+              highlightedLineAndPath(filePath, indexInFile, numChars)) {}
+
+// DeclarationConflict
+
+DeclarationConflict::DeclarationConflict(const std::string& msg, const size_t indexInFile1,
+                                         const size_t indexInFile2,
+                                         const std::filesystem::path& filePath1,
+                                         const std::filesystem::path& filePath2, size_t numChars1,
+                                         size_t numChars2)
+    : Generic(basicErrorMessage(msg) + '\n' +
+              highlightedLineAndPath(filePath1, indexInFile1, numChars1) + '\n' +
+              highlightedLineAndPath(filePath2, indexInFile2, numChars2)) {}
+
+DeclarationConflict::DeclarationConflict(const std::string& msg, const Token& token1,
+                                         const Token& token2)
+    : Generic(basicErrorMessage(msg) + '\n' + highlightedLineAndPath(token1) + '\n' +
+              highlightedLineAndPath(token2)) {}
