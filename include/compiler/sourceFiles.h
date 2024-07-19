@@ -41,6 +41,7 @@ private:
 
 private:
   friend void tokenize(size_t sourceFileIndex);
+  friend void analyzeSyntaxAndBuildSymbolTable(size_t sourceFileIndex);
 };
 
 /// The exact same as \p std::vector<SourceFile> except there's only 1 instance

@@ -1,4 +1,5 @@
-/// \file TODO .................................................................
+/// \file Holds classes that represent symbols (like a function) and symbol
+/// tables (like a collection of function symbols).
 
 #ifndef SYMBOL_H
 #define SYMBOL_H
