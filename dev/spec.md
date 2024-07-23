@@ -16,6 +16,7 @@ It also outlines planned features.
   - [Function File Naming Patterns](#function-file-naming-patterns)
   - [Tick and Load Functions](#tick-and-load-functions)
   - [File Write Restrictions](#file-write-restrictions)
+  - [Importing](#importing)
 - [Future Additions](#future-additions)
   - [Future Language Additions](#future-language-additions)
     - [Modules and Aliases](#modules-and-aliases)
@@ -174,7 +175,7 @@ keeps it consistent with the game and with the way strings work in MCFunc (`\`
 is the escape character).
 
 You can only write files into the namespace directory of your data pack. You
-can't use exact file paths or make use of the `..`/`.` directories at all.
+can't use exact file paths or make use of `..`.
 
 This means that none of the following file write operations are allowed:
 
@@ -188,6 +189,9 @@ file "/bin" = ``;
 file "C:/Windows/System32" = ``;
 ```
 
+File paths can only contain letters, numbers, underscores, dots, and dashes
+(plus the slash character as a separator).
+
 At the start of compilation the contents of the namespace folder and the hidden
 namespace folder are removed. As compilation goes on files and directories will
 be created. If there is any conflict here compilation will fail. This means that
@@ -197,6 +201,12 @@ the following will not work:
 void foo() expose "foo.mcfunction";
 file "function/foo.mcfunction" = ``;
 ```
+
+### Importing
+
+Imported file paths can only contain letters, numbers, underscores, dots, and
+dashes (plus the slash character as a separator). You cant use `..` and the path
+must be relative.
 
 ---
 
