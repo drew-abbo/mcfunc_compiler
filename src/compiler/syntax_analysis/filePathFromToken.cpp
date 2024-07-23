@@ -62,6 +62,12 @@ std::filesystem::path filePathFromToken(const Token* pathTokenPtr, bool allowUpp
     }
   }
 
+  if (path.back() == '/')
+    throw compile_error::BadFilePath(
+        "File path cannot end with a directory (last character can't be " +
+            style_text::styleAsCode('/') + ").",
+        *pathTokenPtr);
+
   const auto ret = std::filesystem::path(path).lexically_normal();
 
   if (!ret.is_relative())
