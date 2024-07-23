@@ -15,7 +15,8 @@
 #include <cli/style_text.h>
 
 /// Helper functions for the \p tokenize() function.
-namespace tokenize_helper {
+namespace {
+namespace helper {
 
 /// Stores a character like '}' and the index of its opening counterpart.
 struct ClosingChar {
@@ -43,14 +44,15 @@ static size_t getStringContentLength(const std::string& str, size_t i, size_t so
 /// returned if \p i isn't the start of a comment.
 static size_t getLengthOfPossibleComment(const std::string& str, size_t i);
 
-} // namespace tokenize_helper
+} // namespace helper
+} // namespace
 
 void tokenize(size_t sourceFileIndex) {
   const std::string str = fileToStr(sourceFiles[sourceFileIndex].path());
 
   std::vector<Token> ret;
 
-  std::vector<tokenize_helper::ClosingChar> closingCharStack;
+  std::vector<helper::ClosingChar> closingCharStack;
 
   for (size_t i = 0; i < str.size(); i++) {
     switch (str[i]) {
@@ -79,11 +81,11 @@ void tokenize(size_t sourceFileIndex) {
 
     case ')':
       ret.emplace_back(Token(Token::R_PAREN, i, sourceFileIndex));
-      tokenize_helper::handleCharStack(str[i], closingCharStack, i, sourceFileIndex);
+      helper::handleCharStack(str[i], closingCharStack, i, sourceFileIndex);
       break;
     case '}':
       ret.emplace_back(Token(Token::R_BRACE, i, sourceFileIndex));
-      tokenize_helper::handleCharStack(str[i], closingCharStack, i, sourceFileIndex);
+      helper::handleCharStack(str[i], closingCharStack, i, sourceFileIndex);
       break;
 
     // quotes and snippets
@@ -91,7 +93,7 @@ void tokenize(size_t sourceFileIndex) {
     case '`': {
       const bool isSnippet = str[i] == '`';
       const size_t contentLength =
-          tokenize_helper::getStringContentLength(str, i, sourceFileIndex, isSnippet);
+          helper::getStringContentLength(str, i, sourceFileIndex, isSnippet);
       ret.emplace_back(Token((isSnippet) ? Token::SNIPPET : Token::STRING, i, sourceFileIndex,
                              str.substr(i + 1, contentLength)));
       i += contentLength + 1;
@@ -105,7 +107,7 @@ void tokenize(size_t sourceFileIndex) {
                                             sourceFiles[sourceFileIndex].path());
 
       // comments
-      const size_t commentLenth = tokenize_helper::getLengthOfPossibleComment(str, i);
+      const size_t commentLenth = helper::getLengthOfPossibleComment(str, i);
       if (commentLenth != 0) {
         i += commentLenth;
         break;
@@ -136,16 +138,15 @@ void tokenize(size_t sourceFileIndex) {
         case ')':
         case '}':
         case ']':
-          tokenize_helper::handleCharStack(str[j], closingCharStack, j, sourceFileIndex,
-                                           closingCharStackStartSize);
+          helper::handleCharStack(str[j], closingCharStack, j, sourceFileIndex,
+                                  closingCharStackStartSize);
           commandContents += str[j];
           break;
 
         // strings in commands
         case '"':
         case '\'': {
-          const size_t strLen =
-              tokenize_helper::getStringContentLength(str, j, sourceFileIndex, false);
+          const size_t strLen = helper::getStringContentLength(str, j, sourceFileIndex, false);
           commandContents += str.substr(j, strLen + 2);
           j += strLen + 1;
           break;
@@ -153,7 +154,7 @@ void tokenize(size_t sourceFileIndex) {
 
         // possible comments
         case '/': {
-          const size_t commentLenth = tokenize_helper::getLengthOfPossibleComment(str, j);
+          const size_t commentLenth = helper::getLengthOfPossibleComment(str, j);
           if (commentLenth != 0) {
             // possibly add a space in place of the comment
             if (!commandContents.empty() && commandContents.back() != ' ')
@@ -216,7 +217,7 @@ void tokenize(size_t sourceFileIndex) {
 
     // word or keyword or invalid char
     default:
-      std::string word = tokenize_helper::getWord(str, i, sourceFileIndex);
+      std::string word = helper::getWord(str, i, sourceFileIndex);
 
       // look for keywords
       Token::Kind kind;
@@ -260,9 +261,8 @@ void tokenize(size_t sourceFileIndex) {
 // Helper function definitions beyond this point.
 // ---------------------------------------------------------------------------//
 
-static void tokenize_helper::handleCharStack(
-    char c, std::vector<tokenize_helper::ClosingChar>& closingCharStack, size_t indexInFile,
-    size_t sourceFileIndex, size_t minSize) {
+static void helper::handleCharStack(char c, std::vector<helper::ClosingChar>& closingCharStack,
+                                    size_t indexInFile, size_t sourceFileIndex, size_t minSize) {
 
   if (closingCharStack.size() <= minSize) {
     throw compile_error::BadClosingChar(std::string("Missing opening counterpart for ") +
@@ -279,23 +279,21 @@ static void tokenize_helper::handleCharStack(
   closingCharStack.pop_back();
 };
 
-static std::string tokenize_helper::getWord(const std::string& str, size_t& i,
-                                            size_t sourceFileIndex) {
-  if (!tokenize_helper::isWordChar(str[i])) {
+static std::string helper::getWord(const std::string& str, size_t& i, size_t sourceFileIndex) {
+  if (!helper::isWordChar(str[i])) {
     throw compile_error::UnknownChar("Unexpected character.", i,
                                      sourceFiles[sourceFileIndex].path());
   }
 
   for (size_t j = i + 1; j < str.size(); j++) {
-    if (!tokenize_helper::isWordChar(str[j]))
+    if (!helper::isWordChar(str[j]))
       return str.substr(i, j - i);
   }
   return str.substr(i);
 }
 
-static size_t tokenize_helper::getStringContentLength(const std::string& str, size_t i,
-                                                      size_t sourceFileIndex,
-                                                      bool allowSpecialWhitespace) {
+static size_t helper::getStringContentLength(const std::string& str, size_t i,
+                                             size_t sourceFileIndex, bool allowSpecialWhitespace) {
   assert((str[i] == '"' || str[i] == '`' || str[i] == '\'') &&
          "'getStringContentLength()' is only for strings.");
 
@@ -328,7 +326,7 @@ static size_t tokenize_helper::getStringContentLength(const std::string& str, si
                                       sourceFiles[sourceFileIndex].path(), endOfLineIndex - i);
 }
 
-static size_t tokenize_helper::getLengthOfPossibleComment(const std::string& str, size_t i) {
+static size_t helper::getLengthOfPossibleComment(const std::string& str, size_t i) {
   if (i + 1 >= str.size())
     return 0;
 
