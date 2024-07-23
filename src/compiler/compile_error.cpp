@@ -188,6 +188,9 @@ SyntaxError::SyntaxError(const std::string& msg, size_t indexInFile,
     : Generic(basicErrorMessage(msg) + '\n' +
               highlightedLineAndPath(filePath, indexInFile, numChars)) {}
 
+SyntaxError::SyntaxError(const std::string& msg, const Token& token)
+    : Generic(basicErrorMessage(msg) + '\n' + highlightedLineAndPath(token)) {}
+
 // DeclarationConflict
 
 DeclarationConflict::DeclarationConflict(const std::string& msg, const size_t indexInFile1,

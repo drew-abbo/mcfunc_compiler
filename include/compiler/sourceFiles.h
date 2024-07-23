@@ -33,11 +33,15 @@ public:
   /// The function symbol table.
   const symbol::FunctionTable& functionSymbolTable() const;
 
+  /// The file write symbol table.
+  const symbol::FileWriteTable& fileWriteSymbolTable() const;
+
 private:
   std::filesystem::path m_filePath;
   UniqueID m_fileID;
   std::vector<Token> m_tokens;
   symbol::FunctionTable m_functionSymbolTable;
+  symbol::FileWriteTable m_fileWriteSymbolTable;
 
 private:
   friend void tokenize(size_t sourceFileIndex);

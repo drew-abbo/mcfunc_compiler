@@ -25,6 +25,10 @@ const symbol::FunctionTable& SourceFile::functionSymbolTable() const {
   return m_functionSymbolTable;
 }
 
+const symbol::FileWriteTable& SourceFile::fileWriteSymbolTable() const {
+  return m_fileWriteSymbolTable;
+}
+
 // SourceFilesSingleton_t
 
 SourceFilesSingletonType& SourceFilesSingletonType::getSingletonInstance() {

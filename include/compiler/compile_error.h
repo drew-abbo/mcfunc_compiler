@@ -18,7 +18,9 @@
 /// ├── \p CouldntOpenFile
 /// ├── \p SyntaxError (superclass)
 /// │   ├── \p BadClosingChar
-/// │   └── \p UnknownChar
+/// │   ├── \p UnknownChar
+/// │   ├── \p BadStringChar
+/// │   └── \p BadFilePath
 /// └── \p DeclarationConflict
 ///
 /// A newline is added to the end of all \p msg parameters.
@@ -48,6 +50,8 @@ class SyntaxError : public Generic {
 public:
   explicit SyntaxError(const std::string& msg, const size_t indexInFile,
                        const std::filesystem::path& filePath, size_t numChars = 1);
+
+  explicit SyntaxError(const std::string& msg, const Token& token);
 };
 
 /// Throw when things like parenthesis or quotes aren't closed properly.
@@ -55,6 +59,12 @@ using BadClosingChar = SyntaxError;
 
 /// Throw when things like parenthesis or quotes aren't closed properly.
 using UnknownChar = SyntaxError;
+
+/// Throw when a character that is not allowed in a string appears in a string.
+using BadStringChar = SyntaxError;
+
+/// Throw when a file path provided is not valid.
+using BadFilePath = SyntaxError;
 
 /// Throw when 2 declarations do not match or when something is redefined.
 class DeclarationConflict : public Generic {
