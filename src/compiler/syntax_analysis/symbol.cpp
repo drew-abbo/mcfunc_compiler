@@ -256,6 +256,8 @@ static const SourceFile& findSourceFileFromToken(const Token* importPathTokenPtr
             style_text::styleAsCode(importPath.string()) + '.',
         *importPathTokenPtr);
   }
+  if (ret == &importPathTokenPtr->sourceFile())
+    throw compile_error::ImportError("A source file cannot import itself.", *importPathTokenPtr);
 
   return *ret;
 }
