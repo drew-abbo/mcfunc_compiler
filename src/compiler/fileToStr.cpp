@@ -7,10 +7,12 @@
 #include <compiler/compile_error.h>
 
 std::string fileToStr(const std::filesystem::path& path) {
-  std::ifstream file(path);
-  if (!file.is_open()) {
+  if (!std::filesystem::is_regular_file(path))
     throw compile_error::CouldntOpenFile(path);
-  }
+
+  std::ifstream file(path);
+  if (!file.is_open())
+    throw compile_error::CouldntOpenFile(path);
 
   std::string contents;
   std::string line;

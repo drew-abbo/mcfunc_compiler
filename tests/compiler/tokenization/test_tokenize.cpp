@@ -3,26 +3,40 @@
 #include <vector>
 
 #include <compiler/compile_error.h>
+#include <compiler/fileToStr.h>
 #include <compiler/sourceFiles.h>
 #include <compiler/tokenization/Token.h>
 #include <compiler/tokenization/tokenize.h>
-#include <compiler/fileToStr.h>
+
+/// Adds a path to \p sourceFiles and ensures that it actually exists.
+#define ADD_SOURCE_FILE(_path)                                                                     \
+  {                                                                                                \
+    const auto _tmpPath = std::filesystem::path(".") / _path;                                      \
+    ASSERT_TRUE(std::filesystem::exists(_tmpPath))                                                 \
+        << "The test path must exist but " << _tmpPath << " doesn't.";                             \
+    sourceFiles.push_back(SourceFile(std::move(_tmpPath)));                                        \
+  }
 
 // test a file that cannot be opened
 TEST(test_bad_file, test_tokenize) {
 
-  sourceFiles.emplace_back("thisFileVeryLikelyDoesntExist.txt");
+  sourceFiles.push_back(SourceFile("thisFileVeryLikelyDoesntExist.txt"));
+  ASSERT_THROW(tokenize(sourceFiles.size() - 1), compile_error::CouldntOpenFile)
+      << "Tokenization should have failed since the file " << sourceFiles.back().path()
+      << " does not exist.";
+
+  // make sure directories don't silently fail
+  ADD_SOURCE_FILE("tests");
 
   ASSERT_THROW(tokenize(sourceFiles.size() - 1), compile_error::CouldntOpenFile)
-      << "Tokenization should have failed since the file does not exist.";
-
+      << "Tokenization should have failed since the file " << sourceFiles.back().path()
+      << " does not exist.";
 }
 
 // test a valid file
 TEST(test_valid_file, test_tokenize) {
 
-  sourceFiles.emplace_back(std::filesystem::path(".") / "tests" / "compiler" / "tokenization" /
-                           "test_token_test_file1.mcfunc");
+  ADD_SOURCE_FILE("tests" / "compiler" / "tokenization" / "test_token_test_file1.mcfunc");
 
   ASSERT_NO_THROW(tokenize(sourceFiles.size() - 1))
       << "Tokenization shouldn't fail on a valid file";
@@ -138,35 +152,25 @@ TEST(test_valid_file, test_tokenize) {
         << "Expected token " << tokenDebugStr(expectedTokens[i]) << " but got "
         << tokenDebugStr(result[i]) << " (different 'content'). Token index = " << i << ".";
   }
-
 }
 
 // test some bad syntax
 TEST(test_valid_file_bad_syntax, test_tokenize) {
 
   const std::vector<std::filesystem::path> goodFilePathsBadSyntaxFiles = {
-      std::filesystem::path(".") / "tests" / "compiler" / "tokenization" /
-          "test_token_test_file2.mcfunc",
-      std::filesystem::path(".") / "tests" / "compiler" / "tokenization" /
-          "test_token_test_file3.mcfunc",
-      std::filesystem::path(".") / "tests" / "compiler" / "tokenization" /
-          "test_token_test_file4.mcfunc",
-      std::filesystem::path(".") / "tests" / "compiler" / "tokenization" /
-          "test_token_test_file5.mcfunc",
-      std::filesystem::path(".") / "tests" / "compiler" / "tokenization" /
-          "test_token_test_file6.mcfunc",
-      std::filesystem::path(".") / "tests" / "compiler" / "tokenization" /
-          "test_token_test_file7.mcfunc",
-      std::filesystem::path(".") / "tests" / "compiler" / "tokenization" /
-          "test_token_test_file8.mcfunc",
-      std::filesystem::path(".") / "tests" / "compiler" / "tokenization" /
-          "test_token_test_file9.mcfunc",
+      std::filesystem::path("tests") / "compiler" / "tokenization" / "test_token_test_file2.mcfunc",
+      std::filesystem::path("tests") / "compiler" / "tokenization" / "test_token_test_file3.mcfunc",
+      std::filesystem::path("tests") / "compiler" / "tokenization" / "test_token_test_file4.mcfunc",
+      std::filesystem::path("tests") / "compiler" / "tokenization" / "test_token_test_file5.mcfunc",
+      std::filesystem::path("tests") / "compiler" / "tokenization" / "test_token_test_file6.mcfunc",
+      std::filesystem::path("tests") / "compiler" / "tokenization" / "test_token_test_file7.mcfunc",
+      std::filesystem::path("tests") / "compiler" / "tokenization" / "test_token_test_file8.mcfunc",
+      std::filesystem::path("tests") / "compiler" / "tokenization" / "test_token_test_file9.mcfunc",
   };
 
   for (const auto& path : goodFilePathsBadSyntaxFiles) {
-    sourceFiles.emplace_back(path);
-
-    ASSERT_NO_THROW(fileToStr(path));   // make sure the file is openable
+    ADD_SOURCE_FILE(path);
+    ASSERT_NO_THROW(fileToStr(path)); // make sure the file is openable
 
     ASSERT_THROW(tokenize(sourceFiles.size() - 1), compile_error::Generic)
         << "Syntax invalid in '" << path << "' but 'tokenize()' didn't throw.";
