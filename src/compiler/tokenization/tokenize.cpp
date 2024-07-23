@@ -46,7 +46,7 @@ static size_t getLengthOfPossibleComment(const std::string& str, size_t i);
 } // namespace tokenize_helper
 
 void tokenize(size_t sourceFileIndex) {
-  const std::string str = fileToStr(sourceFiles[sourceFileIndex].pathRef());
+  const std::string str = fileToStr(sourceFiles[sourceFileIndex].path());
 
   std::vector<Token> ret;
 
@@ -102,7 +102,7 @@ void tokenize(size_t sourceFileIndex) {
     case '/': {
       if (i + 1 == str.size())
         throw compile_error::BadClosingChar("Command never ends.", i,
-                                            sourceFiles[sourceFileIndex].pathRef());
+                                            sourceFiles[sourceFileIndex].path());
 
       // comments
       const size_t commentLenth = tokenize_helper::getLengthOfPossibleComment(str, i);
@@ -206,10 +206,10 @@ void tokenize(size_t sourceFileIndex) {
         throw compile_error::BadClosingChar(
             std::string("Command never ends because of missing ") +
                 style_text::styleAsCode(closingCharStack.back().c) + '.',
-            closingCharStack.back().index, sourceFiles[sourceFileIndex].pathRef());
+            closingCharStack.back().index, sourceFiles[sourceFileIndex].path());
       }
       throw compile_error::BadClosingChar("Command never ends.", i,
-                                          sourceFiles[sourceFileIndex].pathRef());
+                                          sourceFiles[sourceFileIndex].path());
     foundCommandEnd:
       break;
     }
@@ -250,7 +250,7 @@ void tokenize(size_t sourceFileIndex) {
     throw compile_error::BadClosingChar(
         std::string("Missing closing counterpart for ") +
             style_text::styleAsCode(str[closingCharStack.back().index]) + '.',
-        closingCharStack.back().index, sourceFiles[sourceFileIndex].pathRef());
+        closingCharStack.back().index, sourceFiles[sourceFileIndex].path());
 
   // modify source file
   sourceFiles[sourceFileIndex].m_tokens = std::move(ret);
@@ -267,14 +267,14 @@ static void tokenize_helper::handleCharStack(
   if (closingCharStack.size() <= minSize) {
     throw compile_error::BadClosingChar(std::string("Missing opening counterpart for ") +
                                             style_text::styleAsCode(c) + '.',
-                                        indexInFile, sourceFiles[sourceFileIndex].pathRef());
+                                        indexInFile, sourceFiles[sourceFileIndex].path());
   }
 
   if (closingCharStack.back().c != c) {
     throw compile_error::BadClosingChar(
         std::string("Missing opening counterpart for ") +
             style_text::styleAsCode(closingCharStack.back().c) + '.',
-        closingCharStack.back().index, sourceFiles[sourceFileIndex].pathRef());
+        closingCharStack.back().index, sourceFiles[sourceFileIndex].path());
   }
   closingCharStack.pop_back();
 };
@@ -283,7 +283,7 @@ static std::string tokenize_helper::getWord(const std::string& str, size_t& i,
                                             size_t sourceFileIndex) {
   if (!tokenize_helper::isWordChar(str[i])) {
     throw compile_error::UnknownChar("Unexpected character.", i,
-                                     sourceFiles[sourceFileIndex].pathRef());
+                                     sourceFiles[sourceFileIndex].path());
   }
 
   for (size_t j = i + 1; j < str.size(); j++) {
@@ -307,10 +307,10 @@ static size_t tokenize_helper::getStringContentLength(const std::string& str, si
       if (str[j] != ' ' && std::isspace(str[j])) {
         if (str[j] == '\n') {
           throw compile_error::BadClosingChar("Expected closing quote before end of line.", i,
-                                              sourceFiles[sourceFileIndex].pathRef(), j - i);
+                                              sourceFiles[sourceFileIndex].path(), j - i);
         }
-        throw compile_error::BadStringChar("This character isn't allowed in a string.", j,
-                                           sourceFiles[sourceFileIndex].pathRef(), 1);
+        throw compile_error::BadString("This character isn't allowed in a string.", j,
+                                       sourceFiles[sourceFileIndex].path(), 1);
       }
     }
 
@@ -325,7 +325,7 @@ static size_t tokenize_helper::getStringContentLength(const std::string& str, si
       break;
   }
   throw compile_error::BadClosingChar("Missing closing quote.", i,
-                                      sourceFiles[sourceFileIndex].pathRef(), endOfLineIndex - i);
+                                      sourceFiles[sourceFileIndex].path(), endOfLineIndex - i);
 }
 
 static size_t tokenize_helper::getLengthOfPossibleComment(const std::string& str, size_t i) {

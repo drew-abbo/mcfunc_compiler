@@ -1,21 +1,31 @@
 #include <cassert>
-#include <compiler/sourceFiles.h>
-
+#include <filesystem>
 #include <vector>
 
 #include <compiler/UniqueID.h>
+#include <compiler/generateImportPath.h>
+#include <compiler/sourceFiles.h>
 #include <compiler/tokenization/Token.h>
 
 static const UniqueID globalLibraryID = UniqueID(UniqueID::Kind::LIBRARY);
 
 // SourceFile
 
-SourceFile::SourceFile(const std::filesystem::path& filePath)
-    : m_filePath(filePath), m_fileID(UniqueID::Kind::SOURCE_FILE) {}
+SourceFile::SourceFile(const std::filesystem::path& filePath,
+                       const std::filesystem::path& prefixToRemoveForImporting)
+    : m_filePath(filePath),
+      m_importFilePath(generateImportPath(m_filePath, prefixToRemoveForImporting)),
+      m_fileID(UniqueID::Kind::SOURCE_FILE) {}
 
-std::filesystem::path SourceFile::path() const { return m_filePath; }
+SourceFile::SourceFile(std::filesystem::path&& filePath,
+                       const std::filesystem::path& prefixToRemoveForImporting)
+    : m_filePath(std::move(filePath)),
+      m_importFilePath(generateImportPath(m_filePath, prefixToRemoveForImporting)),
+      m_fileID(UniqueID::Kind::SOURCE_FILE) {}
 
-const std::filesystem::path& SourceFile::pathRef() const { return m_filePath; }
+const std::filesystem::path& SourceFile::path() const { return m_filePath; }
+
+const std::filesystem::path& SourceFile::importPath() const { return m_importFilePath; }
 
 UniqueID SourceFile::fileID() const { return m_fileID; }
 
@@ -27,6 +37,12 @@ const symbol::FunctionTable& SourceFile::functionSymbolTable() const {
 
 const symbol::FileWriteTable& SourceFile::fileWriteSymbolTable() const {
   return m_fileWriteSymbolTable;
+}
+
+const symbol::ImportTable& SourceFile::importSymbolTable() const { return m_importSymbolTable; }
+
+const symbol::NamespaceExpose& SourceFile::namespaceExposeSymbol() const {
+  return m_namespaceExpose;
 }
 
 // SourceFilesSingleton_t

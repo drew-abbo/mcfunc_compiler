@@ -7,22 +7,28 @@
 #include <vector>
 
 #include <compiler/UniqueID.h>
-#include <compiler/tokenization/Token.h>
 #include <compiler/syntax_analysis/symbol.h>
+#include <compiler/tokenization/Token.h>
 
 /// Represents a single source file.
+/// Anything that this class does may throw (including construction).
+/// \throws compile_error::Generic (or a subclass of it).
 class SourceFile {
 public:
   /// \param filePath Relative or absolute path to the file.
-  SourceFile(const std::filesystem::path& filePath);
-
-  /// Get a copy of the file path.
-  std::filesystem::path path() const;
+  /// \param filePath
+  SourceFile(const std::filesystem::path& filePath,
+             const std::filesystem::path& prefixToRemoveForImporting = "");
+  SourceFile(std::filesystem::path&& filePath,
+             const std::filesystem::path& prefixToRemoveForImporting = "");
 
   /// Get a const reference to the path.
   /// \warning Don't store if the location of this object can change (like if
-  /// it's inside of a vector that can resize).
-  const std::filesystem::path& pathRef() const;
+  /// it's inside of a vector that might resize).
+  const std::filesystem::path& path() const;
+
+  /// Get the path that this file will be imported as.
+  const std::filesystem::path& importPath() const;
 
   /// A unique file ID that is generated for this specific source file.
   UniqueID fileID() const;
@@ -36,12 +42,21 @@ public:
   /// The file write symbol table.
   const symbol::FileWriteTable& fileWriteSymbolTable() const;
 
+  /// The import symbol table.
+  const symbol::ImportTable& importSymbolTable() const;
+
+  /// The namespace expose symbol.
+  const symbol::NamespaceExpose& namespaceExposeSymbol() const;
+
 private:
   std::filesystem::path m_filePath;
+  std::filesystem::path m_importFilePath;
   UniqueID m_fileID;
   std::vector<Token> m_tokens;
   symbol::FunctionTable m_functionSymbolTable;
   symbol::FileWriteTable m_fileWriteSymbolTable;
+  symbol::ImportTable m_importSymbolTable;
+  symbol::NamespaceExpose m_namespaceExpose;
 
 private:
   friend void tokenize(size_t sourceFileIndex);

@@ -7,10 +7,12 @@
 
 #include <cli/style_text.h>
 #include <compiler/compile_error.h>
+#include <compiler/generateImportPath.h>
 #include <compiler/sourceFiles.h>
+#include <compiler/syntax_analysis/filePathFromToken.h>
 #include <compiler/syntax_analysis/statement.h>
 #include <compiler/tokenization/Token.h>
-#include <compiler/syntax_analysis/filePathFromToken.h>
+#include <compiler/translation/constants.h>
 
 using namespace symbol;
 
@@ -182,16 +184,16 @@ const Token& FileWrite::contentsToken() const {
 
 // FileWriteTable
 
-bool FileWriteTable::hasSymbol(const std::filesystem::path& symbolName) const {
-  return m_indexMap.count(symbolName) > 0;
+bool FileWriteTable::hasSymbol(const std::filesystem::path& outPath) const {
+  return m_indexMap.count(outPath) > 0;
 }
 bool FileWriteTable::hasSymbol(const FileWrite& symbol) const {
   return hasSymbol(symbol.relativeOutPath());
 }
 
-const FileWrite& FileWriteTable::getSymbol(const std::filesystem::path& symbolName) const {
-  assert(hasSymbol(symbolName) && "Called 'getSymbol()' when symbol isn't in table (str param).");
-  return m_symbolsVec[m_indexMap.at(symbolName)];
+const FileWrite& FileWriteTable::getSymbol(const std::filesystem::path& outPath) const {
+  assert(hasSymbol(outPath) && "Called 'getSymbol()' when symbol isn't in table (str param).");
+  return m_symbolsVec[m_indexMap.at(outPath)];
 }
 const FileWrite& FileWriteTable::getSymbol(const FileWrite& symbol) const {
   assert(hasSymbol(symbol) && "Called 'getSymbol()' when symbol isn't in table (symbol param).");
@@ -222,4 +224,130 @@ void FileWriteTable::merge(FileWrite&& newSymbol) {
 void FileWriteTable::clear() {
   m_symbolsVec.clear();
   m_indexMap.clear();
+}
+
+// Import
+
+/// \todo This could be optimized a lot by maybe using a hashset or hashmap idk.
+static const SourceFile& findSourceFileFromToken(const Token* importPathTokenPtr) {
+  assert(importPathTokenPtr->kind() == Token::STRING && "File path must be of 'STRING' kind.");
+
+  const auto importPath = generateImportPath(importPathTokenPtr->contents());
+
+  bool found = false;
+  const SourceFile* ret;
+
+  for (const SourceFile& sourceFile : sourceFiles) {
+    if (sourceFile.importPath() == importPath) {
+      if (found) {
+        throw compile_error::ImportError(
+            "Import failed because multiple source files share the import path " +
+                style_text::styleAsCode(importPath.string()) + '.',
+            *importPathTokenPtr);
+      }
+
+      ret = &sourceFile;
+      found = true;
+    }
+  }
+
+  return *ret;
+}
+
+Import::Import(const Token* importPathTokenPtr)
+    : m_importPathTokenPtr(importPathTokenPtr),
+      m_sourceFile(findSourceFileFromToken(importPathTokenPtr)) {}
+
+const Token& Import::importPathToken() const { return *m_importPathTokenPtr; }
+
+const SourceFile& Import::sourceFile() const { return m_sourceFile; }
+
+const std::filesystem::path& Import::importPath() const { return m_sourceFile.importPath(); }
+
+const std::filesystem::path& Import::actualPath() const { return m_sourceFile.path(); }
+
+// ImportTable
+
+bool ImportTable::hasSymbol(const std::filesystem::path& importPath) const {
+  return m_indexMap.count(importPath) > 0;
+}
+bool ImportTable::hasSymbol(const Import& symbol) const { return hasSymbol(symbol.importPath()); }
+
+const Import& ImportTable::getSymbol(const std::filesystem::path& importPath) const {
+  assert(hasSymbol(importPath) && "Called 'getSymbol()' when symbol isn't in table (str param).");
+  return m_symbolsVec[m_indexMap.at(importPath)];
+}
+const Import& ImportTable::getSymbol(const Import& symbol) const {
+  assert(hasSymbol(symbol) && "Called 'getSymbol()' when symbol isn't in table (symbol param).");
+  return getSymbol(symbol.importPath());
+}
+
+void ImportTable::merge(Import&& newSymbol) {
+  if (!hasSymbol(newSymbol)) {
+    m_indexMap[newSymbol.importPath()] = m_symbolsVec.size();
+    m_symbolsVec.emplace_back(std::move(newSymbol));
+  }
+}
+
+void ImportTable::clear() {
+  m_symbolsVec.clear();
+  m_indexMap.clear();
+}
+
+// NamespaceExpose
+
+NamespaceExpose::NamespaceExpose() : m_exposedNamespaceTokenPtr(nullptr) {}
+
+void NamespaceExpose::set(const Token* exposedNamespaceTokenPtr) {
+  assert(exposedNamespaceTokenPtr != nullptr && "Don't reset the namespace with nullptr.");
+  assert(exposedNamespaceTokenPtr->kind() == Token::STRING &&
+         "Namespace token should be of 'STRING' kind.");
+
+  if (isSet()) {
+    throw compile_error::DeclarationConflict("The namespace was exposed multiple times.",
+                                             *m_exposedNamespaceTokenPtr,
+                                             *exposedNamespaceTokenPtr);
+  }
+
+  const std::string& namespaceStr = exposedNamespaceTokenPtr->contents();
+
+  // namespace cannot be empty
+  if (namespaceStr.empty()) {
+    throw compile_error::BadString("The exposed namespace cannot be blank.",
+                                   *exposedNamespaceTokenPtr);
+  }
+
+  // namespace can only contain certain characters
+  for (const char c : namespaceStr) {
+    if (!std::isalnum(c) && c != '_' && c != '.' && c != '-') {
+      if (std::isprint(c)) {
+        throw compile_error::BadString("The exposed namespace contains invalid character " +
+                                           style_text::styleAsCode(c) + '.',
+                                       *exposedNamespaceTokenPtr);
+      }
+      throw compile_error::BadString("The exposed namespace contains invalid character.",
+                                     *exposedNamespaceTokenPtr);
+    }
+  }
+
+  // namespace can't start with the hidden namespace prefix
+  if (namespaceStr.find(hiddenNamespacePrefix) == 0) {
+    throw compile_error::BadString(
+        "The exposed namespace cannot begin with the hidden namespace prefix " +
+            style_text::styleAsCode(hiddenNamespacePrefix) + '.',
+        *exposedNamespaceTokenPtr);
+  }
+
+  m_exposedNamespaceTokenPtr = exposedNamespaceTokenPtr;
+}
+
+bool NamespaceExpose::isSet() const { return m_exposedNamespaceTokenPtr != nullptr; }
+
+const Token& NamespaceExpose::exposedNamespaceToken() const {
+  assert(isSet() && "Can't call 'exposedNamespaceToken()' when no namespace is set.");
+  return *m_exposedNamespaceTokenPtr;
+}
+
+const std::string& NamespaceExpose::exposedNamespace() const {
+  return exposedNamespaceToken().contents();
 }

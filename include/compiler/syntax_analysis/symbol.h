@@ -81,10 +81,10 @@ public:
 
   /// Get a reference to the symbol with the name \param symbolName.
   const Function& getSymbol(const std::string& symbolName) const;
-  /// Get a reference to the symbol with the name \param symbol's name.
+  /// Get a reference to the symbol with the same name as \param symbol's name.
   const Function& getSymbol(const Function& symbol) const;
 
-  /// If the symbols is not in the table it is added. If \param newSymbol is in
+  /// If the symbol is not in the table it is added. If \param newSymbol is in
   /// the table, qualifiers (like 'tick' or 'load') are validated and any
   /// definition or expose path is also amended to the existing symbol.
   /// \throws compile_error::Generic (or a subclass of it) if there is an issue
@@ -99,6 +99,7 @@ private:
   std::unordered_map<std::string, size_t> m_indexMap;
 };
 
+/// Represents a file write operation with or without a definition.
 class FileWrite {
 public:
   /// You can set \param contentsTokenPtr to \p nullptr but you can't for
@@ -130,19 +131,18 @@ class FileWriteTable {
 public:
   FileWriteTable() = default;
 
-  /// Whether a symbol with the name \param symbolName is in the table.
-  bool hasSymbol(const std::filesystem::path& symbolName) const;
-  /// Whether a symbol with \param symbol's name is in the table.
+  /// Whether a symbol with the path \param outPath is in the table.
+  bool hasSymbol(const std::filesystem::path& outPath) const;
+  /// Whether a symbol with \param symbol's path is in the table.
   bool hasSymbol(const FileWrite& symbol) const;
 
-  /// Get a reference to the symbol with the name \param symbolName.
-  const FileWrite& getSymbol(const std::filesystem::path& symbolName) const;
-  /// Get a reference to the symbol with the name \param symbol's name.
+  /// Get a reference to the symbol with the path \param outPath.
+  const FileWrite& getSymbol(const std::filesystem::path& outPath) const;
+  /// Get a reference to the symbol with the same path as \param symbol's path.
   const FileWrite& getSymbol(const FileWrite& symbol) const;
 
-  /// If the symbols is not in the table it is added. If \param newSymbol is in
-  /// the table, qualifiers (like 'tick' or 'load') are validated and any
-  /// definition or expose path is also amended to the existing symbol.
+  /// If the symbol is not in the table it is added. If \param newSymbol is in
+  /// the table, the file cannot already be defined.
   /// \throws compile_error::Generic (or a subclass of it) if there is an issue
   /// merging \param newSymbol into the table.
   void merge(FileWrite&& newSymbol);
@@ -153,6 +153,82 @@ public:
 private:
   std::vector<FileWrite> m_symbolsVec;
   std::unordered_map<std::filesystem::path, size_t> m_indexMap;
+};
+
+/// Represents an imported file.
+class Import {
+public:
+  /// \param importPathTokenPtr cannot be null.
+  /// \note This class does not take owenership of any pointers it is given.
+  Import(const Token* importPathTokenPtr);
+
+  /// The token that holds the import path.
+  const Token& importPathToken() const;
+
+  /// The source file that the import points to.
+  const SourceFile& sourceFile() const;
+
+  /// The import file path that is being imported (reference to the
+  /// \p importPath of the source file that is being imported).
+  const std::filesystem::path& importPath() const;
+
+  /// The actual file path of the source file that is being imported (reference
+  /// to the \p path of the source file that is being imported).
+  const std::filesystem::path& actualPath() const;
+
+private:
+  const Token* m_importPathTokenPtr;
+  const SourceFile& m_sourceFile;
+
+private:
+  friend class ImportTable;
+};
+
+/// A collection of \p symbol::Import objects.
+class ImportTable {
+public:
+  ImportTable() = default;
+
+  /// Whether a symbol with the path \param importPath is in the table.
+  bool hasSymbol(const std::filesystem::path& importPath) const;
+  /// Whether a symbol with \param symbol's path is in the table.
+  bool hasSymbol(const Import& symbol) const;
+
+  /// Get a reference to the symbol with the path \param importPath.
+  const Import& getSymbol(const std::filesystem::path& importPath) const;
+  /// Get a reference to the symbol with the same path as \param symbol's path.
+  const Import& getSymbol(const Import& symbol) const;
+
+  /// If the symbol is not in the table it is added.
+  void merge(Import&& newSymbol);
+
+  /// Empties the table.
+  void clear();
+
+private:
+  std::vector<Import> m_symbolsVec;
+  std::unordered_map<std::filesystem::path, size_t> m_indexMap;
+};
+
+class NamespaceExpose {
+public:
+  NamespaceExpose();
+
+  /// Sets the namespace token. Ensures that it's valid and ensures a namespace
+  /// hasn't already been set, otherwise it throws.
+  void set(const Token* exposedNamespaceTokenPtr);
+
+  /// Whether the namespace is set at all.
+  bool isSet() const;
+
+  /// The token that holds the exposed namespace name.
+  const Token& exposedNamespaceToken() const;
+
+  /// The exposed namespace name.
+  const std::string& exposedNamespace() const;
+
+private:
+  const Token* m_exposedNamespaceTokenPtr;
 };
 
 } // namespace symbol

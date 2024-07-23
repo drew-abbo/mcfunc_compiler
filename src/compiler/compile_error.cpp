@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <system_error>
 
 #include <cli/style_text.h>
 #include <compiler/sourceFiles.h>
@@ -13,18 +14,19 @@ using namespace compile_error;
 
 /// Get this:
 ///   Error: This is an error message.
-static std::string errorMessage(const char* msg) {
+static std::string basicErrorMessage(const char* msg) {
   return style_text::styleAsError("Error: ") + msg;
 }
 static std::string basicErrorMessage(const std::string& msg) {
   return style_text::styleAsError("Error: ") + msg;
 }
 
-/// Get this:
-///   '/home/name/example/foo/src/filePath.main'.
-static std::string filePathLine(const std::filesystem::path& filePath) {
-  return style_text::styleAsCode(std::filesystem::absolute(filePath.lexically_normal()).string()) +
-         '.';
+/// Returns "(unknown file error)" in case there is an error getting the full
+/// path.
+static std::string FullPathStr(const std::filesystem::path& filePath) {
+  std::error_code ec;
+  const auto fullPath = std::filesystem::absolute(filePath.lexically_normal(), ec);
+  return (ec) ? "(unknown file error)" : fullPath.string();
 }
 
 namespace {
@@ -107,8 +109,7 @@ static std::string highlightOnLine(std::string&& line, size_t ln, size_t col,
 ///   '/home/name/example/foo/src/filePath.main:40:7' (ln 40, col 7).
 static std::string highlightedLineAndPath(const std::filesystem::path& filePath, size_t indexInFile,
                                           size_t numChars = 1) {
-  const std::string fullFilePathStr =
-      std::filesystem::absolute(filePath.lexically_normal()).string();
+  const std::string fullFilePathStr = FullPathStr(filePath);
   LnCol lnCol = getLnColFromFile(filePath, indexInFile);
 
   if (!lnCol.isValid()) {
@@ -179,7 +180,17 @@ Generic::Generic(const std::string& msg) : m_msg(msg + '\n') {}
 // CouldntOpenFile
 
 CouldntOpenFile::CouldntOpenFile(const std::filesystem::path& filePath)
-    : Generic(errorMessage("Failed to open file.") + '\n' + filePathLine(filePath)) {}
+    : Generic(basicErrorMessage("Failed to open the following file:\n") +
+              style_text::styleAsCode(FullPathStr(filePath)) + '.') {}
+
+// FilePathError
+
+ImportError::ImportError(const std::string& msg, const std::filesystem::path& filePath)
+    : Generic(basicErrorMessage(msg) + '\n' +
+              style_text::styleAsCode(filePath.string()) + '.') {}
+
+ImportError::ImportError(const std::string& msg, const Token& token)
+    : Generic(basicErrorMessage(msg) + '\n' + highlightedLineAndPath(token)) {}
 
 // SyntaxError
 

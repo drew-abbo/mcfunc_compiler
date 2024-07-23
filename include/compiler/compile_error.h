@@ -16,10 +16,11 @@
 ///
 /// \p Generic (superclass)
 /// ├── \p CouldntOpenFile
+/// ├── \p ImportError
 /// ├── \p SyntaxError (superclass)
 /// │   ├── \p BadClosingChar
 /// │   ├── \p UnknownChar
-/// │   ├── \p BadStringChar
+/// │   ├── \p BadString
 /// │   └── \p BadFilePath
 /// └── \p DeclarationConflict
 ///
@@ -44,6 +45,14 @@ public:
   explicit CouldntOpenFile(const std::filesystem::path& filePath);
 };
 
+/// Throw when there's an issue importing.
+class ImportError : public Generic {
+public:
+  explicit ImportError(const std::string& msg, const std::filesystem::path& filePath);
+
+  explicit ImportError(const std::string& msg, const Token& token);
+};
+
 /// The root exception for all syntax errors. Has an index in a file and a file
 /// path for better debug info.
 class SyntaxError : public Generic {
@@ -60,8 +69,9 @@ using BadClosingChar = SyntaxError;
 /// Throw when things like parenthesis or quotes aren't closed properly.
 using UnknownChar = SyntaxError;
 
-/// Throw when a character that is not allowed in a string appears in a string.
-using BadStringChar = SyntaxError;
+/// Throw when a string does not meet some extra requirements (like if a
+/// character that is not allowed in a string appears in a string)
+using BadString = SyntaxError;
 
 /// Throw when a file path provided is not valid.
 using BadFilePath = SyntaxError;
