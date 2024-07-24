@@ -48,9 +48,13 @@ public:
 
   const Token& exposeAddressStrToken() const;
 
+  void setExposeAddressStrToken(const Token* exposeAddressStrToken);
+
   bool isDefined() const;
 
   const statement::Scope& definition() const;
+
+  void setDefinition(std::optional<statement::Scope>&& definition);
 
 private:
   const Token* m_nameTokenPtr;

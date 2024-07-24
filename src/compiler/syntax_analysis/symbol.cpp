@@ -64,11 +64,21 @@ const Token& Function::exposeAddressStrToken() const {
   return *m_nameTokenPtr;
 }
 
+void Function::setExposeAddressStrToken(const Token* exposeAddressStrTokenPtr) {
+  assert(!isExposed() && "Overriding non-null expose address.");
+  m_exposeAddressTokenPtr = exposeAddressStrTokenPtr;
+}
+
 bool Function::isDefined() const { return m_definition.has_value(); }
 
 const statement::Scope& Function::definition() const {
   assert(isDefined() && "bad call to 'definition()'.");
   return m_definition.value();
+}
+
+void Function::setDefinition(std::optional<statement::Scope>&& definition) {
+  assert(!isDefined() && "Overriding non-null definition.");
+  m_definition = definition;
 }
 
 // FunctionTable
