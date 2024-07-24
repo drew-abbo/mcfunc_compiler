@@ -23,7 +23,7 @@ Function::Function(const Token* nameTokenPtr, const Token* publicTokenPtr,
                    const Token* exposeAddressTokenPtr, std::optional<statement::Scope>&& definition)
     : m_nameTokenPtr(nameTokenPtr), m_publicTokenPtr(publicTokenPtr), m_tickTokenPtr(tickTokenPtr),
       m_loadTokenPtr(loadTokenPtr), m_exposeAddressTokenPtr(exposeAddressTokenPtr),
-      m_definition(definition) {
+      m_definition(std::move(definition)) {
   assert(nameTokenPtr != nullptr && "Name token can't be 'nullptr'.");
 }
 
@@ -78,7 +78,7 @@ const statement::Scope& Function::definition() const {
 
 void Function::setDefinition(std::optional<statement::Scope>&& definition) {
   assert(!isDefined() && "Overriding non-null definition.");
-  m_definition = definition;
+  m_definition = std::move(definition);
 }
 
 // FunctionTable

@@ -35,6 +35,12 @@ protected:
   /// \warning Don't explicitly create instances of this, it's a base class.
   Generic(size_t firstTokenIndex, size_t numTokens);
 
+  /// Statements should not be copied.
+  Generic(const Generic&) = delete;
+  Generic& operator=(const Generic&) = delete;
+  Generic(Generic&&) = default;
+  Generic& operator=(Generic&&) = default;
+
 public:
   virtual ~Generic() = default;
 
