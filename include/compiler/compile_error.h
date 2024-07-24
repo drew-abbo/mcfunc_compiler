@@ -21,7 +21,8 @@
 /// │   ├── \p BadClosingChar
 /// │   ├── \p UnknownChar
 /// │   ├── \p BadString
-/// │   └── \p BadFilePath
+/// │   ├── \p BadFilePath
+/// │   └── \p UnexpectedToken
 /// └── \p DeclarationConflict
 ///
 /// A newline is added to the end of all \p msg parameters.
@@ -75,6 +76,9 @@ using BadString = SyntaxError;
 
 /// Throw when a file path provided is not valid.
 using BadFilePath = SyntaxError;
+
+/// Throw when an unexpected token appears.
+using UnexpectedToken = SyntaxError;
 
 /// Throw when 2 declarations do not match or when something is redefined.
 class DeclarationConflict : public Generic {
