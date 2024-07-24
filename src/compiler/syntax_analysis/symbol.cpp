@@ -242,7 +242,8 @@ void FileWriteTable::clear() {
 static const SourceFile& findSourceFileFromToken(const Token* importPathTokenPtr) {
   assert(importPathTokenPtr->kind() == Token::STRING && "File path must be of 'STRING' kind.");
 
-  const std::filesystem::path importPath = generateImportPath(importPathTokenPtr->contents());
+  const std::filesystem::path importPath =
+      generateImportPath(filePathFromToken(importPathTokenPtr));
 
   bool found = false;
   const SourceFile* ret;
