@@ -21,7 +21,7 @@ FunctionCall::FunctionCall(size_t firstTokenIndex) : Generic(firstTokenIndex, 4)
 
 Kind FunctionCall::kind() const { return Kind::FUNCTION_CALL; }
 
-size_t FunctionCall::functionNameTokenIndex() const { return 0; }
+size_t FunctionCall::functionNameTokenIndex() const { return m_firstTokenIndex + 0; }
 
 // Command
 
@@ -33,7 +33,7 @@ Command::Command(size_t firstTokenIndex, size_t numTokens,
 
 Kind Command::kind() const { return Kind::COMMAND; }
 
-size_t Command::commmandContentsTokenIndex() const { return 0; }
+size_t Command::commmandContentsTokenIndex() const { return m_firstTokenIndex + 0; }
 
 bool Command::hasStatementAfterRun() const { return m_statementPtr != nullptr; }
 

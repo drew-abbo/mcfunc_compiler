@@ -56,12 +56,12 @@ bool Function::isExposed() const { return m_exposeAddressTokenPtr != nullptr; }
 
 const std::string& Function::exposeAddressStr() const {
   assert(isExposed() && "bad call to 'exposeAddress()'.");
-  return m_nameTokenPtr->contents();
+  return m_exposeAddressTokenPtr->contents();
 }
 
 const Token& Function::exposeAddressStrToken() const {
   assert(isExposed() && "bad call to 'exposeAddressToken()'.");
-  return *m_nameTokenPtr;
+  return *m_exposeAddressTokenPtr;
 }
 
 void Function::setExposeAddressStrToken(const Token* exposeAddressStrTokenPtr) {
