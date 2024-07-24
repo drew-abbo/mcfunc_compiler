@@ -135,12 +135,15 @@ static std::string highlightedLineAndPath(const Token& token) {
   case Token::R_BRACE:
   case Token::ASSIGN:
   case Token::COMMAND_PAUSE:
+  case Token::COMMAND:
     numChars = 1;
     break;
 
   case Token::STRING:
   case Token::SNIPPET:
-  case Token::COMMAND:
+    numChars = token.contents().size() + 2;
+    break;
+
   case Token::WORD:
     numChars = token.contents().size();
     break;
