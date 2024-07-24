@@ -1,28 +1,18 @@
+#include "compiler/syntax_analysis/statement.h"
+#include <cassert>
 #include <cstdlib>
-#include <filesystem>
 #include <iostream>
-#include <cstdlib>
+#include <memory>
+#include <vector>
 
 #include <compiler/compile_error.h>
 #include <compiler/sourceFiles.h>
+#include <compiler/syntax_analysis/analyzeSyntax.h>
 #include <compiler/tokenization/Token.h>
 #include <compiler/tokenization/tokenize.h>
 
-int main() {
-
-  sourceFiles.emplace_back(std::filesystem::path(".") / "test.mcfunc");
-
-  // try and tokenize the file
-  try {
-    tokenize(sourceFiles.size() - 1);
-  } catch (const compile_error::Generic& e) {
-    std::cout << e.what();
-    return EXIT_FAILURE;
-  }
-
-  const auto& tokens = sourceFiles.back().tokens();
-
-  // print tokens in a somewhat readable way
+// print tokens in a somewhat readable way
+void printTokens(const std::vector<Token> tokens) {
   std::string indent;
   for (const auto& t : tokens) {
     std::cout << tokenDebugStr(t);
@@ -37,5 +27,127 @@ int main() {
     } else
       std::cout << ' ';
   }
+}
 
+void printStatement(const std::unique_ptr<statement::Generic>& statement,
+                    const SourceFile& sourceFile, std::string indent) {
+  switch (statement->kind()) {
+
+  case statement::Kind::FUNCTION_CALL: {
+    const auto& funcPtr = dynamic_cast<statement::FunctionCall*>(statement.get());
+
+    const std::string funcName = sourceFile.tokens()[funcPtr->functionNameTokenIndex()].contents();
+    std::cout << indent << funcName << "();\n";
+    break;
+  }
+
+  case statement::Kind::COMMAND: {
+    const auto& cmdPtr = dynamic_cast<statement::Command*>(statement.get());
+
+    const std::string commandContents =
+        sourceFile.tokens()[cmdPtr->commmandContentsTokenIndex()].contents();
+
+    std::cout << indent << '/' << commandContents;
+
+    if (cmdPtr->hasStatementAfterRun()) {
+      std::cout << ":\n";
+      printStatement(cmdPtr->statementAfterRun(), sourceFile, indent + "  ");
+    } else
+      std::cout << ";\n";
+    break;
+  }
+
+  case statement::Kind::SCOPE: {
+    const auto& scopePtr = dynamic_cast<statement::Scope*>(statement.get());
+    std::cout << indent << "{";
+    if (scopePtr->numTokens() == 2) {
+      std::cout << "}\n";
+      break;
+    }
+    std::cout << "\n";
+    for (const auto& subStatement : scopePtr->statements())
+      printStatement(subStatement, sourceFile, indent + "  ");
+    std::cout << indent << "}\n";
+    break;
+  }
+  }
+}
+
+void reconstructSyntaxAndPrint(const SourceFile& sourceFile) {
+  // namespace
+  if (sourceFile.namespaceExposeSymbol().isSet())
+    std::cout << "expose \"" << sourceFile.namespaceExposeSymbol().exposedNamespace() << "\";\n\n";
+
+  // imports
+  for (const auto& symbol : sourceFile.importSymbolTable()) {
+    std::cout << "import \"" << symbol.importPathToken().contents()
+              << "\";\t// file: " << symbol.actualPath() << ", import as " << symbol.importPath()
+              << "\n";
+  }
+  std::cout << '\n';
+
+  // file writes
+  for (const auto& symbol : sourceFile.fileWriteSymbolTable()) {
+    std::cout << "// file: " << symbol.relativeOutPath() << "\n"
+              << "file \"" << symbol.relativeOutPathToken().contents() << "\"";
+    if (symbol.hasContents()) {
+      const char contentStrChar = ((symbol.contentsToken().kind() == Token::STRING) ? '"' : '`');
+      std::cout << " = " << contentStrChar << symbol.contents() << contentStrChar;
+    }
+    std::cout << ";\n\n";
+  }
+
+  for (const auto& symbol : sourceFile.functionSymbolTable()) {
+    if (symbol.isPublic())
+      std::cout << "public ";
+    if (symbol.isTickFunc())
+      std::cout << "tick ";
+    if (symbol.isLoadFunc())
+      std::cout << "load ";
+    std::cout << "void " << symbol.name() << "()";
+    if (symbol.isExposed())
+      std::cout << " expose \"" << symbol.exposeAddressStr() << "\"";
+
+    if (!symbol.isDefined()) {
+      std::cout << ";\n\n";
+      continue;
+    }
+
+    std::cout << " {\n";
+    for (const auto& subStatement : symbol.definition().statements()) {
+      printStatement(subStatement, sourceFile, "  ");
+    }
+    std::cout << "}\n\n";
+  }
+}
+
+int main() {
+
+  // so that the imports in the test file don't cause errors
+  sourceFiles.emplace_back("dummy_import_1.mcfunc");
+  sourceFiles.emplace_back("dummy_import_2.mcfunc");
+  sourceFiles.emplace_back("dummy_import_3.mcfunc");
+
+  sourceFiles.emplace_back("test.mcfunc");
+
+  // try and tokenize the file
+  try {
+    tokenize(sourceFiles.size() - 1);
+  } catch (const compile_error::Generic& e) {
+    std::cout << "TOKENIZATION FAILED" << std::endl;
+    std::cout << e.what();
+    return EXIT_FAILURE;
+  }
+
+  // try and do syntax analysis the file
+  try {
+    analyzeSyntax(sourceFiles.size() - 1);
+  } catch (const compile_error::Generic& e) {
+    std::cout << "SYNTAX ANALYSIS FAILED" << std::endl;
+    std::cout << e.what();
+    return EXIT_FAILURE;
+  }
+
+  // printTokens(sourceFiles.back().tokens());
+  reconstructSyntaxAndPrint(sourceFiles.back());
 }
