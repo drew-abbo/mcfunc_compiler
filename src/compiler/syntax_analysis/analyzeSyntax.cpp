@@ -13,9 +13,6 @@
 #include <compiler/syntax_analysis/symbol.h>
 #include <compiler/tokenization/Token.h>
 
-// REMOVE
-#include <iostream>
-
 namespace {
 namespace helper {
 
@@ -291,8 +288,6 @@ static void helper::forceMatchToken(const std::vector<Token>& tokens, size_t ind
 
 std::unique_ptr<statement::Generic> helper::collectStatement(const std::vector<Token>& tokens,
                                                              size_t firstIndex) {
-
-  std::cout << firstIndex << std::endl;
   switch (tokens[firstIndex].kind()) {
 
   // command (e.g. '/say hi;' or '/execute as @a run: foo();')
