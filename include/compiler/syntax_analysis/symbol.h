@@ -4,10 +4,10 @@
 #ifndef SYMBOL_H
 #define SYMBOL_H
 
+#include <filesystem>
 #include <optional>
 #include <string>
 #include <unordered_map>
-#include <filesystem>
 
 #include <compiler/syntax_analysis/statement.h>
 #include <compiler/tokenization/Token.h>
@@ -98,6 +98,12 @@ public:
   /// Empties the table.
   void clear();
 
+  /// Enables iteration.
+  auto begin() { return m_symbolsVec.begin(); }
+  auto begin() const { return m_symbolsVec.cbegin(); }
+  auto end() { return m_symbolsVec.end(); }
+  auto end() const { return m_symbolsVec.cend(); }
+
 private:
   std::vector<Function> m_symbolsVec;
   std::unordered_map<std::string, size_t> m_indexMap;
@@ -154,6 +160,12 @@ public:
   /// Empties the table.
   void clear();
 
+  /// Enables iteration.
+  auto begin() { return m_symbolsVec.begin(); }
+  auto begin() const { return m_symbolsVec.cbegin(); }
+  auto end() { return m_symbolsVec.end(); }
+  auto end() const { return m_symbolsVec.cend(); }
+
 private:
   std::vector<FileWrite> m_symbolsVec;
   std::unordered_map<std::filesystem::path, size_t> m_indexMap;
@@ -189,6 +201,7 @@ private:
 };
 
 /// A collection of \p symbol::Import objects.
+
 class ImportTable {
 public:
   ImportTable() = default;
@@ -208,6 +221,12 @@ public:
 
   /// Empties the table.
   void clear();
+
+  /// Enables iteration.
+  auto begin() { return m_symbolsVec.begin(); }
+  auto begin() const { return m_symbolsVec.cbegin(); }
+  auto end() { return m_symbolsVec.end(); }
+  auto end() const { return m_symbolsVec.cend(); }
 
 private:
   std::vector<Import> m_symbolsVec;
