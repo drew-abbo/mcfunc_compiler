@@ -305,7 +305,7 @@ static size_t helper::getStringContentLength(const std::string& str, size_t i,
       if (str[j] != ' ' && std::isspace(str[j])) {
         if (str[j] == '\n') {
           throw compile_error::BadClosingChar("Expected closing quote before end of line.", i,
-                                              sourceFiles[sourceFileIndex].path(), j - i);
+                                              sourceFiles[sourceFileIndex].path(), (j - i) + 1);
         }
         throw compile_error::BadString("This character isn't allowed in a string.", j,
                                        sourceFiles[sourceFileIndex].path(), 1);
@@ -322,6 +322,7 @@ static size_t helper::getStringContentLength(const std::string& str, size_t i,
     if (str[endOfLineIndex] == '\n')
       break;
   }
+  endOfLineIndex++;
   throw compile_error::BadClosingChar("Missing closing quote.", i,
                                       sourceFiles[sourceFileIndex].path(), endOfLineIndex - i);
 }

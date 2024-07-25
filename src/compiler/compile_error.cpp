@@ -65,7 +65,7 @@ static LnCol getLnColFromFile(const std::filesystem::path& filePath, size_t inde
     i += lineLen;
   }
 
-  ret.line = line;
+  ret.line = std::move(line);
   return ret;
 }
 
@@ -77,6 +77,9 @@ static std::string highlightOnLine(std::string&& line, size_t ln, size_t col,
   // line must end with newline
   if (line.empty() || line.back() != '\n')
     line.push_back('\n');
+
+  if (numChars - 1 > line.size() - col)
+    numChars = (line.size() - col) + 1;
 
   // highlight the selected section in red
   if ((col - 1) + numChars <= line.size())
