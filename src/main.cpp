@@ -1,5 +1,5 @@
-#include "compiler/syntax_analysis/statement.h"
 #include <cassert>
+#include <chrono>
 #include <cstdlib>
 #include <iostream>
 #include <memory>
@@ -10,6 +10,7 @@
 #include <compiler/syntax_analysis/analyzeSyntax.h>
 #include <compiler/tokenization/Token.h>
 #include <compiler/tokenization/tokenize.h>
+#include <compiler/syntax_analysis/statement.h>
 
 // print tokens in a somewhat readable way
 void printTokens(const std::vector<Token> tokens) {
@@ -123,6 +124,8 @@ void reconstructSyntaxAndPrint(const SourceFile& sourceFile) {
 
 int main() {
 
+  auto startTime = std::chrono::high_resolution_clock::now();
+
   // so that the imports in the test file don't cause errors
   sourceFiles.emplace_back("dummy_import_1.mcfunc");
   sourceFiles.emplace_back("dummy_import_2.mcfunc");
@@ -148,6 +151,14 @@ int main() {
     return EXIT_FAILURE;
   }
 
+  auto endTime = std::chrono::high_resolution_clock::now();
+
   // printTokens(sourceFiles.back().tokens());
   reconstructSyntaxAndPrint(sourceFiles.back());
+
+  // print the time it took
+  std::chrono::duration<double> timeTaken = endTime - startTime;
+  auto timeTakenMil = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+  std::cout << "Compile time: " << timeTaken.count() << " seconds (" << timeTakenMil.count()
+            << " milliseconds)." << std::endl;
 }
