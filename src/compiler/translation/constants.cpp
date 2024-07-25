@@ -1,3 +1,3 @@
 #include <compiler/translation/constants.h>
 
-const char* hiddenNamespacePrefix = "zzz__.";
+const char* const hiddenNamespacePrefix = "zzz__.";

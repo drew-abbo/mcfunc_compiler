@@ -5,6 +5,6 @@
 
 /// This string prepended to the exposed namespace is used as the namespace for
 /// anything that is not explicitly exposed.
-extern const char* hiddenNamespacePrefix;
+extern const char* const hiddenNamespacePrefix;
 
 #endif // CONSTANTS_H

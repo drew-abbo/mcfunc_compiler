@@ -25,6 +25,13 @@ Function::Function(const Token* nameTokenPtr, const Token* publicTokenPtr,
       m_loadTokenPtr(loadTokenPtr), m_exposeAddressTokenPtr(exposeAddressTokenPtr),
       m_definition(std::move(definition)) {
   assert(nameTokenPtr != nullptr && "Name token can't be 'nullptr'.");
+  assert(nameTokenPtr->contents().size() > 0 && "Name token can't lack contents.");
+
+  if (nameTokenPtr->contents()[0] >= '0' && nameTokenPtr->contents()[0] <= '9') {
+    throw compile_error::NameError("Function names cannot start with a digit.",
+                                   nameTokenPtr->indexInFile(), nameTokenPtr->sourceFile().path(),
+                                   1);
+  }
 }
 
 bool Function::isPublic() const { return m_publicTokenPtr != nullptr; };
@@ -262,10 +269,9 @@ static const SourceFile& findSourceFileFromToken(const Token* importPathTokenPtr
     }
   }
   if (!found) {
-    throw compile_error::ImportError(
-        "Import failed because no source file has the import path " +
-            style_text::styleAsCode(importPath.string()) + '.',
-        *importPathTokenPtr);
+    throw compile_error::ImportError("Import failed because no source file has the import path " +
+                                         style_text::styleAsCode(importPath.string()) + '.',
+                                     *importPathTokenPtr);
   }
   if (ret == &importPathTokenPtr->sourceFile())
     throw compile_error::ImportError("A source file cannot import itself.", *importPathTokenPtr);
