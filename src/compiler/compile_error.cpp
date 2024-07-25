@@ -45,10 +45,12 @@ struct LnCol {
 static LnCol getLnColFromFile(const std::filesystem::path& filePath, size_t indexInFile) {
   LnCol ret;
 
-  std::ifstream file(filePath);
-  if (!file.is_open()) {
+  if (!std::filesystem::is_regular_file(filePath))
     return ret;
-  }
+
+  std::ifstream file(filePath);
+  if (!file.is_open())
+    return ret;
 
   size_t i = 0;
 
