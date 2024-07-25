@@ -1,5 +1,6 @@
-#include <filesystem>
 #include <gtest/gtest.h>
+
+#include <filesystem>
 #include <vector>
 
 #include <compiler/compile_error.h>
@@ -13,12 +14,13 @@
   {                                                                                                \
     const auto _tmpPath = std::filesystem::path(".") / _path;                                      \
     ASSERT_TRUE(std::filesystem::exists(_tmpPath))                                                 \
-        << "The test path must exist but " << _tmpPath << " doesn't.";                             \
+        << "The test path must exist but " << _tmpPath                                             \
+        << " doesn't (assertion in 'ADD_SOURCE_FILE' macro).";                                     \
     sourceFiles.push_back(SourceFile(std::move(_tmpPath)));                                        \
   }
 
 // test a file that cannot be opened
-TEST(test_bad_file, test_tokenize) {
+TEST(test_tokenize, test_bad_file) {
 
   sourceFiles.push_back(SourceFile("thisFileVeryLikelyDoesntExist.txt"));
   ASSERT_THROW(tokenize(sourceFiles.size() - 1), compile_error::CouldntOpenFile)
@@ -34,7 +36,7 @@ TEST(test_bad_file, test_tokenize) {
 }
 
 // test a valid file
-TEST(test_valid_file, test_tokenize) {
+TEST(test_tokenize, test_valid_file) {
 
   ADD_SOURCE_FILE("tests" / "compiler" / "tokenization" / "test_token_test_file1.mcfunc");
 
@@ -155,7 +157,7 @@ TEST(test_valid_file, test_tokenize) {
 }
 
 // test some bad syntax
-TEST(test_valid_file_bad_syntax, test_tokenize) {
+TEST(test_tokenize, test_valid_file_bad_syntax) {
 
   const std::vector<std::filesystem::path> goodFilePathsBadSyntaxFiles = {
       std::filesystem::path("tests") / "compiler" / "tokenization" / "test_token_test_file2.mcfunc",
@@ -176,3 +178,5 @@ TEST(test_valid_file_bad_syntax, test_tokenize) {
         << "Syntax invalid in '" << path << "' but 'tokenize()' didn't throw.";
   }
 };
+
+#undef ADD_SOURCE_FILE
