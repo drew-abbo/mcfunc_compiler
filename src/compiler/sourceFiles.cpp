@@ -7,8 +7,6 @@
 #include <compiler/sourceFiles.h>
 #include <compiler/tokenization/Token.h>
 
-static const UniqueID globalLibraryID = UniqueID(UniqueID::Kind::LIBRARY);
-
 // SourceFile
 
 SourceFile::SourceFile(const std::filesystem::path& filePath,

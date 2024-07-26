@@ -8,10 +8,9 @@
 class UniqueID {
 public:
   enum class Kind : char {
-    SOURCE_FILE = 'S',
-    LIBRARY = 'L',
-    FUNCTION = 'F',
-    FILE_WRITE = 'W',
+    SOURCE_FILE = 's',
+    FUNCTION = 'f',
+    FILE_WRITE = 'w',
   };
 
 public:
@@ -20,7 +19,7 @@ public:
   /// \param kind The kind of object that this ID is for.
   UniqueID(Kind kind);
 
-  /// String representation of this ID (e.g. 'S_00001' is a \p SOURCE_FILE ID).
+  /// String representation of this ID (e.g. 's_00001' is a \p SOURCE_FILE ID).
   const char* str() const;
 
   /// The kind/type of this ID (e.g. \p SOURCE_FILE ).

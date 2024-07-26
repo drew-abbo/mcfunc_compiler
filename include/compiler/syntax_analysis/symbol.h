@@ -44,11 +44,13 @@ public:
 
   bool isExposed() const;
 
-  const std::string& exposeAddressStr() const;
+  const std::string& exposeAddress() const;
 
-  const Token& exposeAddressStrToken() const;
+  const Token& exposeAddressToken() const;
 
-  void setExposeAddressStrToken(const Token* exposeAddressStrToken);
+  void setExposeAddressToken(const Token* exposeAddressStrToken);
+
+  const std::filesystem::path& exposeAddressPath() const;
 
   bool isDefined() const;
 
@@ -62,6 +64,7 @@ private:
   const Token* m_tickTokenPtr;
   const Token* m_loadTokenPtr;
   const Token* m_exposeAddressTokenPtr;
+  std::filesystem::path m_exposeAddressPath;
   std::optional<statement::Scope> m_definition;
 
 private:

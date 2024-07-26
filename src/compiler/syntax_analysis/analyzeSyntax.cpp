@@ -132,7 +132,7 @@ void analyzeSyntax(size_t sourceFileIndex) {
       // function is exposed (e.g. 'void foo() expose "foo";')
       if (tokens[i].kind() == Token::EXPOSE_KW) {
         helper::forceMatchToken(tokens, i + 1, {Token::STRING});
-        thisSymbol.setExposeAddressStrToken(&tokens[i + 1]);
+        thisSymbol.setExposeAddressToken(&tokens[i + 1]);
         i += 2; // set to index of definition or ending semicolon
         helper::forceMatchToken(tokens, i, {Token::L_BRACE, Token::SEMICOLON});
       }

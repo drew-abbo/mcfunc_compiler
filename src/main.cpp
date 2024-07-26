@@ -107,7 +107,7 @@ void reconstructSyntaxAndPrint(const SourceFile& sourceFile) {
       std::cout << "load ";
     std::cout << "void " << symbol.name() << "()";
     if (symbol.isExposed())
-      std::cout << " expose \"" << symbol.exposeAddressStr() << "\"";
+      std::cout << " expose \"" << symbol.exposeAddress() << "\"";
 
     if (!symbol.isDefined()) {
       std::cout << ";\n\n";

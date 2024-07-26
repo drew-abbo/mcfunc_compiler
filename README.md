@@ -264,12 +264,10 @@ void myFunction() expose "hello_world" {
 > contain letters `a`-`z`, digits `0`-`9`, underscores `_`, dots `.`, and dashes
 > `-` (although it's recommended that you avoid dots `.` and dashes `-`) with
 > slashes `/` separating each element (e.g. `"foo/bar/baz"`). An element cannot
-> be named with only dots `.` (e.g. `"..."` is invalid). Every slash `/` must
-> have an element around it.
-> 
-> The `expose` keyword does not need to appear for an exposed function's
-> definition if it has already appeared on a declaration (and vice versa). This
-> is valid:
+> be named `.` or `..`. Every slash `/` must have an element on either side of
+> it.
+>
+> The `expose` keyword can only appear on one of a function's declarations:
 > 
 > ```mcfunc
 > void myFunction() expose "hello_world";
@@ -299,9 +297,9 @@ void sayHelloWorld5Times() {
 > [!TIP]
 > Functions do not need to be declared before they are called.
 
-The `tick` keyword means that function should be placed in the `#minecraft:tick`
-function tag. The same is true for the `load` keyword and the `#minecraft:load`
-function tag.
+The `tick` keyword means that a function should be placed in the
+`#minecraft:tick` function tag. The same is true for the `load` keyword and the
+`#minecraft:load` function tag.
 
 ```mcfunc
 tick void tickFunction() {
@@ -314,9 +312,6 @@ load void loadFunction() {
 ```
 
 > [!NOTE]
-> `tick` functions run before `load` functions. This may cause problems if a
-> `tick` function relies on things a `load` function sets up.
-> 
 > The `tick` and `load` keywords can both be applied to the same function. They
 > must appear before the return type (e.g. `void tick` is invalid). They also
 > must appear on every declaration/definition of a function.
@@ -338,6 +333,10 @@ void giveStuff() {
   /give @s shield 1;
 }
 ```
+
+> [!NOTE]
+> There must be at least one whitespace character before and after `run:` and
+> it must appear outside of any parenthesis or strings.
 
 Instead of calling a function, you can also open a scope after `run:`. This
 allows you to run multiple commands after a `run` argument without defining a
@@ -384,8 +383,7 @@ Directly writing a file's contents can be done with an equal sign `=` and the
 file's contents as a snippet in backticks <code>&#96;</code>.
 
 ```mcfunc
-file "loot_table/my_loot_table.json" =
-`{
+file "loot_table/my_loot_table.json" = `{
   "pools": [{
     "rolls": 1,
     "entries": [{ "type": "minecraft:item", "name": "minecraft:stone" }]
@@ -409,14 +407,14 @@ file "loot_table/my_loot_table_1.json" = "my_loot_table_1.json";
 
 ### Imports
 
-You can import members of other MCFunc files into this data pack with the
-`import` keyword.
+You can import functions from other MCFunc files and use them in the current one
+with the `import` keyword.
 
 ```mcfunc
 import "foo.mcfunc";
 ```
 
-Importing a file allows you to use all members of that file that are marked as
+Importing a file allows you to use any functions that file has marked as
 `public`.
 
 ```mcfunc
@@ -433,19 +431,36 @@ void bar() {
 }
 ```
 
+Functions marked as `public` are global. This means that if file `a` and file
+`b` both define a public function `foo` (`public` keyword used) there will be a
+conflict (even if there's no importing between the two).
+
+On the other hand, if multiple files both define a non-public function `foo`
+(`public` keyword not used) then there will not be a conflict (even if there is
+importing between them) so long as a *public* function `foo` is never declared.
+
+The advantage of this is that you can split a function's declaration from its
+definition and have a clean interface file for a library or API (like a C header
+file):
+
+```mcfunc
+// doSomethingComplicated.mcfunc
+
+public void doSomethingComplicated();
+```
+
+```mcfunc
+// doSomethingComplicated_impl.mcfunc
+
+public void doSomethingComplicated() {
+  // big complicated implementation goes here
+}
+```
+
 > [!NOTE]
-> File members declared without the `public` keyword must be defined in the same
-> file. File members declared as `public` do not need to be defined in the same
-> file that they are declared in (e.g. `foo()` can be declared in `a` and
-> defined in `b` (even if there is no importing between `a` and `b`) so long as
-> `foo()` is public).
-> 
 > The `private` keyword must appear before the return type (e.g. `void private`
-> is invalid). It also must appear on every declaration/definition of a member.
-> 
-> Files imported by imported files are not accessible in an importing file (e.g.
-> if `a` imports `b` and `b` imports `c`, members of `c` cannot be used in `a`
-> unless `a` also imports `c`).
+> is invalid). It also must appear on every declaration/definition of a
+> function.
 
 ---
 

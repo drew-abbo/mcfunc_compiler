@@ -23,6 +23,9 @@ Function::Function(const Token* nameTokenPtr, const Token* publicTokenPtr,
                    const Token* exposeAddressTokenPtr, std::optional<statement::Scope>&& definition)
     : m_nameTokenPtr(nameTokenPtr), m_publicTokenPtr(publicTokenPtr), m_tickTokenPtr(tickTokenPtr),
       m_loadTokenPtr(loadTokenPtr), m_exposeAddressTokenPtr(exposeAddressTokenPtr),
+      m_exposeAddressPath((exposeAddressTokenPtr == nullptr)
+                              ? ""
+                              : filePathFromToken(exposeAddressTokenPtr, false, false)),
       m_definition(std::move(definition)) {
   assert(nameTokenPtr != nullptr && "Name token can't be 'nullptr'.");
   assert(nameTokenPtr->contents().size() > 0 && "Name token can't lack contents.");
@@ -61,19 +64,26 @@ const Token& Function::nameToken() const { return *m_nameTokenPtr; }
 
 bool Function::isExposed() const { return m_exposeAddressTokenPtr != nullptr; }
 
-const std::string& Function::exposeAddressStr() const {
+const std::string& Function::exposeAddress() const {
   assert(isExposed() && "bad call to 'exposeAddress()'.");
   return m_exposeAddressTokenPtr->contents();
 }
 
-const Token& Function::exposeAddressStrToken() const {
+const Token& Function::exposeAddressToken() const {
   assert(isExposed() && "bad call to 'exposeAddressToken()'.");
   return *m_exposeAddressTokenPtr;
 }
 
-void Function::setExposeAddressStrToken(const Token* exposeAddressStrTokenPtr) {
+void Function::setExposeAddressToken(const Token* exposeAddressTokenPtr) {
   assert(!isExposed() && "Overriding non-null expose address.");
-  m_exposeAddressTokenPtr = exposeAddressStrTokenPtr;
+  assert(exposeAddressTokenPtr != nullptr && "Setting expose address with 'nullptr'.");
+  m_exposeAddressTokenPtr = exposeAddressTokenPtr;
+  m_exposeAddressPath = filePathFromToken(exposeAddressTokenPtr, false, false);
+}
+
+const std::filesystem::path& Function::exposeAddressPath() const {
+  assert(isExposed() && "bad call to 'exposeAddressPath()'.");
+  return m_exposeAddressPath;
 }
 
 bool Function::isDefined() const { return m_definition.has_value(); }
@@ -153,18 +163,19 @@ void FunctionTable::merge(Function&& newSymbol) {
         existing.nameToken(), newSymbol.nameToken());
   }
 
-  // ensure expose addresses aren't different
-  if (existing.isExposed() && newSymbol.isExposed() &&
-      existing.exposeAddressStr() != newSymbol.exposeAddressStr()) {
+  // ensure only 1 symbol has an exposed address defined
+  if (existing.isExposed() && newSymbol.isExposed()) {
     throw compile_error::DeclarationConflict(
         "Function " + style_text::styleAsCode(existing.name()) +
-            " has conflicting expose addresses.",
-        existing.exposeAddressStrToken(), newSymbol.exposeAddressStrToken());
+            " has multiple expose address definitions.",
+        existing.exposeAddressToken(), newSymbol.exposeAddressToken());
   }
 
   // merge in expose address and definition if new
-  if (!existing.isExposed() && newSymbol.isExposed())
+  if (!existing.isExposed() && newSymbol.isExposed()) {
     existing.m_exposeAddressTokenPtr = newSymbol.m_exposeAddressTokenPtr;
+    existing.m_exposeAddressPath = std::move(newSymbol.m_exposeAddressPath);
+  }
   if (!existing.isDefined() && newSymbol.isDefined())
     existing.m_definition = std::move(newSymbol.m_definition);
 }

@@ -23,6 +23,7 @@ static void throwNoDotDirException(const Token* pathTokenPtr, size_t relativeInd
 
 std::filesystem::path filePathFromToken(const Token* pathTokenPtr, bool allowUppercase,
                                         bool allowDotDir) {
+  assert(pathTokenPtr != nullptr && "Called 'filePathFromToken()' with nullptr");
   assert(pathTokenPtr->kind() == Token::STRING && "File path token must be of 'STRING' kind.");
 
   if (allowDotDir)
