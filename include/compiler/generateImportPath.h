@@ -1,7 +1,5 @@
+#pragma once
 /// \file Contains \p generateImportPath which can be used to make import paths.
-
-#ifndef GENERATEIMPORTPATH_H
-#define GENERATEIMPORTPATH_H
 
 #include <filesystem>
 
@@ -10,5 +8,3 @@
 /// \param prefix can be an empty string.
 std::filesystem::path generateImportPath(const std::filesystem::path& filePath,
                                          const std::filesystem::path& prefix = "");
-
-#endif // GENERATEIMPORTPATH_H

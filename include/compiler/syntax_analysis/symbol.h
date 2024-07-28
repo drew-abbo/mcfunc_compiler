@@ -1,8 +1,6 @@
+#pragma once
 /// \file Holds classes that represent symbols (like a function) and symbol
 /// tables (like a collection of function symbols).
-
-#ifndef SYMBOL_H
-#define SYMBOL_H
 
 #include <filesystem>
 #include <optional>
@@ -258,5 +256,3 @@ private:
 };
 
 } // namespace symbol
-
-#endif // SYMBOL_H

@@ -1,8 +1,6 @@
+#pragma once
 /// \file Contains \p analyzeSyntax which goes through a file's tokens,
 /// validates them, and generates some basic symbol tables.
-
-#ifndef ANALYZESYNTAX_H
-#define ANALYZESYNTAX_H
 
 #include <cstddef>
 
@@ -11,5 +9,3 @@
 /// \throws compile_error::Generic (or a subclass of it) when the file's syntax
 /// is invalid or if there are any early symbol table conflicts.
 void analyzeSyntax(size_t sourceFileIndex);
-
-#endif // ANALYZESYNTAX_H

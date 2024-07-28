@@ -1,7 +1,5 @@
+#pragma once
 /// \file Contains the \p sourceFiles variable and the \p SourceFile type.
-
-#ifndef SOURCEFILES_H
-#define SOURCEFILES_H
 
 #include <filesystem>
 #include <vector>
@@ -82,5 +80,3 @@ private:
 /// tokens don't need to store an entire \p SourceFile object when they could
 /// just store an index for the file they're from.
 extern SourceFilesSingletonType& sourceFiles;
-
-#endif // SOURCEFILES_H

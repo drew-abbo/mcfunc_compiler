@@ -1,7 +1,5 @@
+#pragma once
 /// \file Contains the \p UniqueID type.
-
-#ifndef UNIQUEID_H
-#define UNIQUEID_H
 
 #include <cstdint>
 
@@ -40,5 +38,3 @@ private:
 };
 
 static_assert(sizeof(UniqueID) == sizeof(uint64_t));
-
-#endif // UNIQUEID_H

@@ -1,5 +1,6 @@
-#ifndef STYLE_TEXT_H
-#define STYLE_TEXT_H
+#pragma once
+/// \file Defines functions and constants for styling strings that will be
+// printed.
 
 #include <string>
 
@@ -22,5 +23,3 @@ std::string styleAsWarning(const std::string& s);
 std::string styleAsWarning(char c);
 
 } // namespace style_text
-
-#endif // STYLE_TEXT_H

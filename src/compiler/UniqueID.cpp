@@ -1,8 +1,8 @@
 #include <compiler/UniqueID.h>
 
-#include <cstdint>
 #include <atomic>
 #include <cassert>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 
@@ -16,7 +16,7 @@ UniqueID::UniqueID(Kind kind) {
   const uint32_t val = getNextIdValue();
 
   // there's is a maximum ID value of 1,048,575
-  if(val > 0xfffff)
+  if (val > 0xfffff)
     std::abort();
 
   std::strcpy(m_idStr, "?_00000");

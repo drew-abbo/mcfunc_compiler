@@ -88,7 +88,7 @@ std::filesystem::path filePathFromToken(const Token* pathTokenPtr, bool allowUpp
     throwNoBacktrackingException(pathTokenPtr, 1);
 
   // look for './' at the beginning
-  if (!allowDotDir &&path.size() >= 2 && std::strncmp(path.c_str(), "./", 2) == 0)
+  if (!allowDotDir && path.size() >= 2 && std::strncmp(path.c_str(), "./", 2) == 0)
     throwNoDotDirException(pathTokenPtr, 1);
 
   // no backtracking at the end of the directory

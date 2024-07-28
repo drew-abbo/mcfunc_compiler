@@ -1,7 +1,5 @@
+#pragma once
 /// \file Contains \p tokenize() which converts a file to a list of tokens.
-
-#ifndef TOKENIZE_H
-#define TOKENIZE_H
 
 #include <cstddef>
 
@@ -10,5 +8,3 @@
 /// \throws compile_error::Generic (or a subclass of it) when the file's syntax
 /// is invalid or it cannot be opened.
 void tokenize(size_t sourceFileIndex);
-
-#endif // TOKENIZE_H

@@ -195,8 +195,7 @@ CouldntOpenFile::CouldntOpenFile(const std::filesystem::path& filePath)
 // FilePathError
 
 ImportError::ImportError(const std::string& msg, const std::filesystem::path& filePath)
-    : Generic(basicErrorMessage(msg) + '\n' +
-              style_text::styleAsCode(filePath.string()) + '.') {}
+    : Generic(basicErrorMessage(msg) + '\n' + style_text::styleAsCode(filePath.string()) + '.') {}
 
 ImportError::ImportError(const std::string& msg, const Token& token)
     : Generic(basicErrorMessage(msg) + '\n' + highlightedLineAndPath(token)) {}

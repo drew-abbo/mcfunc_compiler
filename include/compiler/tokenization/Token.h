@@ -1,7 +1,5 @@
+#pragma once
 /// \file Contains the \p Token type (a token is a small piece of source code).
-
-#ifndef TOKEN_H
-#define TOKEN_H
 
 #include <string>
 
@@ -79,5 +77,3 @@ private:
 
 /// Returns a string to represent the token like 'R_PAREN' or 'COMMAND(say hi)'.
 std::string tokenDebugStr(const Token& t);
-
-#endif // TOKEN_H

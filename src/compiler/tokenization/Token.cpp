@@ -16,8 +16,7 @@ Token::Token(Kind tokenKind, size_t indexInFile, size_t sourceFileIndex,
     : m_tokenKind(tokenKind), m_indexInFile(indexInFile), m_sourceFileIndex(sourceFileIndex),
       m_contents(contents) {}
 
-Token::Token(Kind tokenKind, size_t indexInFile, size_t sourceFileIndex,
-             std::string&& contents)
+Token::Token(Kind tokenKind, size_t indexInFile, size_t sourceFileIndex, std::string&& contents)
     : m_tokenKind(tokenKind), m_indexInFile(indexInFile), m_sourceFileIndex(sourceFileIndex),
       m_contents(std::move(contents)) {}
 

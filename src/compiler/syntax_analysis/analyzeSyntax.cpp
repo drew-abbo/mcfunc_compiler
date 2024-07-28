@@ -318,9 +318,9 @@ std::unique_ptr<statement::Generic> helper::collectStatement(const std::vector<T
 
   // anything else is invalid
   default:
-    throw compile_error::UnexpectedToken(
-        "Expected a statement but got " + tokenKindName(tokens[firstIndex].kind()) + '.',
-        tokens[firstIndex]);
+    throw compile_error::UnexpectedToken("Expected a statement but got " +
+                                             tokenKindName(tokens[firstIndex].kind()) + '.',
+                                         tokens[firstIndex]);
   }
 }
 

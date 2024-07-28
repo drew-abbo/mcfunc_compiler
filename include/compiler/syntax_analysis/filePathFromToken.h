@@ -1,8 +1,6 @@
+#pragma once
 /// \file Contains \p filePathFromToken which validates and returns a file path
 /// from a 'STRING' token that represents a file path.
-
-#ifndef FILEPATHFROMTOKEN_H
-#define FILEPATHFROMTOKEN_H
 
 #include <filesystem>
 
@@ -19,5 +17,3 @@
 /// 'foo/bar').
 std::filesystem::path filePathFromToken(const Token* pathTokenPtr, bool allowUppercase = true,
                                         bool allowDotDir = true);
-
-#endif // FILEPATHFROMTOKEN_H

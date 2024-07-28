@@ -1,8 +1,6 @@
+#pragma once
 /// \file Holds the \p statement namespace which has a bunch of different kinds
 /// of statement (like a function call or command).
-
-#ifndef STATEMENT_H
-#define STATEMENT_H
 
 #include <cstddef>
 #include <memory>
@@ -122,5 +120,3 @@ private:
 };
 
 } // namespace statement
-
-#endif // STATEMENT_H

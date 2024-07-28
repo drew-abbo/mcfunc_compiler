@@ -1,8 +1,6 @@
+#pragma once
 /// \file Holds the \p compile_error namespace which contains exceptions that
 /// can be thrown during compilation to stop the process.
-
-#ifndef COMPILE_ERROR_H
-#define COMPILE_ERROR_H
 
 #include <exception>
 #include <filesystem>
@@ -97,5 +95,3 @@ public:
 };
 
 } // namespace compile_error
-
-#endif // COMPILE_ERROR_H
