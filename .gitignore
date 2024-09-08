@@ -1,11 +1,96 @@
-# build directories
-build/
-release/
-
-# common dev environment things that shouldn't end up in the repo
-.vscode/
-.cache/
-.DS_Store
-
-# file to test the compiler with
+# Manual compiler testing file
 test.mcfunc
+foo.mcfunc
+bar.mcfunc
+baz.mcfunc
+
+# Personal todo lists
+TODO
+todo
+TODO.txt
+todo.txt
+TODO.md
+todo.md
+
+# Build
+[Bb]uild/
+[Dd]ebug/
+[Rr]elease/
+[Oo]ut/
+CMakeCache.txt
+CMakeSettings.json
+CMakeFiles/
+CMakeScripts/
+CMakeLists.txt.user
+Makefile
+cmake_install.cmake
+*.cmake
+*.dep
+*.log
+_deps/
+extern/
+lib/
+third_party/
+test_output/
+
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+Thumbs.db
+ehthumbs.db
+.directory
+
+# Common dev environment things
+.cache/
+.clangd/
+.clangd-server/
+.cquery/
+.ccls-cache/
+.vs/
+*.sln
+*.vcxproj
+*.vcxproj.user
+*.user
+*.suo
+*.cbp
+*.layout
+*.pro.user
+*.pro.user.*
+.idea/
+*.iml
+.cproject
+.project
+.settings/
+*.xcodeproj/
+*.xcworkspace/
+*.swp
+*~
+*.tmp
+*.temp
+*.sublime-project
+*.sublime-workspace
+.vscode/
+*.dSYM/
+
+# From the default GitHub C++ .gitignore
+*.d
+*.slo
+*.lo
+*.o
+*.obj
+*.gch
+*.pch
+*.so
+*.dylib
+*.dll
+*.mod
+*.smod
+*.lai
+*.la
+*.a
+*.lib
+*.exe
+*.out
+*.app

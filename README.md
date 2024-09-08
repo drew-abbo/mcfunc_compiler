@@ -23,6 +23,14 @@ bug-prone.
   - [Build System](#build-system)
 - [Recommended Workflow](#recommended-workflow)
 - [Building This Project From Source](#building-this-project-from-source)
+  - [Requirements](#requirements)
+  - [Python Build Script](#python-build-script)
+  - [Building With CMake](#building-with-cmake)
+  - [Running the Executables](#running-the-executables)
+  - [Using an IDE](#using-an-ide)
+    - [Visual Studio / CLion](#visual-studio--clion)
+    - [Xcode](#xcode)
+    - [VSCode](#vscode)
 
 </details>
 
@@ -630,44 +638,133 @@ separate build command (I'd recommend Python for cross platform compatibility).
 
 ## Building This Project From Source
 
-To build this project you must be using a Unix system like Linux or Mac OS (use
-[WSL](https://learn.microsoft.com/en-us/windows/wsl/install) if you're on
-Windows).
+### Requirements
 
-You need to have Python 3, CMake, Git, and either GCC or Clang installed. I'd
-recommend you have Make installed since it has been tested here but other CMake
-generators may work. Make sure your compiler is updated to work with C++ 17.
+Ensure you have [CMake](https://cmake.org) (make sure it's on the path, i.e.
+`cmake --version` works in your terminal), a CMake
+[generator](https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html),
+and a C/C++ compiler supported by CMake and your generator.
 
-You can build the project by running the [build.py](./build.py) script from the
-root project directory. This will also run all of the tests.
+Once you have the repository cloned you can build with the
+[Python build script](#python-build-script), or you can
+[build manually with CMake](#building-with-cmake). Check out
+[how to run the compiled executables](#running-the-executables) once you've
+built successfully.
+
+You can also [use an IDE](#using-an-ide) (like Visual Studio) if you'd prefer.
+
+### Python Build Script
+
+If you have Python installed you can build using the [build.py](./build.py)
+script. You may have to invoke the Python script with `python3`.
 
 ```sh
-# build the project and run all tests
-./build.py
+python build.py
 ```
 
-> [!IMPORTANT]
-> Make sure you aren't already in the build directory when you run the build
-> script.
+If you don't get an error message from the script then you're done.
 
-The build script will build the executables `mcfunc` and `run_tests` in the
-`./build` directory. You can run these executables from the root project
-directory.
+Using the Python build script you can easily switch between debug and release
+builds by adding the `--debug` and `--release` flags (debug by default). The
+script will automatically reconfigure CMake if it needs to.
 
 ```sh
-# run the main executable (debug)
+python build.py --release
+```
+
+You can add `-p` or `--parallel` to compile with all CPU cores. Keep in mind
+that this can make error messages and warnings less cohesive.
+
+```sh
+python build.py -p
+```
+
+For more help info run the script with `-h` or `--help`.
+
+> [!NOTE]
+> If you are on Windows the script will use
+> [`Visual Studio 17 2022`](https://visualstudio.microsoft.com/) as it's
+> generator. Otherwise it will use
+> [`Unix Makefiles`](https://www.gnu.org/software/make/). If you want to use
+> the Python script make sure you have the correct generator installed.
+
+### Building With CMake
+
+Start by configuring CMake in a build folder called `build`.
+
+```sh
+cmake -B build
+```
+
+> [!NOTE]
+> If you're using a single configuration generator like `Unix Makefiles` (you
+> probably are if you're on MacOS/Linux) then you can configure for release mode
+> by adding `--DCMAKE_BUILD_TYPE=Release`.
+>
+> ```sh
+> cmake -B build --DCMAKE_BUILD_TYPE=Release
+> ```
+
+Now we can build the project by running this:
+
+```sh
+cmake --build build
+```
+
+> [!NOTE]
+> If you're using a multi-configuration generator like `Visual Studio 17 2022`
+> (you probably are if you're on Windows) then you can build in release mode by
+> adding `--config Release`.
+>
+> ```sh
+> cmake --build build --config Release
+> ```
+
+### Running the Executables
+
+Successfully built executables will be in your build directory.
+
+> [!NOTE]
+> If you're on Windows using Visual Studio as your generator then your
+> executables will be in the `Debug` sub-folder of the `build` directory (or
+> `Release` if you built in release mode).
+
+You can run your compiled executable like this:
+
+On MacOS/Linux (using `Unix Makefiles` or a similar generator):
+
+```sh
 ./build/mcfunc
 ```
 
-To build in release mode run the python script with `release` as an argument.
-Build files will end up in `./release` instead of `./build`.
+On Windows (using `Visual Studio 17 2022` or a similar generator):
 
-```sh
-# build the project in release mode and run all tests
-./build.py release
+```ps1
+.\build\Debug\mcfunc.exe    # Using Visual Studio on Windows (debug)
+.\build\Release\mcfunc.exe  # Using Visual Studio on Windows (release)
 ```
 
+The same goes for the `run_tests` executable (just replace `mcfunc` with
+`run_tests`).
+
+### Using an IDE
+
+#### Visual Studio / CLion
+
+Just open the project folder with the editor. CMake should automatically be
+configured.
+
+#### Xcode
+
+To use Xcode, configure CMake and then open the `.xcodeproj` folder.
+
 ```sh
-# run the main executable (release)
-./release/mcfunc
+cmake -B build -G "Xcode"
+open build/mcfunc.xcodeproj
 ```
+
+#### VSCode
+
+You can either use the integrated terminal and the build info above or you can
+use the [CMake Tools](vscode:extension/ms-vscode.cmake-tools) extension to build
+and run with `shift+F5` (you can just build with `F7`).

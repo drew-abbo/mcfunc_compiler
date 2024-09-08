@@ -1,135 +1,122 @@
-#
-# project set up
-#
+cmake_minimum_required(VERSION 3.28)
 
-cmake_minimum_required(VERSION 3.12)
-set(CMAKE_CXX_STANDARD 17)
+#
+# Setup the project
+#
+project(
+    mcfunc # The project name
+    C CXX # The langauges this project uses
+)
+set(CMAKE_CXX_STANDARD 17) # The C++ standard
+set(INCLUDE_DIR include) # Name of the folder with header files
+set(MAIN_FILE main.cpp) # Name of the source file with 'main()'
+set(SRC_DIR src) # Name of the folder where all code lives
+option(DO_TESTING "Whether to do testing" ON) # Whether to do testing
+set(TESTS_DIR tests) # Name of the folder where all testing code lives
+
+#
+# Configuration
+#
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-project(
-    mcfunc      # project & main executable name
-    C CXX       # language(s) (C & C++)
-)
+# Main executable
+set(MAIN_EXE ${PROJECT_NAME})
+file(GLOB_RECURSE SOURCES
+    "${SRC_DIR}/*.c"
+    "${SRC_DIR}/*.cpp"
+    "${SRC_DIR}/*.cc"
+    "${SRC_DIR}/*.cxx"
+    "${SRC_DIR}/*.c++")
+list(REMOVE_ITEM SOURCES "${CMAKE_SOURCE_DIR}/${SRC_DIR}/${MAIN_FILE}")
+add_executable(${MAIN_EXE} ${SOURCES} "${SRC_DIR}/${MAIN_FILE}")
+target_include_directories(${MAIN_EXE} PRIVATE ${INCLUDE_DIR})
 
-# file paths `src/`, `include/`, and `tests/`
-set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
-set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
-set(TESTS_DIR ${CMAKE_SOURCE_DIR}/tests)
-
-# path to main file
-set(MAIN_FILE ${SRC_DIR}/main.cpp)
-
-#
-# compile flags
-#
-
-# flags that are always set
-set(COMPILE_OPTIONS
-    # -fno-exceptions             # disables exceptions
-    -Wall -Wextra -Wpedantic    # more warnings
-    -Wnon-virtual-dtor          # warns about non-virtual destructors
-    -Wcast-align                # warns about misalignments from casts
-    -Werror                     # warnings are errors that stop compilation
-)
-set(EXTRA_LIBS)
-
-# add flags depending on whether or not we're in release mode
-if(NOT CMAKE_BUILD_TYPE STREQUAL "Release")
-    list(APPEND COMPILE_OPTIONS
-        -fsanitize=undefined    # detect undefined behavior (like int overflows)
-        -fsanitize=bounds       # detect out of bounds accesses for arrays
-        -fsanitize=address      # detect memory problems (can't use w/ 'tsan')
-        # -fsanitize=thread       # detect thread problems (can't use w/ 'asan')
-    )
-    list(APPEND EXTRA_LIBS
-        -lasan                  # link address sanitizer (can't use w/ 'tsan')
-        -lubsan                 # link undefined behavior sanitizer
-        # -ltsan                  # link thread sanitizer (can't use w/ 'asan')
-    )
-else()
-    list(APPEND COMPILE_OPTIONS
-        -O3                     # agrressive optimization
-        -DNDEBUG                # enable "no debug" (stops asserts)
-    )
+# Tests executable
+if(DO_TESTING)
+    set(TESTS_EXE run_tests)
+    file(GLOB_RECURSE TESTS_SOURCES
+        "${TESTS_DIR}/*.c"
+        "${TESTS_DIR}/*.cpp"
+        "${TESTS_DIR}/*.cc"
+        "${TESTS_DIR}/*.cxx"
+        "${TESTS_DIR}/*.c++")
+    add_executable(${TESTS_EXE} ${SOURCES} ${TESTS_SOURCES})
+    target_include_directories(${TESTS_EXE} PRIVATE ${INCLUDE_DIR})
 endif()
 
+if(MSVC)
+    # Runtime checks
+    set(DEBUG_MODE_COMP_OPTIONS /RTC1)
 
-#
-# main executale
-#
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU|MSYS|MinGW")
+    # Sanitizers
+    set(DEBUG_MODE_COMP_OPTIONS -fsanitize=address,undefined)
+    set(DEBUG_MODE_LINK_OPTIONS -fsanitize=address,undefined)
 
-# compile all source and header files in `src/`
-file(
-    GLOB_RECURSE SOURCES
-    "${SRC_DIR}/*.cpp" "${SRC_DIR}/*.c" "${SRC_DIR}/*.h" "${SRC_DIR}/*.hpp"
-)
-list(REMOVE_ITEM SOURCES ${MAIN_FILE})
+else()
+    message(WARNING "Compiler is not directly supported (expected MSVC, Clang, GNU, MSYS or MinGW)")
+endif()
 
-# main executable
-add_executable(
-    ${PROJECT_NAME}
-    ${MAIN_FILE}
-    ${SOURCES}
-)
-target_include_directories(
-    ${PROJECT_NAME}
-    PRIVATE
-    ${INCLUDE_DIR}
-)
-target_compile_options(
-    ${PROJECT_NAME}
-    PRIVATE
-    ${COMPILE_OPTIONS}
-)
-target_link_libraries(
-    ${PROJECT_NAME}
-    PRIVATE
-    ${EXTRA_LIBS}   # must come 1st
-)
+# Set options for mult-configuration generators (e.g. Visual Studio)
+if(CMAKE_CONFIGURATION_TYPES)
+    # Debug mode
+    target_compile_options(${MAIN_EXE} PRIVATE $<$<CONFIG:Debug>:${DEBUG_MODE_COMP_OPTIONS}>)
+    target_link_options(${MAIN_EXE} PRIVATE $<$<CONFIG:Debug>:${DEBUG_MODE_LINK_OPTIONS}>)
 
+    if(DO_TESTING)
+        target_compile_options(${TESTS_EXE} PRIVATE $<$<CONFIG:Debug>:${DEBUG_MODE_COMP_OPTIONS}>)
+        target_link_options(${TESTS_EXE} PRIVATE $<$<CONFIG:Debug>:${DEBUG_MODE_LINK_OPTIONS}>)
+    endif()
 
-#
-# testing
-#
+    # Release mode options
+    target_compile_options(${MAIN_EXE} PRIVATE $<$<CONFIG:Release>:${RELEASE_MODE_COMP_OPTIONS}>)
+    target_link_options(${MAIN_EXE} PRIVATE $<$<CONFIG:Debug>:${RELEASE_MODE_LINK_OPTIONS}>)
+
+    if(DO_TESTING)
+        target_compile_options(${TESTS_EXE} PRIVATE $<$<CONFIG:Release>:${RELEASE_MODE_COMP_OPTIONS}>)
+        target_link_options(${TESTS_EXE} PRIVATE $<$<CONFIG:Debug>:${RELEASE_MODE_LINK_OPTIONS}>)
+    endif()
+
+    # Enable LTO in release mode (only for the main executable)
+    set_property(TARGET ${MAIN_EXE} PROPERTY INTERPROCEDURAL_OPTIMIZATION
+        $<$<CONFIG:Release>:TRUE>$<$<NOT:$<CONFIG:Release>>:FALSE>)
+
+# Set options for single-configuration generators (e.g. Makefiles)
+else()
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        target_compile_options(${MAIN_EXE} PRIVATE ${DEBUG_MODE_COMP_OPTIONS})
+        target_link_options(${MAIN_EXE} PRIVATE ${DEBUG_MODE_LINK_OPTIONS})
+
+        if(DO_TESTING)
+            target_compile_options(${TESTS_EXE} PRIVATE ${DEBUG_MODE_COMP_OPTIONS})
+            target_link_options(${TESTS_EXE} PRIVATE ${DEBUG_MODE_LINK_OPTIONS})
+        endif()
+
+    elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+        target_compile_options(${MAIN_EXE} PRIVATE ${RELEASE_MODE_COMP_OPTIONS})
+        target_link_options(${MAIN_EXE} PRIVATE ${RELEASE_MODE_LINK_OPTIONS})
+
+        if(DO_TESTING)
+            target_compile_options(${TESTS_EXE} PRIVATE ${RELEASE_MODE_COMP_OPTIONS})
+            target_link_options(${TESTS_EXE} PRIVATE ${RELEASE_MODE_LINK_OPTIONS})
+        endif()
+
+        # Enable LTO in release mode (only for the main executable)
+        set_property(TARGET ${MAIN_EXE} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+    endif()
+endif()
 
 include(FetchContent)
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
-)
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
 
-# compile all source and header files in `tests/`
-file(
-    GLOB_RECURSE TEST_SOURCES
-    "${TESTS_DIR}/*.cpp" "${TESTS_DIR}/*.c" "${TESTS_DIR}/*.h" "${TESTS_DIR}/*.hpp"
-)
-
-enable_testing()
-
-# test executable
-add_executable(
-    run_tests
-    ${SOURCES}
-    ${TEST_SOURCES}
-)
-target_link_libraries(
-    run_tests
-    ${EXTRA_LIBS}   # must come 1st
-    GTest::gtest_main
-)
-target_include_directories(
-    run_tests
-    PRIVATE
-    ${INCLUDE_DIR}
-)
-target_compile_options(
-    run_tests
-    PRIVATE
-    ${COMPILE_OPTIONS}
-)
-
-include(GoogleTest)
-gtest_discover_tests(run_tests)
+# Setup GoogleTest for testing
+if(DO_TESTING)
+    FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+    )
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
+    target_link_libraries(${TESTS_EXE} GTest::gtest_main)
+    include(GoogleTest)
+    gtest_discover_tests(${TESTS_EXE})
+endif()

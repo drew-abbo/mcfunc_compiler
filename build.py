@@ -1,150 +1,250 @@
-#!/bin/python3
+#!/usr/bin/env python3
 
 import sys
-import subprocess
 import os
-import pathlib
+from pathlib import Path
+import subprocess
+import json
+import shutil
 import time
 
-START_TIME = time.time()
+BUILD_DIR = Path("build")
 
-class Text:
-    IMPORTANT     = "\033[35m"
-    BIG_IMPORTANT = "\033[35m\033[1m"
-    BIG_SUCCESS   = "\033[92m\033[1m"
-    SUCCESS       = "\033[92m"
-    WARNING       = "\033[93m"
-    BIG_WARNING   = "\033[93m\033[1m"
-    ERROR         = "\033[91m"
-    BIG_ERROR     = "\033[91m\033[1m"
-    LINK          = "\033[94m\033[4m"
-    RESET         = "\033[0m"
+CALL_NAME = "build.py" if len(sys.argv) < 1 else sys.argv[0]
 
-def build_fail(msg: str):
-    print(f"{Text.BIG_ERROR}{' BUILD FAILED ':=^80}{Text.RESET}\n{Text.ERROR}" + msg + Text.RESET)
-    sys.exit(1)
-
-def build_warn(msg: str):
-    print(f"{Text.BIG_WARNING}BUILD WARNING{Text.RESET}{Text.WARNING}: " + msg + Text.RESET + '\n')
+__ON_WINDOWS = os.name == "nt"
 
 
-def program_is_installed(program: str):
-    try:
-        exit_code = subprocess.run(
-            ["which", program], check=True, capture_output=True
-        ).returncode
-    except subprocess.CalledProcessError as e:
-        return False
-    if exit_code != 0:
-        return False
-    return True
+class Print:
+    @staticmethod
+    def __prefix() -> None:
+        print(f"\033[94m\033[1m{CALL_NAME}: \033[0m", end="")
+
+    @staticmethod
+    def help_info():
+        Print.__prefix()
+        print(
+            f"Usage: {CALL_NAME} [options]\n"
+            "Options (any case):\n"
+            "  -h, --help           Prints this help info.\n"
+            "  -p, --parallel       Builds in parallel using all CPU cores.\n"
+            "  --release            Builds or configures in release mode.\n"
+            "  --debug              Builds or configures in debug mode (default)."
+        )
+
+    @staticmethod
+    def info(msg: str) -> None:
+        Print.__prefix()
+        print(msg)
+
+    @staticmethod
+    def status(msg: str) -> None:
+        Print.__prefix()
+        print(f"\033[35m{msg}\033[0m")
+
+    @staticmethod
+    def warning(msg: str) -> None:
+        Print.__prefix()
+        print(f"\033[93m{msg}\033[0m")
+
+    @staticmethod
+    def error(msg: str) -> None:
+        Print.__prefix()
+        print(f"\033[91m{msg}\033[0m")
+
+    @staticmethod
+    def fatal_error(msg: str) -> None:
+        Print.error(msg)
+        print("For help info run:\n" f"  {CALL_NAME} -h")
+        sys.exit(1)
 
 
-def run_build_command(command: str, in_dir: str = None):
-    print(f"""{Text.BIG_IMPORTANT}{f" Running: '{command}' ":=^80}{Text.RESET}""")
+# 1st return bool is whether parallel build is enabled
+# 2nd return bool is whether to build in release mode or not
+def __parse_cli_args() -> tuple[bool, bool]:
+    args = [arg.lower() for arg in sys.argv[1:]]
 
-    result = subprocess.run(
-        [command], check=False, shell=True, cwd=in_dir,
-        stdout=sys.stdout, stderr=sys.stderr
-    )
+    build_in_parallel = False
+    release_mode_set = False
+    debug_mode_set = False
 
-    if result.returncode != 0:
-        build_fail(f"Command '{command}' had an exit code of {result.returncode}.")
+    for arg in args:
+        if arg in ("-h", "--help"):
+            if len(args) != 1:
+                Print.fatal_error(
+                    f"'{arg}' cannot be passed with additional arguments."
+                )
+            Print.help_info()
+            sys.exit(0)
 
-    print()
+        if arg in ("-p", "--parallel"):
+            build_in_parallel = True
+            continue
 
+        if arg == "--release":
+            if debug_mode_set:
+                Print.fatal_error("Conflicting flags '--debug' and '--release'.")
+            release_mode_set = True
+            continue
 
-# build cannot be done natively on windows
-if os.name == "nt":
-    build_fail(
-        "This project does not currently support building natively on Windows.\n"
-        "To build on Windows use WSL: "
-        f"{Text.LINK}https://learn.microsoft.com/en-us/windows/wsl/install{Text.RESET}"
-    )
+        if arg == "--debug":
+            if release_mode_set:
+                Print.fatal_error("Conflicting flags '--release' and '--debug'.")
+            debug_mode_set = True
+            continue
 
+        else:
+            Print.fatal_error(f"Unknown argument '{arg}'.")
 
-# make sure we have the programs that are needed for installation
-if not program_is_installed("cmake"):
-    build_fail(
-        f"Couldn't find 'cmake'. "
-        "Make sure you have it installed and it's on the path."
-    )
-
-# warn if certain programs aren't installed (may still work)
-if not program_is_installed("git"):
-    build_warn("Couldn't find 'git'. Build may fail.")
-if not program_is_installed("make"):
-    build_warn("Couldn't find 'make'. Build may fail.")
-if not program_is_installed("g++") and not program_is_installed("clang++"):
-    build_warn("Couldn't find a supported C++ compiler ('g++' or 'clang++'). Build may fail.")
-
-
-# figure out what the build type is
-if len(sys.argv) > 2:
-    build_fail(
-        "Too many arguments. "
-        "Use 'release' for a release build or 'debug' (or pass no arguments) for a debug build."
-    )
-if len(sys.argv) < 2:
-    BUILD_TYPE = "debug"
-else:
-    BUILD_TYPE = sys.argv[1].lower().strip()
-if BUILD_TYPE not in ("debug", "release"):
-    build_fail(
-        "Invalid build type. "
-        "Use 'release' for a release build or 'debug' (or pass no arguments) for a debug build."
-    )
+    return (build_in_parallel, release_mode_set)
 
 
-# figure out and create build dir
-BUILD_DIR = "build" if BUILD_TYPE == "debug" else "release"
+# 1st return str is the config command
+# 2nd return str is the build command
+def __get_cmds(build_in_parallel: bool, release_mode: bool) -> tuple[str, str]:
+    config_cmd = "cmake .."
+    build_cmd = "cmake --build ."
 
-if not pathlib.Path(BUILD_DIR).exists():
-    try:
-        pathlib.Path(BUILD_DIR).mkdir()
-    except Exception as e:
-        build_fail(f"Failed to create directory '{BUILD_DIR}'. Reason: '{e}'.")
-
-    CMAKE_UNINITIALIZED = True
-else:
-    # if the build directory is empty
-    CMAKE_UNINITIALIZED = len(os.listdir(BUILD_DIR)) == 0
-
-# set up cmake
-if CMAKE_UNINITIALIZED:
-    print(
-        f"Initializing a {Text.BIG_IMPORTANT}{BUILD_TYPE}{Text.RESET} build in './{BUILD_DIR}'.\n"
-    )
-    if BUILD_TYPE == "debug":
-        run_build_command("cmake -DCMAKE_BUILD_TYPE=Debug ..", in_dir=BUILD_DIR)
+    if __ON_WINDOWS:
+        # Assume we're using Visual Studio (MSVC) on windows
+        config_cmd += ' -G "Visual Studio 17 2022"'
     else:
-        run_build_command("cmake -DCMAKE_BUILD_TYPE=Release ..", in_dir=BUILD_DIR)
+        # Assume we're using Make on MacOS/Linux/else
+        config_cmd += ' -G "Unix Makefiles"'
 
-run_build_command("cmake .", in_dir=BUILD_DIR)
+    if release_mode:
+        if __ON_WINDOWS:
+            # Release mode needs to be specified on build for MSVC
+            build_cmd += " --config Release"
+        else:
+            # Release mode needs to be specified on config for Make
+            config_cmd += " -DCMAKE_BUILD_TYPE=Release"
 
-# build (use all almost all cpu cores but leave 1 free)
-build_command = "cmake --build ."
-CPU_COUNT = os.cpu_count()
-if CPU_COUNT is not None and CPU_COUNT >= 2:
-    build_command += f" --parallel {CPU_COUNT}"
-run_build_command(build_command, in_dir=BUILD_DIR)
+    if build_in_parallel:
+        CPU_COUNT = os.cpu_count()
+        if CPU_COUNT is None or CPU_COUNT < 2:
+            Print.warning("Cannot build in parallel.")
+        else:
+            build_cmd += f" --parallel {CPU_COUNT}"
+            Print.info(f"Parallel build will use {CPU_COUNT} cores.")
 
-# build success
-elapsed_time = time.time() - START_TIME
-print(f"""{Text.BIG_SUCCESS}{f" BUILD FINISHED IN {elapsed_time:.1f} SECONDS ":=^80}{Text.RESET}""")
-print(f"Executables are in './{BUILD_DIR}'.")
+    return (config_cmd, build_cmd)
 
 
-# run tests
-RUN_TESTS_COMMAND = f"./{BUILD_DIR}/run_tests"
+def run_cmd(
+    cmd_str: str,
+    in_dir: str | Path = None,
+    allow_fail: bool = False,
+    print_cmd_output: bool = True,
+) -> int:
+    in_dir = str(in_dir) if in_dir is not None else None
+    cmd = cmd_str if __ON_WINDOWS else [cmd_str]
+    returncode = subprocess.run(
+        cmd,
+        check=False,
+        shell=True,
+        cwd=in_dir,
+        stdout=sys.stdout if print_cmd_output else subprocess.PIPE,
+        stderr=sys.stderr if print_cmd_output else subprocess.PIPE,
+    ).returncode
 
-print(f"""\n{Text.BIG_SUCCESS}{f" RUNNING TESTS ":=^80}{Text.RESET}""")
-RUN_TESTS_RESULT = subprocess.run(
-    [RUN_TESTS_COMMAND], check=False, shell=True,
-    stdout=sys.stdout, stderr=sys.stderr
-)
-if RUN_TESTS_RESULT.returncode != 0:
-    print(f"""{Text.BIG_ERROR}{f" TESTS FAILED OR NOT FOUND ":=^80}{Text.RESET}""")
-    sys.exit(1)
-else:
-    print(f"""{Text.BIG_SUCCESS}{f" ALL TESTS ARE PASSING ":=^80}{Text.RESET}""")
+    if not allow_fail and returncode != 0:
+        Print.fatal_error(f"Command '{cmd_str}' had an exit code of {returncode}.")
+    return returncode
+
+
+def __run_configure_cmd(config_cmd: str) -> None:
+    START_TIME = time.time()
+    Print.status("Configuring...")
+    run_cmd(config_cmd, BUILD_DIR)
+    Print.status(f"Configuring done ({time.time() - START_TIME:.3f} seconds).")
+
+
+def __run_regen_build_files_cmd() -> None:
+    START_TIME = time.time()
+    Print.status("Regenerating build files...")
+    run_cmd("cmake .", BUILD_DIR)
+    Print.status(f"Regenerating build files done ({time.time() - START_TIME:.3f} seconds).")
+
+
+def __run_build_cmd(build_cmd: str, release_mode: bool) -> None:
+    START_TIME = time.time()
+    Print.status("Building...")
+    run_cmd(build_cmd, BUILD_DIR)
+    Print.status(f"Building done ({time.time() - START_TIME:.3f} seconds).")
+
+    if __ON_WINDOWS:
+        built_exe_folder = BUILD_DIR / ("Release" if release_mode else "Debug")
+    else:
+        built_exe_folder = BUILD_DIR
+    Print.info(f"Executables are in '{built_exe_folder}'")
+
+
+# Returns the path to the folder where the executables are.
+def build(build_in_parallel: bool, release_mode: bool) -> Path:
+    # Make sure cmake is callable
+    if run_cmd("cmake --version", allow_fail=True, print_cmd_output=False) != 0:
+        Print.fatal_error("CMake is not on the path ('cmake' is not callable).")
+
+    config_cmd, build_cmd = __get_cmds(build_in_parallel, release_mode)
+
+    BUILD_JSON_CONTENTS = {
+        "config_cmd": config_cmd,
+    }
+    BUILD_JSON_FILE_PATH = BUILD_DIR / "build_py_cmake_cmds.json"
+
+    if BUILD_DIR.exists():
+        if BUILD_JSON_FILE_PATH.exists():
+            # existing build info file matches new one (just rebuild)
+            try:
+                if not BUILD_JSON_FILE_PATH.is_file():
+                    Print.warning(f"'{BUILD_JSON_FILE_PATH}' is invalid.")
+                    raise Exception
+
+                with open(BUILD_JSON_FILE_PATH, "r") as f:
+                    existing_json_contents = json.load(f)
+
+                if not isinstance(
+                    existing_json_contents, dict
+                ) or not existing_json_contents.get("config_cmd", True):
+                    raise Exception
+
+            except Exception:
+                Print.warning(f"'{BUILD_JSON_FILE_PATH}' is invalid.")
+
+            else:
+                # just run the build cmd and exit if the commands are the same
+                if BUILD_JSON_CONTENTS == existing_json_contents:
+                    # regen build files to account for CMake GLOB_RECURSE
+                    __run_regen_build_files_cmd()
+                    __run_build_cmd(build_cmd, release_mode)
+                    return
+                else:
+                    Print.status(f"Build directory needs to be re-configured.")
+
+        # remove the build directory if anything was wrong
+        Print.status(f"CMake config outdated. Removing '{BUILD_DIR}' directory.")
+        try:
+            shutil.rmtree(BUILD_DIR)
+        except Exception:
+            Print.fatal_error(f"Failed to remove '{BUILD_DIR}'.")
+
+    # make the build directory
+    try:
+        BUILD_DIR.mkdir()
+    except Exception:
+        Print.fatal_error(f"Failed to make '{BUILD_DIR}'.")
+    Print.status(f"Created '{BUILD_DIR}' directory.")
+
+    __run_configure_cmd(config_cmd)
+    __run_build_cmd(build_cmd, release_mode)
+
+    try:
+        with open(BUILD_JSON_FILE_PATH, "w") as f:
+            json.dump(BUILD_JSON_CONTENTS, f, indent=2)
+    except Exception:
+        Print.fatal_error(f"Failed to make '{BUILD_JSON_FILE_PATH}'.")
+
+
+if __name__ == "__main__":
+    build(*__parse_cli_args())
