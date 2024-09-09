@@ -120,8 +120,9 @@ public:
   /// Whether a symbol with the name \param symbolName is in the table.
   bool hasSymbol(const std::string& symbolName) const;
 
-  /// Adds \param newSymbolName to the table if it isn't already present.
-  void merge(std::string newSymbolName);
+  /// Adds \param newSymbol (which should be a pointer to the word token for a
+  /// function name) to the table if it isn't already present.
+  void merge(const Token* newSymbol);
 
   /// Removes a symbol with the name \param symbolName if it's in the table.
   void remove(const std::string& symbolName);
@@ -132,6 +133,11 @@ public:
   /// Empties the table.
   void clear();
 
+  /// Throws an error if the table isn't empty, highlighting the first function
+  /// call of an undefined function.
+  /// \throws compile_error::Generic (or a subclass of it).
+  void ensureTableIsEmpty() const;
+
   /// Enables iteration.
   auto begin() { return m_symbolNames.begin(); }
   auto begin() const { return m_symbolNames.cbegin(); }
@@ -140,6 +146,7 @@ public:
 
 private:
   std::unordered_set<std::string> m_symbolNames;
+  std::vector<const Token*> m_calledFunctionNameTokens;
 };
 
 /// Represents a file write operation with or without a definition.

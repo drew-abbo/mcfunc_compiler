@@ -191,8 +191,11 @@ bool UnresolvedFunctionNames::hasSymbol(const std::string& symbolName) const {
   return m_symbolNames.count(symbolName) != 0;
 }
 
-void UnresolvedFunctionNames::merge(std::string newSymbolName) {
-  m_symbolNames.insert(newSymbolName);
+void UnresolvedFunctionNames::merge(const Token* newSymbol) {
+  assert(newSymbol != nullptr && "Unresolved function name token can't be nullptr.");
+  assert(newSymbol->kind() == Token::WORD && "Unresolved function name token must be word token.");
+  m_symbolNames.insert(newSymbol->contents());
+  m_calledFunctionNameTokens.push_back(newSymbol);
 }
 
 void UnresolvedFunctionNames::remove(const std::string& symbolName) {
@@ -203,6 +206,27 @@ void UnresolvedFunctionNames::remove(const std::string& symbolName) {
 bool UnresolvedFunctionNames::empty() const { return m_symbolNames.size() == 0; }
 
 void UnresolvedFunctionNames::clear() { m_symbolNames.clear(); }
+
+void UnresolvedFunctionNames::ensureTableIsEmpty() const {
+  if (empty())
+    return;
+
+  // m_calledFunctionNameTokens is a list of every function that was called
+  // before it had a known definition. It should be sorted by lowest index in
+  // file. We go through the list and throw with the first one that is still in
+  // the symbol names set.
+
+  for (const Token* token : m_calledFunctionNameTokens) {
+    if (m_symbolNames.count(token->contents()) == 0)
+      continue;
+
+    throw compile_error::UnresolvedSymbol("Function " + style_text::styleAsCode(token->contents()) +
+                                              " was never declared or defined.",
+                                          *token);
+  }
+
+  assert(false && "This point should never be reached");
+}
 
 // FileWrite
 

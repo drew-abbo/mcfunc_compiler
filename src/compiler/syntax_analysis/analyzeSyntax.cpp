@@ -321,7 +321,7 @@ std::unique_ptr<statement::Generic> helper::collectStatement(
     forceMatchTokenPattern(tokens, firstIndex + 1,
                            {Token::L_PAREN, Token::R_PAREN, Token::SEMICOLON});
     if (!functionTable.hasSymbol(tokens[firstIndex].contents()))
-      unresolvedFunctionNames.merge(tokens[firstIndex].contents());
+      unresolvedFunctionNames.merge(&tokens[firstIndex]);
     return std::unique_ptr<statement::Generic>(new statement::FunctionCall(firstIndex));
 
   // nested scope (e.g. '{ /say hi; }')
