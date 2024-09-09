@@ -14,7 +14,6 @@
 class SourceFile {
 public:
   /// \param filePath Relative or absolute path to the file.
-  /// \param filePath
   SourceFile(const std::filesystem::path& filePath,
              const std::filesystem::path& prefixToRemoveForImporting = "");
   SourceFile(std::filesystem::path&& filePath,

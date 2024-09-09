@@ -1,6 +1,6 @@
-#include <cctype>
 #include <compiler/syntax_analysis/symbol.h>
 
+#include <cctype>
 #include <cassert>
 #include <filesystem>
 #include <optional>

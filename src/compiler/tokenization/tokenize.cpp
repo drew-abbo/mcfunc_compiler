@@ -107,9 +107,9 @@ void tokenize(size_t sourceFileIndex) {
                                             sourceFiles[sourceFileIndex].path());
 
       // comments
-      const size_t commentLenth = helper::getLengthOfPossibleComment(str, i);
-      if (commentLenth != 0) {
-        i += commentLenth;
+      const size_t commentLength = helper::getLengthOfPossibleComment(str, i);
+      if (commentLength != 0) {
+        i += commentLength;
         break;
       }
 
@@ -154,12 +154,12 @@ void tokenize(size_t sourceFileIndex) {
 
         // possible comments
         case '/': {
-          const size_t commentLenth = helper::getLengthOfPossibleComment(str, j);
-          if (commentLenth != 0) {
+          const size_t commentLength = helper::getLengthOfPossibleComment(str, j);
+          if (commentLength != 0) {
             // possibly add a space in place of the comment
             if (!commandContents.empty() && commandContents.back() != ' ')
               commandContents += ' ';
-            j += commentLenth;
+            j += commentLength;
           } else
             commandContents += '/';
           break;
