@@ -1,7 +1,7 @@
 #include <compiler/syntax_analysis/symbol.h>
 
-#include <cctype>
 #include <cassert>
+#include <cctype>
 #include <filesystem>
 #include <optional>
 
@@ -184,6 +184,25 @@ void FunctionTable::clear() {
   m_symbolsVec.clear();
   m_indexMap.clear();
 }
+
+// UnresolvedFunctionNames
+
+bool UnresolvedFunctionNames::hasSymbol(const std::string& symbolName) const {
+  return m_symbolNames.count(symbolName) != 0;
+}
+
+void UnresolvedFunctionNames::merge(std::string newSymbolName) {
+  m_symbolNames.insert(newSymbolName);
+}
+
+void UnresolvedFunctionNames::remove(const std::string& symbolName) {
+  if (hasSymbol(symbolName))
+    m_symbolNames.erase(symbolName);
+}
+
+bool UnresolvedFunctionNames::empty() const { return m_symbolNames.size() == 0; }
+
+void UnresolvedFunctionNames::clear() { m_symbolNames.clear(); }
 
 // FileWrite
 

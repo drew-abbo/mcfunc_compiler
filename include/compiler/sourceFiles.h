@@ -36,6 +36,9 @@ public:
   /// The function symbol table.
   const symbol::FunctionTable& functionSymbolTable() const;
 
+  /// A set of function names that haven't been declared or defined yet.
+  const symbol::UnresolvedFunctionNames unresolvedFunctionNames() const;
+
   /// The file write symbol table.
   const symbol::FileWriteTable& fileWriteSymbolTable() const;
 
@@ -51,6 +54,7 @@ private:
   UniqueID m_fileID;
   std::vector<Token> m_tokens;
   symbol::FunctionTable m_functionSymbolTable;
+  symbol::UnresolvedFunctionNames m_unresolvedFunctionNames;
   symbol::FileWriteTable m_fileWriteSymbolTable;
   symbol::ImportTable m_importSymbolTable;
   symbol::NamespaceExpose m_namespaceExpose;

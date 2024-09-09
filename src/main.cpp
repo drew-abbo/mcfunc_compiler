@@ -8,9 +8,9 @@
 #include <compiler/compile_error.h>
 #include <compiler/sourceFiles.h>
 #include <compiler/syntax_analysis/analyzeSyntax.h>
+#include <compiler/syntax_analysis/statement.h>
 #include <compiler/tokenization/Token.h>
 #include <compiler/tokenization/tokenize.h>
-#include <compiler/syntax_analysis/statement.h>
 
 // print tokens in a somewhat readable way
 void printTokens(const std::vector<Token> tokens) {
@@ -155,6 +155,14 @@ int main() {
 
   // printTokens(sourceFiles.back().tokens());
   reconstructSyntaxAndPrint(sourceFiles.back());
+
+  if (!sourceFiles.back().unresolvedFunctionNames().empty()) {
+    std::cout << "Unresolved Functions:\n";
+    for (const std::string& fName : sourceFiles.back().unresolvedFunctionNames()) {
+      std::cout << '\t' << fName << "()\n";
+    }
+    std::cout << '\n';
+  }
 
   // print the time it took
   std::chrono::duration<double> timeTaken = endTime - startTime;

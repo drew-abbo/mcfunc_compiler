@@ -36,12 +36,16 @@ static void forceMatchToken(const std::vector<Token>& tokens, size_t index,
                             const std::initializer_list<Token::Kind>& matchKinds);
 
 /// Given the index of the next statement it returns the statement or throws.
-std::unique_ptr<statement::Generic> collectStatement(const std::vector<Token>& tokens,
-                                                     size_t firstIndex);
+std::unique_ptr<statement::Generic> collectStatement(
+    const std::vector<Token>& tokens, const symbol::FunctionTable& functionTable,
+    symbol::UnresolvedFunctionNames& unresolvedFunctionNames, size_t firstIndex);
 
 /// Recursively evaluates the inner contents of a scope. Throws if inner syntax
 /// is invalid.
-static statement::Scope collectScope(const std::vector<Token>& tokens, size_t firstIndex);
+static statement::Scope collectScope(const std::vector<Token>& tokens,
+                                     const symbol::FunctionTable& functionTable,
+                                     symbol::UnresolvedFunctionNames& unresolvedFunctionNames,
+                                     size_t firstIndex);
 
 } // namespace helper
 } // namespace
@@ -51,6 +55,8 @@ void analyzeSyntax(size_t sourceFileIndex) {
   symbol::ImportTable& importTable = sourceFiles[sourceFileIndex].m_importSymbolTable;
   symbol::FileWriteTable& fileWriteTable = sourceFiles[sourceFileIndex].m_fileWriteSymbolTable;
   symbol::FunctionTable& functionTable = sourceFiles[sourceFileIndex].m_functionSymbolTable;
+  symbol::UnresolvedFunctionNames& unresolvedFunctionNames =
+      sourceFiles[sourceFileIndex].m_unresolvedFunctionNames;
 
   // this needs to be here or there might be out of bounds access
   if (tokens.empty())
@@ -139,11 +145,13 @@ void analyzeSyntax(size_t sourceFileIndex) {
 
       // function has definition (e.g. 'void foo() { /say hi; }')
       if (tokens[i].kind() == Token::L_BRACE) {
-        statement::Scope definition = helper::collectScope(tokens, i);
+        statement::Scope definition =
+            helper::collectScope(tokens, functionTable, unresolvedFunctionNames, i);
         i += definition.numTokens() - 1; // set to index of end of definition
         thisSymbol.setDefinition(std::move(definition));
       }
 
+      unresolvedFunctionNames.remove(thisSymbol.name());
       functionTable.merge(std::move(thisSymbol));
       break;
     }
@@ -286,8 +294,10 @@ static void helper::forceMatchToken(const std::vector<Token>& tokens, size_t ind
                                        tokens[index]);
 }
 
-std::unique_ptr<statement::Generic> helper::collectStatement(const std::vector<Token>& tokens,
-                                                             size_t firstIndex) {
+std::unique_ptr<statement::Generic> helper::collectStatement(
+    const std::vector<Token>& tokens, const symbol::FunctionTable& functionTable,
+    symbol::UnresolvedFunctionNames& unresolvedFunctionNames, size_t firstIndex) {
+
   switch (tokens[firstIndex].kind()) {
 
   // command (e.g. '/say hi;' or '/execute as @a run: foo();')
@@ -299,7 +309,8 @@ std::unique_ptr<statement::Generic> helper::collectStatement(const std::vector<T
       return std::unique_ptr<statement::Generic>(new statement::Command(firstIndex));
 
     // command with command pause ('run:') and a statement after
-    std::unique_ptr<statement::Generic> subStatement = collectStatement(tokens, firstIndex + 2);
+    std::unique_ptr<statement::Generic> subStatement =
+        collectStatement(tokens, functionTable, unresolvedFunctionNames, firstIndex + 2);
     const size_t numTokens = subStatement->numTokens();
     return std::unique_ptr<statement::Generic>(
         new statement::Command(firstIndex, numTokens + 2, std::move(subStatement)));
@@ -309,12 +320,14 @@ std::unique_ptr<statement::Generic> helper::collectStatement(const std::vector<T
   case Token::WORD:
     forceMatchTokenPattern(tokens, firstIndex + 1,
                            {Token::L_PAREN, Token::R_PAREN, Token::SEMICOLON});
+    if (!functionTable.hasSymbol(tokens[firstIndex].contents()))
+      unresolvedFunctionNames.merge(tokens[firstIndex].contents());
     return std::unique_ptr<statement::Generic>(new statement::FunctionCall(firstIndex));
 
   // nested scope (e.g. '{ /say hi; }')
   case Token::L_BRACE:
-    return std::unique_ptr<statement::Generic>(
-        new statement::Scope(collectScope(tokens, firstIndex)));
+    return std::unique_ptr<statement::Generic>(new statement::Scope(
+        collectScope(tokens, functionTable, unresolvedFunctionNames, firstIndex)));
 
   // anything else is invalid
   default:
@@ -324,7 +337,9 @@ std::unique_ptr<statement::Generic> helper::collectStatement(const std::vector<T
   }
 }
 
-static statement::Scope helper::collectScope(const std::vector<Token>& tokens, size_t firstIndex) {
+static statement::Scope helper::collectScope(
+    const std::vector<Token>& tokens, const symbol::FunctionTable& functionTable,
+    symbol::UnresolvedFunctionNames& unresolvedFunctionNames, size_t firstIndex) {
   assert(firstIndex < tokens.size() && "'firstIndex' can't be out of 'tokens' bounds.");
   assert(tokens[firstIndex].kind() == Token::L_BRACE && "1st token of scope should be 'L_BRACE'.");
 
@@ -341,7 +356,8 @@ static statement::Scope helper::collectScope(const std::vector<Token>& tokens, s
       continue;
 
     // anything else *should* be a statement
-    std::unique_ptr<statement::Generic> subStatement = collectStatement(tokens, i);
+    std::unique_ptr<statement::Generic> subStatement =
+        collectStatement(tokens, functionTable, unresolvedFunctionNames, i);
     i += subStatement->numTokens() - 1;
     statements.push_back(std::move(subStatement));
   }

@@ -6,6 +6,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 #include <compiler/syntax_analysis/statement.h>
 #include <compiler/tokenization/Token.h>
@@ -108,6 +109,37 @@ public:
 private:
   std::vector<Function> m_symbolsVec;
   std::unordered_map<std::string, size_t> m_indexMap;
+};
+
+/// A set of functions that have been called but have yet to be declared or
+/// defined.
+class UnresolvedFunctionNames {
+public:
+  UnresolvedFunctionNames() = default;
+
+  /// Whether a symbol with the name \param symbolName is in the table.
+  bool hasSymbol(const std::string& symbolName) const;
+
+  /// Adds \param newSymbolName to the table if it isn't already present.
+  void merge(std::string newSymbolName);
+
+  /// Removes a symbol with the name \param symbolName if it's in the table.
+  void remove(const std::string& symbolName);
+
+  /// Whether the table is empty or not.
+  bool empty() const;
+
+  /// Empties the table.
+  void clear();
+
+  /// Enables iteration.
+  auto begin() { return m_symbolNames.begin(); }
+  auto begin() const { return m_symbolNames.cbegin(); }
+  auto end() { return m_symbolNames.end(); }
+  auto end() const { return m_symbolNames.cend(); }
+
+private:
+  std::unordered_set<std::string> m_symbolNames;
 };
 
 /// Represents a file write operation with or without a definition.
