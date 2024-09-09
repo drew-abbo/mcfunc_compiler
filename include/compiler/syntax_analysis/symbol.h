@@ -145,7 +145,7 @@ public:
   auto end() const { return m_symbolNames.cend(); }
 
 private:
-  std::unordered_set<std::string> m_symbolNames;
+  std::unordered_set<std::string_view> m_symbolNames;
   std::vector<const Token*> m_calledFunctionNameTokens;
 };
 

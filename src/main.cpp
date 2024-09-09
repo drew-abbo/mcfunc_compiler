@@ -158,7 +158,7 @@ int main() {
 
   if (!sourceFiles.back().unresolvedFunctionNames().empty()) {
     std::cout << "Unresolved Functions:\n";
-    for (const std::string& fName : sourceFiles.back().unresolvedFunctionNames()) {
+    for (const auto& fName : sourceFiles.back().unresolvedFunctionNames()) {
       std::cout << '\t' << fName << "()\n";
     }
     std::cout << '\n';
