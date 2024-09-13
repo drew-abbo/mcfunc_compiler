@@ -6,5 +6,6 @@
 /// Generates an import path by converting \param filePath and \param prefix to
 /// absolute paths and subtracting \param prefix from \param filePath.
 /// \param prefix can be an empty string.
+/// \throws compile_error::ImportError if this fails.
 std::filesystem::path generateImportPath(const std::filesystem::path& filePath,
                                          const std::filesystem::path& prefix = "");

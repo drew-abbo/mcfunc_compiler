@@ -10,7 +10,8 @@
 
 /// Represents a single source file.
 /// Anything that this class does may throw (including construction).
-/// \throws compile_error::Generic (or a subclass of it).
+/// \throws compile_error::Generic (or a subclass of it). This can happen on
+/// construction.
 class SourceFile {
 public:
   /// \param filePath Relative or absolute path to the file.

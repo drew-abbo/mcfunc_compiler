@@ -125,9 +125,7 @@ int main() {
   auto startTime = std::chrono::high_resolution_clock::now();
 
   // so that the imports in the test file don't cause errors
-  sourceFiles.emplace_back("dummy_import_1.mcfunc");
-  sourceFiles.emplace_back("dummy_import_2.mcfunc");
-  sourceFiles.emplace_back("dummy_import_3.mcfunc");
+  sourceFiles.emplace_back("foo.mcfunc");
 
   sourceFiles.emplace_back("test.mcfunc");
 
