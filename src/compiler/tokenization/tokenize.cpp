@@ -1,4 +1,4 @@
-#include <compiler/tokenization/tokenize.h>
+#include <compiler/sourceFiles.h>
 
 #include <cassert>
 #include <cctype>
@@ -9,7 +9,6 @@
 
 #include <compiler/compile_error.h>
 #include <compiler/fileToStr.h>
-#include <compiler/sourceFiles.h>
 #include <compiler/tokenization/Token.h>
 
 #include <cli/style_text.h>
@@ -27,16 +26,16 @@ struct ClosingChar {
 /// Makes sure \p c == \p closingCharStack.back() and \p closingCharStack.size()
 /// is at least \p minSize or else it throws.
 static void handleCharStack(char c, std::vector<ClosingChar>& closingCharStack, size_t indexInFile,
-                            size_t sourceFileIndex, size_t minSize = 0);
+                            const SourceFile& sourceFile, size_t minSize = 0);
 
 /// Checks if \p c matches r"[a-zA-Z0-9_]".
 static bool isWordChar(char c) { return std::isalnum(c) || c == '_'; }
 
 /// Returns length of the word and the token which can be 'WORD' or a keyword.
-static std::string getWord(const std::string& str, size_t& i, size_t sourceFileIndex);
+static std::string getWord(const std::string& str, size_t& i, const SourceFile& sourceFile);
 
 /// Returns the length of what's in quotes given the index of the opening quote.
-static size_t getStringContentLength(const std::string& str, size_t i, size_t sourceFileIndex,
+static size_t getStringContentLength(const std::string& str, size_t i, const SourceFile& sourceFile,
                                      bool allowSpecialWhitespace);
 
 /// Returns the length of the comment given the index of a starting '/' (length
@@ -47,8 +46,8 @@ static size_t getLengthOfPossibleComment(const std::string& str, size_t i);
 } // namespace helper
 } // namespace
 
-void tokenize(size_t sourceFileIndex) {
-  const std::string str = fileToStr(sourceFiles[sourceFileIndex].path());
+void SourceFile::tokenize() {
+  const std::string str = fileToStr(path());
 
   std::vector<Token> ret;
 
@@ -63,38 +62,37 @@ void tokenize(size_t sourceFileIndex) {
       break;
 
     case ';':
-      ret.emplace_back(Token(Token::SEMICOLON, i, sourceFileIndex));
+      ret.emplace_back(Token(Token::SEMICOLON, i, *this));
       break;
 
     case '=':
-      ret.emplace_back(Token(Token::ASSIGN, i, sourceFileIndex));
+      ret.emplace_back(Token(Token::ASSIGN, i, *this));
       break;
 
     case '(':
-      ret.emplace_back(Token(Token::L_PAREN, i, sourceFileIndex));
+      ret.emplace_back(Token(Token::L_PAREN, i, *this));
       closingCharStack.push_back({')', i});
       break;
     case '{':
-      ret.emplace_back(Token(Token::L_BRACE, i, sourceFileIndex));
+      ret.emplace_back(Token(Token::L_BRACE, i, *this));
       closingCharStack.push_back({'}', i});
       break;
 
     case ')':
-      ret.emplace_back(Token(Token::R_PAREN, i, sourceFileIndex));
-      helper::handleCharStack(str[i], closingCharStack, i, sourceFileIndex);
+      ret.emplace_back(Token(Token::R_PAREN, i, *this));
+      helper::handleCharStack(str[i], closingCharStack, i, *this);
       break;
     case '}':
-      ret.emplace_back(Token(Token::R_BRACE, i, sourceFileIndex));
-      helper::handleCharStack(str[i], closingCharStack, i, sourceFileIndex);
+      ret.emplace_back(Token(Token::R_BRACE, i, *this));
+      helper::handleCharStack(str[i], closingCharStack, i, *this);
       break;
 
     // quotes and snippets
     case '"':
     case '`': {
       const bool isSnippet = str[i] == '`';
-      const size_t contentLength =
-          helper::getStringContentLength(str, i, sourceFileIndex, isSnippet);
-      ret.emplace_back(Token((isSnippet) ? Token::SNIPPET : Token::STRING, i, sourceFileIndex,
+      const size_t contentLength = helper::getStringContentLength(str, i, *this, isSnippet);
+      ret.emplace_back(Token((isSnippet) ? Token::SNIPPET : Token::STRING, i, *this,
                              str.substr(i + 1, contentLength)));
       i += contentLength + 1;
       break;
@@ -103,8 +101,7 @@ void tokenize(size_t sourceFileIndex) {
     // comments and commands
     case '/': {
       if (i + 1 == str.size())
-        throw compile_error::BadClosingChar("Command never ends.", i,
-                                            sourceFiles[sourceFileIndex].path());
+        throw compile_error::BadClosingChar("Command never ends.", i, path());
 
       // comments
       const size_t commentLength = helper::getLengthOfPossibleComment(str, i);
@@ -138,15 +135,14 @@ void tokenize(size_t sourceFileIndex) {
         case ')':
         case '}':
         case ']':
-          helper::handleCharStack(str[j], closingCharStack, j, sourceFileIndex,
-                                  closingCharStackStartSize);
+          helper::handleCharStack(str[j], closingCharStack, j, *this, closingCharStackStartSize);
           commandContents += str[j];
           break;
 
         // strings in commands
         case '"':
         case '\'': {
-          const size_t strLen = helper::getStringContentLength(str, j, sourceFileIndex, false);
+          const size_t strLen = helper::getStringContentLength(str, j, *this, false);
           commandContents += str.substr(j, strLen + 2);
           j += strLen + 1;
           break;
@@ -171,8 +167,8 @@ void tokenize(size_t sourceFileIndex) {
             commandContents += str[j];
             break;
           }
-          ret.emplace_back(Token(Token::COMMAND, i, sourceFileIndex, std::move(commandContents)));
-          ret.emplace_back(Token(Token::SEMICOLON, j, sourceFileIndex));
+          ret.emplace_back(Token(Token::COMMAND, i, *this, std::move(commandContents)));
+          ret.emplace_back(Token(Token::SEMICOLON, j, *this));
           i = j;
           goto foundCommandEnd;
 
@@ -190,8 +186,8 @@ void tokenize(size_t sourceFileIndex) {
             break;
           // remove the ':' and the space we just added
           commandContents.resize(commandContents.size() - 2);
-          ret.emplace_back(Token(Token::COMMAND, i, sourceFileIndex, std::move(commandContents)));
-          ret.emplace_back(Token(Token::COMMAND_PAUSE, j - 1, sourceFileIndex));
+          ret.emplace_back(Token(Token::COMMAND, i, *this, std::move(commandContents)));
+          ret.emplace_back(Token(Token::COMMAND_PAUSE, j - 1, *this));
           i = j;
           goto foundCommandEnd;
 
@@ -204,20 +200,19 @@ void tokenize(size_t sourceFileIndex) {
                "Closing char stack became smaller than start size in command.");
       }
       if (closingCharStack.size() > closingCharStackStartSize) {
-        throw compile_error::BadClosingChar(
-            std::string("Command never ends because of missing ") +
-                style_text::styleAsCode(closingCharStack.back().c) + '.',
-            closingCharStack.back().index, sourceFiles[sourceFileIndex].path());
+        throw compile_error::BadClosingChar(std::string("Command never ends because of missing ") +
+                                                style_text::styleAsCode(closingCharStack.back().c) +
+                                                '.',
+                                            closingCharStack.back().index, path());
       }
-      throw compile_error::BadClosingChar("Command never ends.", i,
-                                          sourceFiles[sourceFileIndex].path());
+      throw compile_error::BadClosingChar("Command never ends.", i, path());
     foundCommandEnd:
       break;
     }
 
     // word or keyword or invalid char
     default:
-      std::string word = helper::getWord(str, i, sourceFileIndex);
+      std::string word = helper::getWord(str, i, *this);
 
       // look for keywords
       Token::Kind kind;
@@ -237,12 +232,12 @@ void tokenize(size_t sourceFileIndex) {
         kind = Token::VOID_KW;
       else { // if it's not a keyword:
         const size_t size = word.size();
-        ret.emplace_back(Token::WORD, i, sourceFileIndex, std::move(word));
+        ret.emplace_back(Token::WORD, i, *this, std::move(word));
         i += size - 1;
         break;
       }
       // if it was a keyword:
-      ret.emplace_back(kind, i, sourceFileIndex);
+      ret.emplace_back(kind, i, *this);
       i += word.size() - 1;
       break;
     }
@@ -251,10 +246,10 @@ void tokenize(size_t sourceFileIndex) {
     throw compile_error::BadClosingChar(
         std::string("Missing closing counterpart for ") +
             style_text::styleAsCode(str[closingCharStack.back().index]) + '.',
-        closingCharStack.back().index, sourceFiles[sourceFileIndex].path());
+        closingCharStack.back().index, path());
 
   // modify source file
-  sourceFiles[sourceFileIndex].m_tokens = std::move(ret);
+  m_tokens = std::move(ret);
 }
 
 // ---------------------------------------------------------------------------//
@@ -262,27 +257,28 @@ void tokenize(size_t sourceFileIndex) {
 // ---------------------------------------------------------------------------//
 
 static void helper::handleCharStack(char c, std::vector<helper::ClosingChar>& closingCharStack,
-                                    size_t indexInFile, size_t sourceFileIndex, size_t minSize) {
+                                    size_t indexInFile, const SourceFile& sourceFile,
+                                    size_t minSize) {
 
   if (closingCharStack.size() <= minSize) {
     throw compile_error::BadClosingChar(std::string("Missing opening counterpart for ") +
                                             style_text::styleAsCode(c) + '.',
-                                        indexInFile, sourceFiles[sourceFileIndex].path());
+                                        indexInFile, sourceFile.path());
   }
 
   if (closingCharStack.back().c != c) {
-    throw compile_error::BadClosingChar(
-        std::string("Missing opening counterpart for ") +
-            style_text::styleAsCode(closingCharStack.back().c) + '.',
-        closingCharStack.back().index, sourceFiles[sourceFileIndex].path());
+    throw compile_error::BadClosingChar(std::string("Missing opening counterpart for ") +
+                                            style_text::styleAsCode(closingCharStack.back().c) +
+                                            '.',
+                                        closingCharStack.back().index, sourceFile.path());
   }
   closingCharStack.pop_back();
 };
 
-static std::string helper::getWord(const std::string& str, size_t& i, size_t sourceFileIndex) {
+static std::string helper::getWord(const std::string& str, size_t& i,
+                                   const SourceFile& sourceFile) {
   if (!helper::isWordChar(str[i])) {
-    throw compile_error::UnknownChar("Unexpected character.", i,
-                                     sourceFiles[sourceFileIndex].path());
+    throw compile_error::UnknownChar("Unexpected character.", i, sourceFile.path());
   }
 
   for (size_t j = i + 1; j < str.size(); j++) {
@@ -293,7 +289,8 @@ static std::string helper::getWord(const std::string& str, size_t& i, size_t sou
 }
 
 static size_t helper::getStringContentLength(const std::string& str, size_t i,
-                                             size_t sourceFileIndex, bool allowSpecialWhitespace) {
+                                             const SourceFile& sourceFile,
+                                             bool allowSpecialWhitespace) {
   assert((str[i] == '"' || str[i] == '`' || str[i] == '\'') &&
          "'getStringContentLength()' is only for strings.");
 
@@ -305,10 +302,10 @@ static size_t helper::getStringContentLength(const std::string& str, size_t i,
       if (str[j] != ' ' && std::isspace(str[j])) {
         if (str[j] == '\n') {
           throw compile_error::BadClosingChar("Expected closing quote before end of line.", i,
-                                              sourceFiles[sourceFileIndex].path(), (j - i) + 1);
+                                              sourceFile.path(), (j - i) + 1);
         }
         throw compile_error::BadString("This character isn't allowed in a string.", j,
-                                       sourceFiles[sourceFileIndex].path(), 1);
+                                       sourceFile.path(), 1);
       }
     }
 
@@ -323,8 +320,8 @@ static size_t helper::getStringContentLength(const std::string& str, size_t i,
       break;
   }
   endOfLineIndex++;
-  throw compile_error::BadClosingChar("Missing closing quote.", i,
-                                      sourceFiles[sourceFileIndex].path(), endOfLineIndex - i);
+  throw compile_error::BadClosingChar("Missing closing quote.", i, sourceFile.path(),
+                                      endOfLineIndex - i);
 }
 
 static size_t helper::getLengthOfPossibleComment(const std::string& str, size_t i) {

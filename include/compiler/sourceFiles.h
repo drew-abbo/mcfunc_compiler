@@ -19,6 +19,19 @@ public:
   SourceFile(std::filesystem::path&& filePath,
              const std::filesystem::path& prefixToRemoveForImporting = "");
 
+  /// Tries to open up the file and split its contents into small "tokens". For
+  /// example, a keyword, a string, or a semicolon.
+  /// \throws compile_error::Generic (or a subclass of it) if the file fails to
+  /// open or if tokenization encounters unexpected data.
+  void tokenize();
+
+  /// Analyzes the file's tokens and validates that the order of the tokens
+  /// creates valid constructs in the language. These constructs are used to
+  /// generate symbol tables for the file.
+  /// \throws compile_error::Generic (or a subclass of it) if anything is wrong
+  /// with the file's syntax.
+  void analyzeSyntax();
+
   /// Get a const reference to the path.
   /// \warning Don't store if the location of this object can change (like if
   /// it's inside of a vector that might resize).
@@ -58,10 +71,6 @@ private:
   symbol::FileWriteTable m_fileWriteSymbolTable;
   symbol::ImportTable m_importSymbolTable;
   symbol::NamespaceExpose m_namespaceExpose;
-
-private:
-  friend void tokenize(size_t sourceFileIndex);
-  friend void analyzeSyntax(size_t sourceFileIndex);
 };
 
 /// The exact same as \p std::vector<SourceFile> except there's only 1 instance

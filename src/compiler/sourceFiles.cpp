@@ -7,6 +7,9 @@
 #include <compiler/sourceFiles.h>
 #include <compiler/tokenization/Token.h>
 
+// NOTE: SourceFile::tokenize() & SourceFile::analyzeSyntax() are defined in
+// separate files.
+
 // SourceFile
 
 SourceFile::SourceFile(const std::filesystem::path& filePath,

@@ -38,26 +38,22 @@ public:
   /// \param indexInFile The index of this token in the file it came from.
   /// \param sourceFileIndex The index of the file in \p sourceFiles that this
   /// token is from.
-  Token(Kind tokenKind, size_t indexInFile, size_t sourceFileIndex);
+  Token(Kind tokenKind, size_t indexInFile, const SourceFile& sourceFile);
 
   /// \param tokenKind The type of token that this is.
   /// \param indexInFile The index of this token in the file it came from.
   /// \param sourceFileIndex The index of the file in \p sourceFiles that this
   /// token is from.
   /// \param contents The contents for tokens like \p STRING that store text.
-  Token(Kind tokenKind, size_t indexInFile, size_t sourceFileIndex,
+  Token(Kind tokenKind, size_t indexInFile, const SourceFile& sourceFile,
         const std::string& contents);
-  Token(Kind tokenKind, size_t indexInFile, size_t sourceFileIndex,
-        std::string&& contents);
+  Token(Kind tokenKind, size_t indexInFile, const SourceFile& sourceFile, std::string&& contents);
 
   /// The type of token that this is.
   Kind kind() const;
 
   /// The index of this token in the file it came from.
   size_t indexInFile() const;
-
-  /// The index of the file in \p sourceFiles that this token is from.
-  size_t sourceFileIndex() const;
 
   /// The source file in \p sourceFiles that this token is from.
   const SourceFile& sourceFile() const;
@@ -71,7 +67,7 @@ public:
 private:
   Kind m_tokenKind;
   size_t m_indexInFile;
-  size_t m_sourceFileIndex;
+  const SourceFile& m_sourceFile;
   std::string m_contents;
 };
 

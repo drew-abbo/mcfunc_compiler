@@ -13,7 +13,7 @@
   if (sourceFiles.empty())                                                                         \
     sourceFiles.push_back(SourceFile("dummy_file.mcfunc"));                                        \
   auto _ptrVarName##_uniquePtr =                                                                   \
-      std::make_unique<Token>(Token(Token::STRING, 0, 0, _filePathStr));                           \
+      std::make_unique<Token>(Token(Token::STRING, 0, sourceFiles.back(), _filePathStr));          \
   Token* _ptrVarName = _ptrVarName##_uniquePtr.get();
 
 TEST(test_filePathFromToken, valid_paths) {

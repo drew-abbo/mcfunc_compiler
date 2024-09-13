@@ -1,4 +1,4 @@
-#include <compiler/syntax_analysis/analyzeSyntax.h>
+#include <compiler/sourceFiles.h>
 
 #include <cassert>
 #include <cstddef>
@@ -8,7 +8,6 @@
 
 #include <cli/style_text.h>
 #include <compiler/compile_error.h>
-#include <compiler/sourceFiles.h>
 #include <compiler/syntax_analysis/statement.h>
 #include <compiler/syntax_analysis/symbol.h>
 #include <compiler/tokenization/Token.h>
@@ -50,77 +49,71 @@ static statement::Scope collectScope(const std::vector<Token>& tokens,
 } // namespace helper
 } // namespace
 
-void analyzeSyntax(size_t sourceFileIndex) {
-  const std::vector<Token>& tokens = sourceFiles[sourceFileIndex].tokens();
-  symbol::ImportTable& importTable = sourceFiles[sourceFileIndex].m_importSymbolTable;
-  symbol::FileWriteTable& fileWriteTable = sourceFiles[sourceFileIndex].m_fileWriteSymbolTable;
-  symbol::FunctionTable& functionTable = sourceFiles[sourceFileIndex].m_functionSymbolTable;
-  symbol::UnresolvedFunctionNames& unresolvedFunctionNames =
-      sourceFiles[sourceFileIndex].m_unresolvedFunctionNames;
+void SourceFile::analyzeSyntax() {
 
   // this needs to be here or there might be out of bounds access
-  if (tokens.empty())
+  if (m_tokens.empty())
     return;
 
-  for (size_t i = 0; i < tokens.size(); i++) {
+  for (size_t i = 0; i < m_tokens.size(); i++) {
 
     const Token* publicTokenPtr = nullptr;
     const Token* tickTokenPtr = nullptr;
     const Token* loadTokenPtr = nullptr;
 
   switchStatementBeginning:
-    switch (tokens[i].kind()) {
+    switch (m_tokens[i].kind()) {
 
     // Namespace expose (e.g. 'expose "foo";')
     case Token::EXPOSE_KW:
-      helper::forceMatchTokenPattern(tokens, i + 1, {Token::STRING, Token::SEMICOLON});
-      sourceFiles[sourceFileIndex].m_namespaceExpose.set(&tokens[i + 1]);
+      helper::forceMatchTokenPattern(m_tokens, i + 1, {Token::STRING, Token::SEMICOLON});
+      m_namespaceExpose.set(&m_tokens[i + 1]);
       i += 2;
       break;
     // Import statement (e.g. 'import "foo.mcfunc";')
     case Token::IMPORT_KW:
-      helper::forceMatchTokenPattern(tokens, i + 1, {Token::STRING, Token::SEMICOLON});
-      importTable.merge(symbol::Import(&tokens[i + 1]));
+      helper::forceMatchTokenPattern(m_tokens, i + 1, {Token::STRING, Token::SEMICOLON});
+      m_importSymbolTable.merge(symbol::Import(&m_tokens[i + 1]));
       i += 2;
       break;
 
     // File definition (e.g. 'file "foo" = `bar`;')
     case Token::FILE_KW:
-      helper::forceMatchToken(tokens, i + 1, {Token::STRING});
-      helper::forceMatchToken(tokens, i + 2, {Token::ASSIGN, Token::SEMICOLON});
+      helper::forceMatchToken(m_tokens, i + 1, {Token::STRING});
+      helper::forceMatchToken(m_tokens, i + 2, {Token::ASSIGN, Token::SEMICOLON});
 
       // no definition (e.g. 'file "foo";')
-      if (tokens[i + 2].kind() == Token::SEMICOLON) {
-        fileWriteTable.merge(symbol::FileWrite(&tokens[i + 1]));
+      if (m_tokens[i + 2].kind() == Token::SEMICOLON) {
+        m_fileWriteSymbolTable.merge(symbol::FileWrite(&m_tokens[i + 1]));
         i += 2;
         break;
       }
 
       // has definition (e.g. 'file "foo" = `bar`;' or 'file "foo" = "bar";')
-      helper::forceMatchToken(tokens, i + 3, {Token::STRING, Token::SNIPPET});
-      helper::forceMatchToken(tokens, i + 4, {Token::SEMICOLON});
+      helper::forceMatchToken(m_tokens, i + 3, {Token::STRING, Token::SNIPPET});
+      helper::forceMatchToken(m_tokens, i + 4, {Token::SEMICOLON});
 
-      fileWriteTable.merge(symbol::FileWrite(&tokens[i + 1], &tokens[i + 3]));
+      m_fileWriteSymbolTable.merge(symbol::FileWrite(&m_tokens[i + 1], &m_tokens[i + 3]));
       i += 4;
       break;
 
     // 'public', 'tick', and 'load' qualifiers for functions that can come in
     // any order and can repeat (e.g. 'public tick load void foo();')
     case Token::PUBLIC_KW:
-      publicTokenPtr = &tokens[i];
+      publicTokenPtr = &m_tokens[i];
       goto getNextQualifierKeyword;
     case Token::TICK_KW:
-      tickTokenPtr = &tokens[i];
+      tickTokenPtr = &m_tokens[i];
       goto getNextQualifierKeyword;
     case Token::LOAD_KW:
-      loadTokenPtr = &tokens[i];
+      loadTokenPtr = &m_tokens[i];
     getNextQualifierKeyword:
       i++;
-      if (helper::tryMatchPattern(tokens, i, {Token::VOID_KW}))
+      if (helper::tryMatchPattern(m_tokens, i, {Token::VOID_KW}))
         goto functionDeclaration;
 
       // re-include 'Token::VOID_KW' here for a better error message
-      helper::forceMatchToken(tokens, i,
+      helper::forceMatchToken(m_tokens, i,
                               {Token::TICK_KW, Token::LOAD_KW, Token::PUBLIC_KW, Token::VOID_KW});
       goto switchStatementBeginning;
 
@@ -128,44 +121,44 @@ void analyzeSyntax(size_t sourceFileIndex) {
     case Token::VOID_KW: {
     functionDeclaration:
       i += 1; // set to index of function name
-      helper::forceMatchTokenPattern(tokens, i, {Token::WORD, Token::L_PAREN, Token::R_PAREN});
+      helper::forceMatchTokenPattern(m_tokens, i, {Token::WORD, Token::L_PAREN, Token::R_PAREN});
 
-      symbol::Function thisSymbol(&tokens[i], publicTokenPtr, tickTokenPtr, loadTokenPtr);
+      symbol::Function thisSymbol(&m_tokens[i], publicTokenPtr, tickTokenPtr, loadTokenPtr);
 
       i += 3; // set to index of definition, ending semicolon, or 'expose'
-      helper::forceMatchToken(tokens, i, {Token::L_BRACE, Token::SEMICOLON, Token::EXPOSE_KW});
+      helper::forceMatchToken(m_tokens, i, {Token::L_BRACE, Token::SEMICOLON, Token::EXPOSE_KW});
 
       // function is exposed (e.g. 'void foo() expose "foo";')
-      if (tokens[i].kind() == Token::EXPOSE_KW) {
-        helper::forceMatchToken(tokens, i + 1, {Token::STRING});
-        thisSymbol.setExposeAddressToken(&tokens[i + 1]);
+      if (m_tokens[i].kind() == Token::EXPOSE_KW) {
+        helper::forceMatchToken(m_tokens, i + 1, {Token::STRING});
+        thisSymbol.setExposeAddressToken(&m_tokens[i + 1]);
         i += 2; // set to index of definition or ending semicolon
-        helper::forceMatchToken(tokens, i, {Token::L_BRACE, Token::SEMICOLON});
+        helper::forceMatchToken(m_tokens, i, {Token::L_BRACE, Token::SEMICOLON});
       }
 
       // function has definition (e.g. 'void foo() { /say hi; }')
-      if (tokens[i].kind() == Token::L_BRACE) {
+      if (m_tokens[i].kind() == Token::L_BRACE) {
         statement::Scope definition =
-            helper::collectScope(tokens, functionTable, unresolvedFunctionNames, i);
+            helper::collectScope(m_tokens, m_functionSymbolTable, m_unresolvedFunctionNames, i);
         i += definition.numTokens() - 1; // set to index of end of definition
         thisSymbol.setDefinition(std::move(definition));
       }
 
-      unresolvedFunctionNames.remove(thisSymbol.name());
-      functionTable.merge(std::move(thisSymbol));
+      m_unresolvedFunctionNames.remove(thisSymbol.name());
+      m_functionSymbolTable.merge(std::move(thisSymbol));
       break;
     }
 
     default:
       throw compile_error::UnexpectedToken(
-          "Expected a definition but got " + helper::tokenKindName(tokens[i].kind()) +
+          "Expected a definition but got " + helper::tokenKindName(m_tokens[i].kind()) +
               " (only definitions are allowed in the global scope).",
-          tokens[i]);
+          m_tokens[i]);
     }
   }
 
   // ensure that no non-public functions are left undefined
-  for (const auto& symbol : functionTable) {
+  for (const auto& symbol : m_functionSymbolTable) {
     if (symbol.isDefined() || symbol.isPublic())
       continue;
     throw compile_error::UnresolvedSymbol("Function " + style_text::styleAsCode(symbol.name()) +

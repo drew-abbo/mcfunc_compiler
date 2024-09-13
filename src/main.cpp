@@ -7,10 +7,8 @@
 
 #include <compiler/compile_error.h>
 #include <compiler/sourceFiles.h>
-#include <compiler/syntax_analysis/analyzeSyntax.h>
 #include <compiler/syntax_analysis/statement.h>
 #include <compiler/tokenization/Token.h>
-#include <compiler/tokenization/tokenize.h>
 
 // print tokens in a somewhat readable way
 void printTokens(const std::vector<Token> tokens) {
@@ -133,20 +131,12 @@ int main() {
 
   sourceFiles.emplace_back("test.mcfunc");
 
-  // try and tokenize the file
-  try {
-    tokenize(sourceFiles.size() - 1);
-  } catch (const compile_error::Generic& e) {
-    std::cout << "TOKENIZATION FAILED" << std::endl;
-    std::cout << e.what();
-    return EXIT_FAILURE;
-  }
-
   // try and do syntax analysis the file
   try {
-    analyzeSyntax(sourceFiles.size() - 1);
+    sourceFiles.back().tokenize();
+    sourceFiles.back().analyzeSyntax();
   } catch (const compile_error::Generic& e) {
-    std::cout << "SYNTAX ANALYSIS FAILED" << std::endl;
+    std::cout << "TOKENIZATION OR SYNTAX ANALYSIS FAILED" << std::endl;
     std::cout << e.what();
     return EXIT_FAILURE;
   }
