@@ -163,6 +163,15 @@ void analyzeSyntax(size_t sourceFileIndex) {
           tokens[i]);
     }
   }
+
+  // ensure that no non-public functions are left undefined
+  for (const auto& symbol : functionTable) {
+    if (symbol.isDefined() || symbol.isPublic())
+      continue;
+    throw compile_error::UnresolvedSymbol("Function " + style_text::styleAsCode(symbol.name()) +
+                                              " was left undefined but was not marked as public.",
+                                          symbol.nameToken());
+  }
 }
 
 // ---------------------------------------------------------------------------//
