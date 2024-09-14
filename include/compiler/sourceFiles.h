@@ -85,6 +85,13 @@ public:
   void operator=(const SourceFilesSingletonType&) = delete;
   void operator=(SourceFilesSingletonType&&) = delete;
 
+  /// Evaluates every source file by tokenizing, performing syntax analysis, and
+  /// generating symbol tables. Source files are evaluated in parallel. This
+  /// sets up the object for the linking stage.
+  /// \throws compile_error::Generic (or a subclass of it) if anything goes
+  /// wrong.
+  void evaluateAll();
+
 private:
   SourceFilesSingletonType() = default;
 };

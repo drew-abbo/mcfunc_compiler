@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <memory>
+#include <ostream>
 #include <vector>
 
 #include <compiler/compile_error.h>
@@ -124,32 +125,31 @@ int main() {
 
   auto startTime = std::chrono::high_resolution_clock::now();
 
-  // so that the imports in the test file don't cause errors
-  sourceFiles.emplace_back("foo.mcfunc");
-
   sourceFiles.emplace_back("test.mcfunc");
+  sourceFiles.emplace_back("foo.mcfunc");
 
   // try and do syntax analysis the file
   try {
-    sourceFiles.back().tokenize();
-    sourceFiles.back().analyzeSyntax();
+    sourceFiles.evaluateAll();
   } catch (const compile_error::Generic& e) {
-    std::cout << "TOKENIZATION OR SYNTAX ANALYSIS FAILED" << std::endl;
+    std::cout << "EVALUATION FAILED" << std::endl;
     std::cout << e.what();
     return EXIT_FAILURE;
   }
 
   auto endTime = std::chrono::high_resolution_clock::now();
 
-  // printTokens(sourceFiles.back().tokens());
-  reconstructSyntaxAndPrint(sourceFiles.back());
+  for (const auto& s : sourceFiles) {
+    std::cout << "--->   " << s.importPath() << "   <---\n\n";
+    reconstructSyntaxAndPrint(s);
 
-  if (!sourceFiles.back().unresolvedFunctionNames().empty()) {
-    std::cout << "Unresolved Functions:\n";
-    for (const auto& fName : sourceFiles.back().unresolvedFunctionNames()) {
-      std::cout << '\t' << fName << "()\n";
+    if (!s.unresolvedFunctionNames().empty()) {
+      std::cout << "Unresolved Functions:\n";
+      for (const auto& fName : s.unresolvedFunctionNames()) {
+        std::cout << '\t' << fName << "()\n";
+      }
+      std::cout << '\n';
     }
-    std::cout << '\n';
   }
 
   // print the time it took
