@@ -45,13 +45,21 @@ if(DO_TESTING)
 endif()
 
 if(MSVC)
-    # Runtime checks
+    # Runtime checks in debug mode
     set(DEBUG_MODE_COMP_OPTIONS /RTC1)
 
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU|MSYS|MinGW")
-    # Sanitizers
-    set(DEBUG_MODE_COMP_OPTIONS -fsanitize=address,undefined)
+    # More warnings (C++ specific warnings on 2nd line)
+    set(GENERAL_COMP_OPTIONS -Wall -Wextra -Wconversion
+        -Woverloaded-virtual -Wuseless-cast -Wdeprecated -Wdelete-non-virtual-dtor)
+
+    # Sanitizers, debug info, and no optimization in debug mode
+    set(DEBUG_MODE_COMP_OPTIONS ${GENERAL_COMP_OPTIONS} -fsanitize=address,undefined -g -O0)
     set(DEBUG_MODE_LINK_OPTIONS -fsanitize=address,undefined)
+
+    # Strip debug symbols, and do high optimization, do link time optimization,
+    # and aggressively inline functions in release mode
+    set(RELEASE_MODE_COMP_OPTIONS ${GENERAL_COMP_OPTIONS} -s -O3 -flto -finline-functions)
 
 else()
     message(WARNING "Compiler is not directly supported (expected MSVC, Clang, GNU, MSYS or MinGW)")
@@ -59,6 +67,10 @@ endif()
 
 # Set options for mult-configuration generators (e.g. Visual Studio)
 if(CMAKE_CONFIGURATION_TYPES)
+    message(STATUS "Detected mult-configuration generator.")
+    message(STATUS "DEBUG_MODE_COMP_OPTIONS = ${DEBUG_MODE_COMP_OPTIONS}")
+    message(STATUS "RELEASE_MODE_COMP_OPTIONS = ${RELEASE_MODE_COMP_OPTIONS}")
+
     # Debug mode
     target_compile_options(${MAIN_EXE} PRIVATE $<$<CONFIG:Debug>:${DEBUG_MODE_COMP_OPTIONS}>)
     target_link_options(${MAIN_EXE} PRIVATE $<$<CONFIG:Debug>:${DEBUG_MODE_LINK_OPTIONS}>)
@@ -83,16 +95,11 @@ if(CMAKE_CONFIGURATION_TYPES)
 
 # Set options for single-configuration generators (e.g. Makefiles)
 else()
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        target_compile_options(${MAIN_EXE} PRIVATE ${DEBUG_MODE_COMP_OPTIONS})
-        target_link_options(${MAIN_EXE} PRIVATE ${DEBUG_MODE_LINK_OPTIONS})
+    message(STATUS "Detected single-configuration generator.")
 
-        if(DO_TESTING)
-            target_compile_options(${TESTS_EXE} PRIVATE ${DEBUG_MODE_COMP_OPTIONS})
-            target_link_options(${TESTS_EXE} PRIVATE ${DEBUG_MODE_LINK_OPTIONS})
-        endif()
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        message(STATUS "RELEASE_MODE_COMP_OPTIONS = ${RELEASE_MODE_COMP_OPTIONS}")
 
-    elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
         target_compile_options(${MAIN_EXE} PRIVATE ${RELEASE_MODE_COMP_OPTIONS})
         target_link_options(${MAIN_EXE} PRIVATE ${RELEASE_MODE_LINK_OPTIONS})
 
@@ -103,6 +110,17 @@ else()
 
         # Enable LTO in release mode (only for the main executable)
         set_property(TARGET ${MAIN_EXE} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+
+    else() # Debug mode
+        message(STATUS "DEBUG_MODE_COMP_OPTIONS = ${DEBUG_MODE_COMP_OPTIONS}")
+
+        target_compile_options(${MAIN_EXE} PRIVATE ${DEBUG_MODE_COMP_OPTIONS})
+        target_link_options(${MAIN_EXE} PRIVATE ${DEBUG_MODE_LINK_OPTIONS})
+
+        if(DO_TESTING)
+            target_compile_options(${TESTS_EXE} PRIVATE ${DEBUG_MODE_COMP_OPTIONS})
+            target_link_options(${TESTS_EXE} PRIVATE ${DEBUG_MODE_LINK_OPTIONS})
+        endif()
     endif()
 endif()
 
