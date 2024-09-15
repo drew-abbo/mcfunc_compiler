@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cctype>
+#include <cstring>
 #include <filesystem>
 #include <optional>
 
@@ -18,6 +19,18 @@ using namespace symbol;
 
 // Function
 
+static void ensureExposePathDoesntStartWithHiddenNamespacePrefix(const Function& func) {
+  // namespace can't start with the hidden namespace prefix
+  if (!func.isExposed() || func.exposeAddress().find(hiddenNamespacePrefix) != 0)
+    return;
+  throw compile_error::BadString(
+      "The expose address for function " + style_text::styleAsCode(func.name()) +
+          " begins with the hidden namespace prefix " +
+          style_text::styleAsCode(hiddenNamespacePrefix) + '.',
+      func.exposeAddressToken().indexInFile() + 1, func.exposeAddressToken().sourceFile().path(),
+      std::strlen(hiddenNamespacePrefix));
+}
+
 Function::Function(const Token* nameTokenPtr, const Token* publicTokenPtr,
                    const Token* tickTokenPtr, const Token* loadTokenPtr,
                    const Token* exposeAddressTokenPtr, std::optional<statement::Scope>&& definition)
@@ -27,8 +40,11 @@ Function::Function(const Token* nameTokenPtr, const Token* publicTokenPtr,
                               ? ""
                               : filePathFromToken(exposeAddressTokenPtr, false, false)),
       m_definition(std::move(definition)) {
+
   assert(nameTokenPtr != nullptr && "Name token can't be 'nullptr'.");
   assert(nameTokenPtr->contents().size() > 0 && "Name token can't lack contents.");
+
+  ensureExposePathDoesntStartWithHiddenNamespacePrefix(*this);
 
   if (nameTokenPtr->contents()[0] >= '0' && nameTokenPtr->contents()[0] <= '9') {
     throw compile_error::NameError("Function names cannot start with a digit.",
@@ -79,6 +95,7 @@ void Function::setExposeAddressToken(const Token* exposeAddressTokenPtr) {
   assert(exposeAddressTokenPtr != nullptr && "Setting expose address with 'nullptr'.");
   m_exposeAddressTokenPtr = exposeAddressTokenPtr;
   m_exposeAddressPath = filePathFromToken(exposeAddressTokenPtr, false, false);
+  ensureExposePathDoesntStartWithHiddenNamespacePrefix(*this);
 }
 
 const std::filesystem::path& Function::exposeAddressPath() const {
@@ -220,9 +237,8 @@ void UnresolvedFunctionNames::ensureTableIsEmpty() const {
     if (m_symbolNames.count(token->contents()) == 0)
       continue;
 
-    throw compile_error::UnresolvedSymbol("Function " + style_text::styleAsCode(token->contents()) +
-                                              " is never defined.",
-                                          *token);
+    throw compile_error::UnresolvedSymbol(
+        "Function " + style_text::styleAsCode(token->contents()) + " is never defined.", *token);
   }
 
   assert(false && "This point should never be reached");
@@ -397,15 +413,18 @@ void NamespaceExpose::set(const Token* exposedNamespaceTokenPtr) {
   }
 
   // namespace can only contain certain characters
-  for (const char c : namespaceStr) {
-    if (!std::isalnum(c) && c != '_' && c != '.' && c != '-') {
-      if (std::isprint(c)) {
+  for (size_t i = 0; i < namespaceStr.size(); i++) {
+    if (!std::isalnum(namespaceStr[i]) && namespaceStr[i] != '_' && namespaceStr[i] != '.' &&
+        namespaceStr[i] != '-') {
+      if (std::isprint(namespaceStr[i])) {
         throw compile_error::BadString("The exposed namespace contains invalid character " +
-                                           style_text::styleAsCode(c) + '.',
-                                       *exposedNamespaceTokenPtr);
+                                           style_text::styleAsCode(namespaceStr[i]) + '.',
+                                       exposedNamespaceTokenPtr->indexInFile() + i + 1,
+                                       exposedNamespaceTokenPtr->sourceFile().path(), 1);
       }
       throw compile_error::BadString("The exposed namespace contains invalid character.",
-                                     *exposedNamespaceTokenPtr);
+                                     exposedNamespaceTokenPtr->indexInFile() + i + 1,
+                                     exposedNamespaceTokenPtr->sourceFile().path(), 1);
     }
   }
 
@@ -414,7 +433,8 @@ void NamespaceExpose::set(const Token* exposedNamespaceTokenPtr) {
     throw compile_error::BadString(
         "The exposed namespace cannot begin with the hidden namespace prefix " +
             style_text::styleAsCode(hiddenNamespacePrefix) + '.',
-        *exposedNamespaceTokenPtr);
+        exposedNamespaceTokenPtr->indexInFile() + 1, exposedNamespaceTokenPtr->sourceFile().path(),
+        std::strlen(hiddenNamespacePrefix));
   }
 
   m_exposedNamespaceTokenPtr = exposedNamespaceTokenPtr;
