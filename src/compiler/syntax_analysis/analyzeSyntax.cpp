@@ -157,13 +157,20 @@ void SourceFile::analyzeSyntax() {
     }
   }
 
-  // ensure that no non-public functions are left undefined
   for (const auto& symbol : m_functionSymbolTable) {
-    if (symbol.isDefined() || symbol.isPublic())
+    if (symbol.isDefined())
       continue;
-    throw compile_error::UnresolvedSymbol("Function " + style_text::styleAsCode(symbol.name()) +
-                                              " was left undefined but was not marked as public.",
-                                          symbol.nameToken());
+
+    // ensure that no private functions are left undefined
+    if (!symbol.isPublic()) {
+      throw compile_error::UnresolvedSymbol("Function " + style_text::styleAsCode(symbol.name()) +
+                                                " was left undefined but was not marked as public.",
+                                            symbol.nameToken());
+    }
+
+    // add public function declarations (without definitions) to the unresolved
+    // function table (they aren't defined in this file)
+    m_unresolvedFunctionNames.merge(&symbol.nameToken());
   }
 }
 

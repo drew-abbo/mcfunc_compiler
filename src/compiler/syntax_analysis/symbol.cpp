@@ -221,7 +221,7 @@ void UnresolvedFunctionNames::ensureTableIsEmpty() const {
       continue;
 
     throw compile_error::UnresolvedSymbol("Function " + style_text::styleAsCode(token->contents()) +
-                                              " was never declared or defined.",
+                                              " is never defined.",
                                           *token);
   }
 

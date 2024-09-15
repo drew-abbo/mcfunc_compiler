@@ -7,6 +7,7 @@
 #include <compiler/UniqueID.h>
 #include <compiler/syntax_analysis/symbol.h>
 #include <compiler/tokenization/Token.h>
+#include <compiler/linking/LinkResult.h>
 
 /// Represents a single source file.
 /// Anything that this class does may throw (including construction).
@@ -72,6 +73,9 @@ private:
   symbol::FileWriteTable m_fileWriteSymbolTable;
   symbol::ImportTable m_importSymbolTable;
   symbol::NamespaceExpose m_namespaceExpose;
+
+private:
+  friend class SourceFilesSingletonType;
 };
 
 /// The exact same as \p std::vector<SourceFile> except there's only 1 instance
@@ -91,6 +95,11 @@ public:
   /// \throws compile_error::Generic (or a subclass of it) if anything goes
   /// wrong.
   void evaluateAll();
+
+  /// Links all source files together, returns a \p LinkResult object.
+  /// \throws compile_error::Generic (or a subclass of it) if anything goes
+  /// wrong.
+  LinkResult link();
 
 private:
   SourceFilesSingletonType() = default;

@@ -1,7 +1,9 @@
 #pragma once
 /// \file Contains the \p UniqueID type.
 
+#include <cassert>
 #include <cstdint>
+#include <functional>
 
 class UniqueID {
 public:
@@ -16,6 +18,10 @@ public:
   /// value.
   /// \param kind The kind of object that this ID is for.
   UniqueID(Kind kind);
+
+  /// \warning Do not use the default constructor for this class. It is only
+  /// here so that you can use this class in data structures that require it.
+  UniqueID() { assert(false && "Do not use the UniqueID default constructor."); };
 
   /// String representation of this ID (e.g. 's_00001' is a \p SOURCE_FILE ID).
   const char* str() const;
@@ -38,3 +44,9 @@ private:
 };
 
 static_assert(sizeof(UniqueID) == sizeof(uint64_t));
+
+/// This allows \p UniqueID to be used in data structures like
+/// \p std::unordered_map as a key.
+template <> struct std::hash<UniqueID> {
+  std::size_t operator()(UniqueID id) const { return std::hash<uint64_t>()(id.value()); }
+};

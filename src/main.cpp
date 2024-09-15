@@ -131,8 +131,9 @@ int main() {
   // try and do syntax analysis the file
   try {
     sourceFiles.evaluateAll();
+    sourceFiles.link();
   } catch (const compile_error::Generic& e) {
-    std::cout << "EVALUATION FAILED" << std::endl;
+    std::cout << "COMPILATION FAILED" << std::endl;
     std::cout << e.what();
     return EXIT_FAILURE;
   }
