@@ -102,7 +102,7 @@ def __parse_cli_args() -> tuple[bool, bool]:
 # 1st return str is the config command
 # 2nd return str is the build command
 def __get_cmds(build_in_parallel: bool, release_mode: bool) -> tuple[str, str]:
-    config_cmd = "cmake .."
+    config_cmd = "cmake .. -Wno-dev"
     build_cmd = "cmake --build ."
 
     if __ON_WINDOWS:
@@ -163,7 +163,7 @@ def __run_configure_cmd(config_cmd: str) -> None:
 def __run_regen_build_files_cmd() -> None:
     START_TIME = time.time()
     Print.status("Regenerating build files...")
-    run_cmd("cmake .", BUILD_DIR)
+    run_cmd("cmake . -Wno-dev", BUILD_DIR)
     Print.status(f"Regenerating build files done ({time.time() - START_TIME:.3f} seconds).")
 
 
