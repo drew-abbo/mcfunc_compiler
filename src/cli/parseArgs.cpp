@@ -22,6 +22,9 @@ const std::filesystem::path& ParseArgsResult::outputDirectory() const { return m
 
 // parseArgs helper functions
 
+namespace {
+namespace helper {
+
 /// Prints a message about running the program with the help flag to
 /// \p std::cerr and exits with \p EXIT_FAILURE as the exit code.
 static void exitWithHelpPageInfo(const char* arg0) {
@@ -47,6 +50,9 @@ static void ensureDirectorySuppliedAfterArg(int argc, const char** argv, int i) 
   }
 }
 
+} // namespace helper
+} // namespace
+
 // parseArgs
 
 ParseArgsResult parseArgs(int argc, const char** argv) {
@@ -66,7 +72,7 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
 
     // -v, --version
     if (arg == "-v" || arg == "--version") {
-      ensureArgIsOnlyArg(argc, argv, i);
+      helper::ensureArgIsOnlyArg(argc, argv, i);
 
       std::cout << "MCFunc version " MCFUNC_VERSION "\n";
 
@@ -75,7 +81,7 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
 
     // -h, --help
     if (arg == "-h" || arg == "--help") {
-      ensureArgIsOnlyArg(argc, argv, i);
+      helper::ensureArgIsOnlyArg(argc, argv, i);
 
       std::cout << // clang-format off
       // -------------------------------------------------------------------------------- (80 chars)
@@ -95,9 +101,9 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
     if (arg == "-o") {
       if (outputDirectoryAlreadyGiven) {
         std::cerr << "Multiple output directories were supplied.\n";
-        exitWithHelpPageInfo(argv[0]);
+        helper::exitWithHelpPageInfo(argv[0]);
       }
-      ensureDirectorySuppliedAfterArg(argc, argv, i);
+      helper::ensureDirectorySuppliedAfterArg(argc, argv, i);
 
       outputDirectoryAlreadyGiven = true;
       outputDirectory = argv[i + 1];
@@ -126,7 +132,7 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
       newSourceFilePathPrefixToRemove.remove_filename();
     } catch (const std::exception&) {
       std::cerr << "File " << style_text::styleAsCode(arg.data()) << " is not valid.";
-      exitWithHelpPageInfo(argv[0]);
+      helper::exitWithHelpPageInfo(argv[0]);
     }
 
     // skip the path if it's already there
