@@ -1,4 +1,4 @@
-#include <compiler/sourceFiles.h>
+#include <compiler/SourceFiles.h>
 
 #include <algorithm>
 #include <cassert>
@@ -17,7 +17,7 @@
 #include <compiler/tokenization/Token.h>
 
 // NOTE: SourceFile::tokenize(), SourceFile::analyzeSyntax(), and
-// SourceFilesSingletonType::link() are defined in separate files.
+// SourceFiles::link() are defined in separate files.
 
 // SourceFile
 
@@ -59,16 +59,9 @@ const symbol::NamespaceExpose& SourceFile::namespaceExposeSymbol() const {
   return m_namespaceExpose;
 }
 
-// SourceFilesSingleton_t
+// SourceFiles
 
-SourceFilesSingletonType& SourceFilesSingletonType::getSingletonInstance() {
-  static SourceFilesSingletonType instance;
-  return instance;
-}
-
-// SourceFilesSingletonType
-
-void SourceFilesSingletonType::evaluateAll() {
+void SourceFiles::evaluateAll() {
   if (!size())
     return;
 
@@ -107,7 +100,7 @@ void SourceFilesSingletonType::evaluateAll() {
           try {
             for (size_t j = start; j < end; j++) {
               this->at(j).tokenize();
-              this->at(j).analyzeSyntax();
+              this->at(j).analyzeSyntax(*this);
             }
             promise.set_value();
           } catch (...) {
@@ -133,7 +126,3 @@ void SourceFilesSingletonType::evaluateAll() {
     p.get_future().get();
   }
 }
-
-// sourceFiles
-
-SourceFilesSingletonType& sourceFiles = SourceFilesSingletonType::getSingletonInstance();

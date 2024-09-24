@@ -11,6 +11,9 @@
 #include <compiler/syntax_analysis/statement.h>
 #include <compiler/tokenization/Token.h>
 
+// forward declaration to avoid conflicts
+class SourceFiles;
+
 namespace symbol {
 
 /// Represents a function declaration with or without a definition.
@@ -216,7 +219,7 @@ class Import {
 public:
   /// \param importPathTokenPtr cannot be null.
   /// \note This class does not take owenership of any pointers it is given.
-  Import(const Token* importPathTokenPtr);
+  Import(const Token* importPathTokenPtr, const SourceFiles& sourceFiles);
 
   /// The token that holds the import path.
   const Token& importPathToken() const;

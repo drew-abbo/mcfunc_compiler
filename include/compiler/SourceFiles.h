@@ -1,13 +1,13 @@
 #pragma once
-/// \file Contains the \p sourceFiles variable and the \p SourceFile type.
+/// \file Contains the \p SourceFiles and \p SourceFile types.
 
 #include <filesystem>
 #include <vector>
 
 #include <compiler/UniqueID.h>
+#include <compiler/linking/LinkResult.h>
 #include <compiler/syntax_analysis/symbol.h>
 #include <compiler/tokenization/Token.h>
-#include <compiler/linking/LinkResult.h>
 
 /// Represents a single source file.
 /// Anything that this class does may throw (including construction).
@@ -32,7 +32,7 @@ public:
   /// generate symbol tables for the file.
   /// \throws compile_error::Generic (or a subclass of it) if anything is wrong
   /// with the file's syntax.
-  void analyzeSyntax();
+  void analyzeSyntax(const SourceFiles& sourceFiles);
 
   /// Get a const reference to the path.
   /// \warning Don't store if the location of this object can change (like if
@@ -75,20 +75,13 @@ private:
   symbol::NamespaceExpose m_namespaceExpose;
 
 private:
-  friend class SourceFilesSingletonType;
+  friend class SourceFiles;
 };
 
-/// The exact same as \p std::vector<SourceFile> except there's only 1 instance
-/// of it.
-class SourceFilesSingletonType : public std::vector<SourceFile> {
+/// The exact same as \p std::vector<SourceFile> except there's a few extra
+/// methods attached for linking and compiling.
+class SourceFiles : public std::vector<SourceFile> {
 public:
-  /// This class is a singleton. Only 1 instance of it exists.
-  static SourceFilesSingletonType& getSingletonInstance();
-  SourceFilesSingletonType(const SourceFilesSingletonType&) = delete;
-  SourceFilesSingletonType(SourceFilesSingletonType&&) = delete;
-  void operator=(const SourceFilesSingletonType&) = delete;
-  void operator=(SourceFilesSingletonType&&) = delete;
-
   /// Evaluates every source file by tokenizing, performing syntax analysis, and
   /// generating symbol tables. Source files are evaluated in parallel. This
   /// sets up the object for the linking stage.
@@ -100,12 +93,4 @@ public:
   /// \throws compile_error::Generic (or a subclass of it) if anything goes
   /// wrong.
   LinkResult link();
-
-private:
-  SourceFilesSingletonType() = default;
 };
-
-/// Use this variable to track what files have been visited so that things like
-/// tokens don't need to store an entire \p SourceFile object when they could
-/// just store an index for the file they're from.
-extern SourceFilesSingletonType& sourceFiles;

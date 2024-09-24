@@ -7,9 +7,9 @@
 #include <optional>
 
 #include <cli/style_text.h>
+#include <compiler/SourceFiles.h>
 #include <compiler/compile_error.h>
 #include <compiler/generateImportPath.h>
-#include <compiler/sourceFiles.h>
 #include <compiler/syntax_analysis/filePathFromToken.h>
 #include <compiler/syntax_analysis/statement.h>
 #include <compiler/tokenization/Token.h>
@@ -316,7 +316,8 @@ void FileWriteTable::clear() {
 // Import
 
 /// \todo This could be optimized a lot by maybe using a hashset or hashmap idk.
-static const SourceFile& findSourceFileFromToken(const Token* importPathTokenPtr) {
+static const SourceFile& findSourceFileFromToken(const Token* importPathTokenPtr,
+                                                 const SourceFiles& sourceFiles) {
   assert(importPathTokenPtr->kind() == Token::STRING && "File path must be of 'STRING' kind.");
 
   const std::filesystem::path importPath =
@@ -349,9 +350,9 @@ static const SourceFile& findSourceFileFromToken(const Token* importPathTokenPtr
   return *ret;
 }
 
-Import::Import(const Token* importPathTokenPtr)
+Import::Import(const Token* importPathTokenPtr, const SourceFiles& sourceFiles)
     : m_importPathTokenPtr(importPathTokenPtr),
-      m_sourceFile(findSourceFileFromToken(importPathTokenPtr)) {}
+      m_sourceFile(findSourceFileFromToken(importPathTokenPtr, sourceFiles)) {}
 
 const Token& Import::importPathToken() const { return *m_importPathTokenPtr; }
 

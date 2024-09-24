@@ -3,7 +3,7 @@
 #include <memory>
 
 #include <compiler/compile_error.h>
-#include <compiler/sourceFiles.h>
+#include <compiler/SourceFiles.h>
 #include <compiler/syntax_analysis/filePathFromToken.h>
 #include <compiler/tokenization/Token.h>
 
@@ -17,6 +17,7 @@
   Token* _ptrVarName = _ptrVarName##_uniquePtr.get();
 
 TEST(test_filePathFromToken, valid_paths) {
+  SourceFiles sourceFiles;
   {
     char path[] = "x/Y/z";
     CREATE_STR_TOKEN(testToken, path);
@@ -30,6 +31,7 @@ TEST(test_filePathFromToken, valid_paths) {
 }
 
 TEST(test_filePathFromToken, empty_file_path) {
+  SourceFiles sourceFiles;
   {
     char path[] = "";
     CREATE_STR_TOKEN(testToken, path);
@@ -45,6 +47,7 @@ TEST(test_filePathFromToken, empty_file_path) {
 }
 
 TEST(test_filePathFromToken, ends_with_directory) {
+  SourceFiles sourceFiles;
   {
     char path[] = "x/x/x/";
     CREATE_STR_TOKEN(testToken, path);
@@ -78,6 +81,7 @@ TEST(test_filePathFromToken, ends_with_directory) {
 }
 
 TEST(test_filePathFromToken, abolsute_path) {
+  SourceFiles sourceFiles;
   {
     char path[] = "/x/x/y";
     CREATE_STR_TOKEN(testToken, path);
@@ -105,6 +109,7 @@ TEST(test_filePathFromToken, abolsute_path) {
 }
 
 TEST(test_filePathFromToken, invalid_char) {
+  SourceFiles sourceFiles;
   { // no backslashes
     char path[] = "x\\x\\x";
     CREATE_STR_TOKEN(testToken, path);
@@ -150,6 +155,7 @@ TEST(test_filePathFromToken, invalid_char) {
 }
 
 TEST(test_filePathFromToken, no_backtracking) {
+  SourceFiles sourceFiles;
   {
     char path[] = "x/../x";
     CREATE_STR_TOKEN(testToken, path);
@@ -232,6 +238,7 @@ TEST(test_filePathFromToken, no_backtracking) {
 }
 
 TEST(test_filePathFromToken, no_dot_dir) {
+  SourceFiles sourceFiles;
   {
     char path[] = "x/./x";
     CREATE_STR_TOKEN(testToken, path);
@@ -326,6 +333,7 @@ TEST(test_filePathFromToken, no_dot_dir) {
 }
 
 TEST(test_filePathFromToken, empty_dirs) {
+  SourceFiles sourceFiles;
   {
     char path[] = "/";
     CREATE_STR_TOKEN(testToken, path);

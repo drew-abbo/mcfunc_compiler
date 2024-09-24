@@ -5,7 +5,7 @@
 
 #include <compiler/compile_error.h>
 #include <compiler/fileToStr.h>
-#include <compiler/sourceFiles.h>
+#include <compiler/SourceFiles.h>
 #include <compiler/tokenization/Token.h>
 
 /// Adds a path to \p sourceFiles and ensures that it actually exists.
@@ -20,6 +20,7 @@
 
 // test a file that cannot be opened
 TEST(test_tokenize, test_bad_file) {
+  SourceFiles sourceFiles;
 
   sourceFiles.push_back(SourceFile("thisFileVeryLikelyDoesntExist.txt"));
   ASSERT_THROW(sourceFiles.back().tokenize(), compile_error::CouldntOpenFile)
@@ -36,6 +37,7 @@ TEST(test_tokenize, test_bad_file) {
 
 // test a valid file
 TEST(test_tokenize, test_valid_file) {
+  SourceFiles sourceFiles;
 
   ADD_SOURCE_FILE("tests" / "compiler" / "tokenization" / "test_token_test_file1.mcfunc");
 
@@ -153,6 +155,7 @@ TEST(test_tokenize, test_valid_file) {
 
 // test some bad syntax
 TEST(test_tokenize, test_valid_file_bad_syntax) {
+  SourceFiles sourceFiles;
 
   const std::vector<std::filesystem::path> goodFilePathsBadSyntaxFiles = {
       std::filesystem::path("tests") / "compiler" / "tokenization" / "test_token_test_file2.mcfunc",

@@ -10,14 +10,6 @@
 #include <compiler/UniqueID.h>
 #include <compiler/syntax_analysis/symbol.h>
 
-// TODO:
-// - needs to generate the relative output path for all functions
-// - needs to make sure that functions names don't collide on merge (can't have
-//  a private function named 'foo' if there's already a public one named that)
-// - needs to "prefix" private function names with the id for the file they came
-//  from so that when a function call is found and isn't to a public function we
-//  can prefix it with the file id it came from and then find it from there.
-
 class LinkedFunctionTable {
 public:
   /// Holds a pointer to an existing function symbol and ID for the file that it

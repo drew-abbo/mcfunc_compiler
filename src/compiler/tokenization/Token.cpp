@@ -6,7 +6,7 @@
 
 #include <compiler/compile_error.h>
 #include <compiler/fileToStr.h>
-#include <compiler/sourceFiles.h>
+#include <compiler/SourceFiles.h>
 
 Token::Token(Kind tokenKind, size_t indexInFile, const SourceFile& sourceFile)
     : m_tokenKind(tokenKind), m_indexInFile(indexInFile), m_sourceFile(sourceFile) {}

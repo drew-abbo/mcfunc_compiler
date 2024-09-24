@@ -1,9 +1,9 @@
-#include <compiler/sourceFiles.h>
+#include <compiler/SourceFiles.h>
 
 #include <cli/style_text.h>
 #include <compiler/compile_error.h>
 
-LinkResult SourceFilesSingletonType::link() {
+LinkResult SourceFiles::link() {
   symbol::NamespaceExpose exposedNamespaceSymbol;
 
   LinkedFunctionTable finalFunctionTable;

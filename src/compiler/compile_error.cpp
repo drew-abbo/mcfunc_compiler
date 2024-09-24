@@ -7,7 +7,7 @@
 #include <system_error>
 
 #include <cli/style_text.h>
-#include <compiler/sourceFiles.h>
+#include <compiler/SourceFiles.h>
 #include <compiler/tokenization/Token.h>
 
 using namespace compile_error;

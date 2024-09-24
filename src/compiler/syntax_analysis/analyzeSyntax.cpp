@@ -1,4 +1,4 @@
-#include <compiler/sourceFiles.h>
+#include <compiler/SourceFiles.h>
 
 #include <cassert>
 #include <cstddef>
@@ -49,7 +49,7 @@ static statement::Scope collectScope(const std::vector<Token>& tokens,
 } // namespace helper
 } // namespace
 
-void SourceFile::analyzeSyntax() {
+void SourceFile::analyzeSyntax(const SourceFiles& sourceFiles) {
 
   // this needs to be here or there might be out of bounds access
   if (m_tokens.empty())
@@ -73,7 +73,7 @@ void SourceFile::analyzeSyntax() {
     // Import statement (e.g. 'import "foo.mcfunc";')
     case Token::IMPORT_KW:
       helper::forceMatchTokenPattern(m_tokens, i + 1, {Token::STRING, Token::SEMICOLON});
-      m_importSymbolTable.merge(symbol::Import(&m_tokens[i + 1]));
+      m_importSymbolTable.merge(symbol::Import(&m_tokens[i + 1], sourceFiles));
       i += 2;
       break;
 

@@ -1,4 +1,4 @@
-#include <compiler/sourceFiles.h>
+#include <compiler/SourceFiles.h>
 
 #include <cassert>
 #include <cctype>

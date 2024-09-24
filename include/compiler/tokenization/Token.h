@@ -36,14 +36,14 @@ public:
 public:
   /// \param tokenKind The type of token that this is.
   /// \param indexInFile The index of this token in the file it came from.
-  /// \param sourceFileIndex The index of the file in \p sourceFiles that this
-  /// token is from.
+  /// \param sourceFileIndex The index of the file in a \p SourceFiles vector
+  /// that this token is from.
   Token(Kind tokenKind, size_t indexInFile, const SourceFile& sourceFile);
 
   /// \param tokenKind The type of token that this is.
   /// \param indexInFile The index of this token in the file it came from.
-  /// \param sourceFileIndex The index of the file in \p sourceFiles that this
-  /// token is from.
+  /// \param sourceFileIndex The index of the file in \p SourceFiles vector
+  /// that this token is from.
   /// \param contents The contents for tokens like \p STRING that store text.
   Token(Kind tokenKind, size_t indexInFile, const SourceFile& sourceFile,
         const std::string& contents);
@@ -55,7 +55,7 @@ public:
   /// The index of this token in the file it came from.
   size_t indexInFile() const;
 
-  /// The source file in \p sourceFiles that this token is from.
+  /// The source file in \p SourceFiles vector that this token is from.
   const SourceFile& sourceFile() const;
 
   // Whether or not this kind of token has contents.

@@ -7,7 +7,7 @@
 #include <vector>
 
 #include <compiler/compile_error.h>
-#include <compiler/sourceFiles.h>
+#include <compiler/SourceFiles.h>
 #include <compiler/syntax_analysis/statement.h>
 #include <compiler/tokenization/Token.h>
 
@@ -124,6 +124,8 @@ void reconstructSyntaxAndPrint(const SourceFile& sourceFile) {
 int main() {
 
   auto startTime = std::chrono::high_resolution_clock::now();
+
+  SourceFiles sourceFiles;
 
   sourceFiles.emplace_back("test.mcfunc");
   sourceFiles.emplace_back("foo.mcfunc");

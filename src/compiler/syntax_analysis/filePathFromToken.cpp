@@ -6,7 +6,7 @@
 
 #include <cli/style_text.h>
 #include <compiler/compile_error.h>
-#include <compiler/sourceFiles.h>
+#include <compiler/SourceFiles.h>
 #include <compiler/tokenization/Token.h>
 
 static void throwNoBacktrackingException(const Token* pathTokenPtr, size_t relativeIndex) {
