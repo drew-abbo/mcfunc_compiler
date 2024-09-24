@@ -481,6 +481,13 @@ To get help info you can run `mcfunc` with the `-h` flag.
 mcfunc -h
 ```
 
+To get version info you can run `mcfunc` with the `-v` flag.
+
+```sh
+# print version info
+mcfunc -v
+```
+
 ### Direcly Passing Source Files
 
 Run `mcfunc` followed by a list of source files to generate a data pack in the
