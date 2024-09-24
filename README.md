@@ -656,10 +656,11 @@ You can also [use an IDE](#using-an-ide) (like Visual Studio) if you'd prefer.
 ### Python Build Script
 
 If you have Python installed you can build using the [build.py](./build.py)
-script. You may have to invoke the Python script with `python3`.
+script. If you're on a POSIX OS (e.g. Linux or MacOS) you should be able to just
+run `./build.py`, otherwise run the script with either `python3` or `python`.
 
 ```sh
-python build.py
+python3 build.py
 ```
 
 If you don't get an error message from the script then you're done.
@@ -669,14 +670,14 @@ builds by adding the `--debug` and `--release` flags (debug by default). The
 script will automatically reconfigure CMake if it needs to.
 
 ```sh
-python build.py --release
+python3 build.py --release
 ```
 
 You can add `-p` or `--parallel` to compile with all CPU cores. Keep in mind
 that this can make error messages and warnings less cohesive.
 
 ```sh
-python build.py -p
+python3 build.py -p
 ```
 
 For more help info run the script with `-h` or `--help`.
