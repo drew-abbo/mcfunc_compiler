@@ -189,8 +189,9 @@ Generic::Generic(const std::string& msg) : m_msg(msg + '\n') {}
 // NoExposedNamespace
 
 NoExposedNamespace::NoExposedNamespace()
-    : Generic("The namespace was never exposed (try adding " +
-              style_text::styleAsCode("expose \"example\";") + " to the top of your main file).") {}
+    : Generic(basicErrorMessage("The namespace was never exposed (try adding something like " +
+                                style_text::styleAsCode("expose \"example\";") +
+                                " to the top of your main file).")) {}
 
 // CouldntOpenFile
 
