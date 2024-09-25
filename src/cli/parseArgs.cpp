@@ -11,8 +11,10 @@
 
 // ParseArgsResult
 
-ParseArgsResult::ParseArgsResult(SourceFiles&& sourceFiles, std::filesystem::path&& outputDirectory)
-    : sourceFiles(std::move(sourceFiles)), outputDirectory(std::move(outputDirectory)) {}
+ParseArgsResult::ParseArgsResult(std::filesystem::path&& outputDirectory, SourceFiles&& sourceFiles,
+                                 std::vector<FileWriteSourceFile>&& fileWriteSourceFiles)
+    : outputDirectory(std::move(outputDirectory)), sourceFiles(std::move(sourceFiles)),
+      fileWriteSourceFiles(std::move(fileWriteSourceFiles)) {}
 
 // parseArgs helper functions
 
@@ -50,6 +52,11 @@ static void ensureDirectorySuppliedAfterArg(int argc, const char** argv, int i) 
   }
 }
 
+static void warnAboutFileSuppliedMoreThanOnce(const std::filesystem::path& path) {
+  helper::printWarningPrefix();
+  std::cerr << "The file " << style_text::styleAsCode(path) << " was supplied twice.\n";
+}
+
 } // namespace helper
 } // namespace
 
@@ -64,6 +71,7 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
   }
 
   SourceFiles sourceFiles;
+  std::vector<FileWriteSourceFile> fileWriteSourceFiles;
 
   std::filesystem::path outputDirectory;
   bool outputDirectoryAlreadyGiven = false;
@@ -122,50 +130,69 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
       continue;
     }
 
-    // a file path
-
-    // ensure the argument isn't blank
+    // blank arguments
     if (arg.size() == 0) {
       helper::printErrorPrefix();
       std::cerr << "Arguments cannot be empty.\n\n";
       helper::exitWithHelpPageInfo(argv[0]);
     }
 
-    // warn about unrecognized arguments that start with `-` (the user was
-    // probably trying to use a flag).
+    // unrecognized arguments
     if (arg[0] == '-') {
-      helper::printWarningPrefix();
-      std::cerr << "Argument " << style_text::styleAsCode(arg.data()) << " starts with a "
-                << style_text::styleAsCode('-') << " but is being treated as a file path (unknown flag).\n";
+      helper::printErrorPrefix();
+      std::cerr << style_text::styleAsCode(arg.data()) << " is not a valid argument.\n\n";
+      helper::exitWithHelpPageInfo(argv[0]);
     }
 
-    std::filesystem::path newSourceFilePath = arg;
-    std::filesystem::path newSourceFilePathPrefixToRemove;
+    // a file path
+
+    std::filesystem::path newFilePath = arg;
+    std::filesystem::path newFilePathPrefixToRemove;
+    bool newFilePathIsSourceFile;
 
     try {
-      newSourceFilePath = std::filesystem::absolute(newSourceFilePath.lexically_normal());
-      newSourceFilePathPrefixToRemove = newSourceFilePath;
-      newSourceFilePathPrefixToRemove.remove_filename();
+      newFilePath = std::filesystem::absolute(newFilePath.lexically_normal());
+      newFilePathPrefixToRemove = newFilePath;
+      newFilePathPrefixToRemove.remove_filename();
+      newFilePathIsSourceFile = newFilePath.extension() == ".mcfunc";
     } catch (const std::exception&) {
       helper::printErrorPrefix();
       std::cerr << style_text::styleAsCode(arg.data()) << " is not a valid file path.\n\n";
       helper::exitWithHelpPageInfo(argv[0]);
     }
 
-    // warn about the same file being added twice
-    // Note: this does not handle the case where the same file is added twice
-    // via symlink
-    for (const SourceFile& sourceFile : sourceFiles) {
-      if (sourceFile.path() == newSourceFilePath) {
-        helper::printWarningPrefix();
-        std::cerr << "The file " << style_text::styleAsCode(sourceFile.path())
-                  << " was supplied twice.\n";
-        break;
+    // if it's a source file
+    if (newFilePathIsSourceFile) {
+
+      // warn about the same file being added twice
+      // Note: this does not handle the case where the same file is added twice
+      // via symlink
+      for (const SourceFile& sourceFile : sourceFiles) {
+        if (sourceFile.path() == newFilePath) {
+          helper::warnAboutFileSuppliedMoreThanOnce(newFilePath);
+          break;
+        }
       }
+
+      sourceFiles.emplace_back(std::move(newFilePath), std::move(newFilePathPrefixToRemove));
     }
 
-    sourceFiles.emplace_back(std::move(newSourceFilePath),
-                             std::move(newSourceFilePathPrefixToRemove));
+    // if it's a file write source file
+    else {
+
+      // warn about the same file being added twice
+      // Note: this does not handle the case where the same file is added twice
+      // via symlink
+      for (const FileWriteSourceFile& fileWriteSourceFile : fileWriteSourceFiles) {
+        if (fileWriteSourceFile.path() == newFilePath) {
+          helper::warnAboutFileSuppliedMoreThanOnce(newFilePath);
+          break;
+        }
+      }
+
+      fileWriteSourceFiles.emplace_back(std::move(newFilePath),
+                                        std::move(newFilePathPrefixToRemove));
+    }
   }
 
   if (sourceFiles.size() == 0) {
@@ -180,5 +207,6 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
 
   // TODO: ensure no input files are inside of the output directory
 
-  return ParseArgsResult(std::move(sourceFiles), std::move(outputDirectory));
+  return ParseArgsResult(std::move(outputDirectory), std::move(sourceFiles),
+                         std::move(fileWriteSourceFiles));
 }

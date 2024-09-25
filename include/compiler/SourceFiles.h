@@ -8,6 +8,7 @@
 #include <compiler/linking/LinkResult.h>
 #include <compiler/syntax_analysis/symbol.h>
 #include <compiler/tokenization/Token.h>
+#include <compiler/FileWriteSourceFile.h>
 
 /// Represents a single source file.
 /// Anything that this class does may throw (including construction).
@@ -92,5 +93,5 @@ public:
   /// Links all source files together, returns a \p LinkResult object.
   /// \throws compile_error::Generic (or a subclass of it) if anything goes
   /// wrong.
-  LinkResult link();
+  LinkResult link(const std::vector<FileWriteSourceFile>& fileWriteSourceFiles);
 };

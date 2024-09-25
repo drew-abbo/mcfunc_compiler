@@ -2,16 +2,20 @@
 /// \file Contains the \p parseArgs function and the \p ParseArgsResult type.
 
 #include <filesystem>
+#include <vector>
 
+#include <compiler/FileWriteSourceFile.h>
 #include <compiler/SourceFiles.h>
 
 /// The result of calling the \p parseArgs function. Holds a list of source
 /// files and an output directory.
 struct ParseArgsResult {
-  SourceFiles sourceFiles;
   std::filesystem::path outputDirectory;
+  SourceFiles sourceFiles;
+  std::vector<FileWriteSourceFile> fileWriteSourceFiles;
 
-  ParseArgsResult(SourceFiles&& sourceFiles, std::filesystem::path&& outputDirectory);
+  ParseArgsResult(std::filesystem::path&& outputDirectory, SourceFiles&& sourceFiles,
+                  std::vector<FileWriteSourceFile>&& fileWriteSourceFiles);
 };
 
 /// Parses all of the passed arguments, updating the source files list.
