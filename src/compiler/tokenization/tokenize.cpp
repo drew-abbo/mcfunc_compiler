@@ -177,7 +177,7 @@ void SourceFile::tokenize() {
         case '\t':
           // all whitespace becomes 1 space (consecutive whitespace is ignored)
           if (!commandContents.empty() && str[j - 1] != ' ' && str[j - 1] != '\n' &&
-              str[j - 1] != '\t')
+              str[j - 1] != '\t' && commandContents.back() != ' ')
             commandContents += ' ';
 
           // possible command pause (if after 'run:')
