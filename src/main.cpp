@@ -1,16 +1,17 @@
-#include <cassert>
-#include <chrono>
 #include <cstdlib>
 #include <iostream>
+
+#include <cli/parseArgs.h>
+#include <compiler/compile_error.h>
+
+// set to 1 to enable compilation result printing
+#define DO_DEBUG_PRINT_COMPILATION_RESULT 1
+#if DO_DEBUG_PRINT_COMPILATION_RESULT
+
+#include <cassert>
 #include <memory>
 #include <ostream>
 #include <vector>
-
-#include <cli/parseArgs.h>
-#include <compiler/SourceFiles.h>
-#include <compiler/compile_error.h>
-#include <compiler/syntax_analysis/statement.h>
-#include <compiler/tokenization/Token.h>
 
 // print tokens in a somewhat readable way
 void printTokens(const std::vector<Token> tokens) {
@@ -122,23 +123,9 @@ void reconstructSyntaxAndPrint(const SourceFile& sourceFile) {
   }
 }
 
-int main(int argc, const char** argv) {
-
-  // TODO: handle the fact that this can throw (generateImportPath() is called)
-  auto [outputDirectory, sourceFiles, fileWriteSourceFiles] = parseArgs(argc, argv);
-
-  auto startTime = std::chrono::high_resolution_clock::now();
-
-  // try and do tokenization, syntax analysis, and linking the file
-  try {
-    sourceFiles.evaluateAll();
-    sourceFiles.link(fileWriteSourceFiles);
-  } catch (const compile_error::Generic& e) {
-    std::cout << e.what();
-    return EXIT_FAILURE;
-  }
-
-  auto endTime = std::chrono::high_resolution_clock::now();
+void printFullCompilationResult(const std::filesystem::path& outputDirectory,
+                                const SourceFiles& sourceFiles,
+                                const std::vector<FileWriteSourceFile>& fileWriteSourceFiles) {
 
   for (const auto& s : sourceFiles) {
     std::cout << "--->   " << s.importPath() << "   <---\n\n";
@@ -153,12 +140,6 @@ int main(int argc, const char** argv) {
     }
   }
 
-  // print the time it took
-  std::chrono::duration<double> timeTaken = endTime - startTime;
-  auto timeTakenMil = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-  std::cout << "Compile time: " << timeTaken.count() << " seconds (" << timeTakenMil.count()
-            << " milliseconds)." << "\n\n";
-
   std::cout << "File-Write Source Files:\n";
   for (const auto& fileWriteSourceFile : fileWriteSourceFiles) {
     std::cout << "- " << fileWriteSourceFile.path() << "\timportable as "
@@ -167,4 +148,27 @@ int main(int argc, const char** argv) {
   std::cout << "\n";
 
   std::cout << "(!) Output Directory: " << outputDirectory << '\n';
+}
+
+#define DEBUG_PRINT_COMPILATION_RESULT(_outputDirectory, _sourceFiles, _fileWriteSourceFiles)      \
+  printFullCompilationResult(_outputDirectory, _sourceFiles, _fileWriteSourceFiles);
+
+#else
+
+#define DEBUG_PRINT_COMPILATION_RESULT(_a, _b, _c)
+
+#endif
+
+int main(int argc, const char** argv) {
+  try {
+    auto [outputDirectory, sourceFiles, fileWriteSourceFiles] = parseArgs(argc, argv);
+    sourceFiles.evaluateAll();
+    sourceFiles.link(fileWriteSourceFiles);
+
+    DEBUG_PRINT_COMPILATION_RESULT(outputDirectory, sourceFiles, fileWriteSourceFiles);
+
+  } catch (const compile_error::Generic& e) {
+    std::cerr << e.what();
+    return EXIT_FAILURE;
+  }
 }
