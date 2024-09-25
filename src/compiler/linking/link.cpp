@@ -90,6 +90,9 @@ LinkResult SourceFiles::link() {
         fileWrite.relativeOutPathToken());
   }
 
+  if (!exposedNamespaceSymbol.isSet())
+    throw compile_error::NoExposedNamespace();
+
   return LinkResult(exposedNamespaceSymbol.exposedNamespace(), std::move(finalFunctionTable),
                     std::move(fileWrites));
 }

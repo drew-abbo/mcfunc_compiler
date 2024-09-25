@@ -10,6 +10,7 @@
 #include <compiler/SourceFiles.h>
 #include <compiler/syntax_analysis/statement.h>
 #include <compiler/tokenization/Token.h>
+#include <cli/parseArgs.h>
 
 // print tokens in a somewhat readable way
 void printTokens(const std::vector<Token> tokens) {
@@ -121,21 +122,17 @@ void reconstructSyntaxAndPrint(const SourceFile& sourceFile) {
   }
 }
 
-int main() {
+int main(int argc, const char** argv) {
+
+  auto [sourceFiles, outputDirectory] = parseArgs(argc, argv);
 
   auto startTime = std::chrono::high_resolution_clock::now();
 
-  SourceFiles sourceFiles;
-
-  sourceFiles.emplace_back("test.mcfunc");
-  sourceFiles.emplace_back("foo.mcfunc");
-
-  // try and do syntax analysis the file
+  // try and do tokenization, syntax analysis, and linking the file
   try {
     sourceFiles.evaluateAll();
     sourceFiles.link();
   } catch (const compile_error::Generic& e) {
-    std::cout << "COMPILATION FAILED" << std::endl;
     std::cout << e.what();
     return EXIT_FAILURE;
   }
@@ -159,5 +156,7 @@ int main() {
   std::chrono::duration<double> timeTaken = endTime - startTime;
   auto timeTakenMil = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
   std::cout << "Compile time: " << timeTaken.count() << " seconds (" << timeTakenMil.count()
-            << " milliseconds)." << std::endl;
+            << " milliseconds)." << "\n\n\n";
+
+  std::cout << "(!) Output Directory: " << outputDirectory << '\n';
 }

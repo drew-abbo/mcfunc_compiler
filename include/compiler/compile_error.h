@@ -15,6 +15,7 @@
 /// \p Generic (superclass)
 /// ├── \p CouldntOpenFile
 /// ├── \p ImportError
+/// ├── \p NoExposedNamespace
 /// ├── \p SyntaxError (superclass)
 /// │   ├── \p BadClosingChar
 /// │   ├── \p UnknownChar
@@ -38,6 +39,12 @@ public:
 
 protected:
   std::string m_msg;
+};
+
+/// Throw when no namespace is ever exposed after linking.
+class NoExposedNamespace : public Generic {
+public:
+  explicit NoExposedNamespace();
 };
 
 /// Throw when an attempt to open a file fails.

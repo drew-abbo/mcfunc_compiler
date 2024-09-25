@@ -13,12 +13,12 @@
 using namespace compile_error;
 
 /// Get this:
-///   Error: This is an error message.
+///   Compilatiion Error: This is an error message.
 static std::string basicErrorMessage(const char* msg) {
-  return style_text::styleAsError("Error: ") + msg;
+  return style_text::styleAsError("Compilatiion Error: ") + msg;
 }
 static std::string basicErrorMessage(const std::string& msg) {
-  return style_text::styleAsError("Error: ") + msg;
+  return style_text::styleAsError("Compilatiion Error: ") + msg;
 }
 
 /// Returns "(unknown file error)" in case there is an error getting the full
@@ -185,6 +185,12 @@ static std::string highlightedLineAndPath(const Token& token) {
 const char* Generic::what() const noexcept { return m_msg.c_str(); }
 
 Generic::Generic(const std::string& msg) : m_msg(msg + '\n') {}
+
+// NoExposedNamespace
+
+NoExposedNamespace::NoExposedNamespace()
+    : Generic("The namespace was never exposed (try adding " +
+              style_text::styleAsCode("expose \"example\";") + " to the top of your main file).") {}
 
 // CouldntOpenFile
 

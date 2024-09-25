@@ -12,24 +12,22 @@
 // ParseArgsResult
 
 ParseArgsResult::ParseArgsResult(SourceFiles&& sourceFiles, std::filesystem::path&& outputDirectory)
-    : m_sourceFiles(std::move(sourceFiles)), m_outputDirectory(std::move(outputDirectory)) {}
-
-SourceFiles& ParseArgsResult::sourceFiles() { return m_sourceFiles; }
-
-const SourceFiles& ParseArgsResult::sourceFiles() const { return m_sourceFiles; }
-
-const std::filesystem::path& ParseArgsResult::outputDirectory() const { return m_outputDirectory; }
+    : sourceFiles(std::move(sourceFiles)), outputDirectory(std::move(outputDirectory)) {}
 
 // parseArgs helper functions
 
 namespace {
 namespace helper {
 
+static void printErrorPrefix() { std::cerr << style_text::styleAsError("CLI Error: "); }
+
+static void printWarningPrefix() { std::cerr << style_text::styleAsWarning("CLI Warning: "); }
+
 /// Prints a message about running the program with the help flag to
 /// \p std::cerr and exits with \p EXIT_FAILURE as the exit code.
 static void exitWithHelpPageInfo(const char* arg0) {
   std::cerr << "Try running " << style_text::styleAsCode(std::string(arg0) + " -h")
-            << "for help info.\n";
+            << " for help info.\n";
 
   std::exit(EXIT_FAILURE);
 }
@@ -37,7 +35,8 @@ static void exitWithHelpPageInfo(const char* arg0) {
 /// Ensures the argument at index \param i is the only argument.
 static void ensureArgIsOnlyArg(int argc, const char** argv, int i) {
   if (argc != 2) {
-    std::cerr << style_text::styleAsCode(argv[i]) << "must be the only argument.\n";
+    printErrorPrefix();
+    std::cerr << style_text::styleAsCode(argv[i]) << "must be the only argument.\n\n";
     exitWithHelpPageInfo(argv[0]);
   }
 }
@@ -45,7 +44,8 @@ static void ensureArgIsOnlyArg(int argc, const char** argv, int i) {
 /// Ensures that the argument at index \param i is followed by another argument.
 static void ensureDirectorySuppliedAfterArg(int argc, const char** argv, int i) {
   if (i + 1 == argc) {
-    std::cerr << "No directory was supplied after " << style_text::styleAsCode(argv[i]) << ".\n";
+    printErrorPrefix();
+    std::cerr << "No directory was supplied after " << style_text::styleAsCode(argv[i]) << ".\n\n";
     exitWithHelpPageInfo(argv[0]);
   }
 }
@@ -58,6 +58,7 @@ static void ensureDirectorySuppliedAfterArg(int argc, const char** argv, int i) 
 ParseArgsResult parseArgs(int argc, const char** argv) {
   // TODO: read arguments from build.jsonc
   if (std::filesystem::exists("build.jsonc")) {
+    helper::printWarningPrefix();
     std::cerr << style_text::styleAsWarning("(NOT IMPLEMENTED)") << " The "
               << style_text::styleAsCode("build.json") << " file will be ignored.\n";
   }
@@ -100,7 +101,8 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
     // -o
     if (arg == "-o") {
       if (outputDirectoryAlreadyGiven) {
-        std::cerr << "Multiple output directories were supplied.\n";
+        helper::printErrorPrefix();
+        std::cerr << "Multiple output directories were supplied.\n\n";
         helper::exitWithHelpPageInfo(argv[0]);
       }
       helper::ensureDirectorySuppliedAfterArg(argc, argv, i);
@@ -113,6 +115,7 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
 
     // TODO: -i, --hot
     if (arg == "-i" || arg == "--hot") {
+      helper::printErrorPrefix();
       std::cerr << style_text::styleAsError("(NOT IMPLEMENTED)") << " The "
                 << style_text::styleAsCode(arg.data()) << " flag cannot be used yet.\n";
       exit(EXIT_FAILURE);
@@ -120,46 +123,60 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
     }
 
     // a file path
-    std::filesystem::path newSourceFilePath;
+
+    // ensure the argument isn't blank
+    if (arg.size() == 0) {
+      helper::printErrorPrefix();
+      std::cerr << "Arguments cannot be empty.\n\n";
+      helper::exitWithHelpPageInfo(argv[0]);
+    }
+
+    // warn about unrecognized arguments that start with `-` (the user was
+    // probably trying to use a flag).
+    if (arg[0] == '-') {
+      helper::printWarningPrefix();
+      std::cerr << "Argument " << style_text::styleAsCode(arg.data()) << " starts with a "
+                << style_text::styleAsCode('-') << " but is being treated as a file path (unknown flag).\n";
+    }
+
+    std::filesystem::path newSourceFilePath = arg;
     std::filesystem::path newSourceFilePathPrefixToRemove;
 
     try {
       newSourceFilePath = std::filesystem::absolute(newSourceFilePath.lexically_normal());
-      if (!std::filesystem::is_regular_file(newSourceFilePath))
-        throw std::exception();
-
       newSourceFilePathPrefixToRemove = newSourceFilePath;
       newSourceFilePathPrefixToRemove.remove_filename();
     } catch (const std::exception&) {
-      std::cerr << "File " << style_text::styleAsCode(arg.data()) << " is not valid.\n";
+      helper::printErrorPrefix();
+      std::cerr << style_text::styleAsCode(arg.data()) << " is not a valid file path.\n\n";
       helper::exitWithHelpPageInfo(argv[0]);
     }
 
-    // skip the path if it's already there
+    // warn about the same file being added twice
     // Note: this does not handle the case where the same file is added twice
     // via symlink
-    bool found = false;
     for (const SourceFile& sourceFile : sourceFiles) {
       if (sourceFile.path() == newSourceFilePath) {
-        found = true;
+        helper::printWarningPrefix();
+        std::cerr << "The file " << style_text::styleAsCode(sourceFile.path())
+                  << " was supplied twice.\n";
         break;
       }
     }
-    if (found)
-      continue;
 
     sourceFiles.emplace_back(std::move(newSourceFilePath),
                              std::move(newSourceFilePathPrefixToRemove));
   }
 
   if (sourceFiles.size() == 0) {
-    std::cerr << "No source files were provided.\n";
+    helper::printErrorPrefix();
+    std::cerr << "No source files were provided.\n\n";
     helper::exitWithHelpPageInfo(argv[0]);
   }
 
   // the default output directory is "./data"
   if (!outputDirectoryAlreadyGiven)
-    std::filesystem::path outputDirectory = "data";
+    outputDirectory = "data";
 
   // TODO: ensure no input files are inside of the output directory
 

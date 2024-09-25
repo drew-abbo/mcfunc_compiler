@@ -7,22 +7,11 @@
 
 /// The result of calling the \p parseArgs function. Holds a list of source
 /// files and an output directory.
-class ParseArgsResult {
-public:
+struct ParseArgsResult {
+  SourceFiles sourceFiles;
+  std::filesystem::path outputDirectory;
+
   ParseArgsResult(SourceFiles&& sourceFiles, std::filesystem::path&& outputDirectory);
-
-  /// Get a reference to the source files.
-  SourceFiles& sourceFiles();
-
-  /// Get a reference to the source files (const).
-  const SourceFiles& sourceFiles() const;
-
-  /// Get the output directory.
-  const std::filesystem::path& outputDirectory() const;
-
-private:
-  SourceFiles m_sourceFiles;
-  std::filesystem::path m_outputDirectory;
 };
 
 /// Parses all of the passed arguments, updating the source files list.

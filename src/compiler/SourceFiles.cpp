@@ -9,11 +9,11 @@
 #include <vector>
 
 #include <cli/style_text.h>
-#include <compiler/linking/LinkResult.h>
-#include <compiler/syntax_analysis/symbol.h>
 #include <compiler/UniqueID.h>
 #include <compiler/compile_error.h>
 #include <compiler/generateImportPath.h>
+#include <compiler/linking/LinkResult.h>
+#include <compiler/syntax_analysis/symbol.h>
 #include <compiler/tokenization/Token.h>
 
 // NOTE: SourceFile::tokenize(), SourceFile::analyzeSyntax(), and
