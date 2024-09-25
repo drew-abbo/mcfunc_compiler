@@ -59,7 +59,7 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
   // TODO: read arguments from build.jsonc
   if (std::filesystem::exists("build.jsonc")) {
     std::cerr << style_text::styleAsWarning("(NOT IMPLEMENTED)") << " The "
-              << style_text::styleAsCode("build.json") << " file will be ignored.";
+              << style_text::styleAsCode("build.json") << " file will be ignored.\n";
   }
 
   SourceFiles sourceFiles;
@@ -114,7 +114,7 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
     // TODO: -i, --hot
     if (arg == "-i" || arg == "--hot") {
       std::cerr << style_text::styleAsError("(NOT IMPLEMENTED)") << " The "
-                << style_text::styleAsCode(arg.data()) << " flag cannot be used yet.";
+                << style_text::styleAsCode(arg.data()) << " flag cannot be used yet.\n";
       exit(EXIT_FAILURE);
       continue;
     }
@@ -131,7 +131,7 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
       newSourceFilePathPrefixToRemove = newSourceFilePath;
       newSourceFilePathPrefixToRemove.remove_filename();
     } catch (const std::exception&) {
-      std::cerr << "File " << style_text::styleAsCode(arg.data()) << " is not valid.";
+      std::cerr << "File " << style_text::styleAsCode(arg.data()) << " is not valid.\n";
       helper::exitWithHelpPageInfo(argv[0]);
     }
 
@@ -150,6 +150,11 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
 
     sourceFiles.emplace_back(std::move(newSourceFilePath),
                              std::move(newSourceFilePathPrefixToRemove));
+  }
+
+  if (sourceFiles.size() == 0) {
+    std::cerr << "No source files were provided.\n";
+    helper::exitWithHelpPageInfo(argv[0]);
   }
 
   // the default output directory is "./data"
