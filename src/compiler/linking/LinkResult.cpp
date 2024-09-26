@@ -95,18 +95,13 @@ LinkedFunctionTable::FunctionDefinition LinkedFunctionTable::get(const std::stri
 }
 
 // LinkResult
-// generateDataPack() is defined elsewhere
 
 const std::string& LinkResult::exposedNamespace() const { return m_exposedNamespace; }
-
-const LinkedFunctionTable& LinkResult::functionSymbolTable() const { return m_functionSymbolTable; }
 
 const std::unordered_map<std::filesystem::path, std::string>& LinkResult::fileWrites() const {
   return m_fileWrites;
 }
 
 LinkResult::LinkResult(const std::string& exposedNamespace,
-                       LinkedFunctionTable&& functionSymbolTable,
                        std::unordered_map<std::filesystem::path, std::string>&& fileWrites)
-    : m_exposedNamespace(exposedNamespace), m_functionSymbolTable(std::move(functionSymbolTable)),
-      m_fileWrites(std::move(fileWrites)) {}
+    : m_exposedNamespace(exposedNamespace), m_fileWrites(std::move(fileWrites)) {}

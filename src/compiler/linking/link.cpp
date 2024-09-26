@@ -123,6 +123,8 @@ LinkResult SourceFiles::link(const std::vector<FileWriteSourceFile>& fileWriteSo
   if (!exposedNamespaceSymbol.isSet())
     throw compile_error::NoExposedNamespace();
 
-  return LinkResult(exposedNamespaceSymbol.exposedNamespace(), std::move(finalFunctionTable),
-                    std::move(fileWrites));
+  // TODO: translate finalFunctionTable into file writes and merge it into
+  /// fileWrites.
+
+  return LinkResult(exposedNamespaceSymbol.exposedNamespace(), std::move(fileWrites));
 }

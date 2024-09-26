@@ -64,27 +64,23 @@ private:
 /// to file contents (for file write operations with the `file` keyword).
 class LinkResult {
 public:
-  LinkResult(const std::string& exposedNamespace, LinkedFunctionTable&& functionSymbolTable,
+  /// \param functionSymbolTable is translated and converted to file writes.
+  LinkResult(const std::string& exposedNamespace,
              std::unordered_map<std::filesystem::path, std::string>&& fileWrites);
 
   /// The exposed namespace name.
   const std::string& exposedNamespace() const;
 
-  /// The function symbol table. All functions in this table are guaranteed to
-  /// be defined.
-  const LinkedFunctionTable& functionSymbolTable() const;
-
-  /// The non-mcfunction files to write (like .json files). Paths are relative
-  /// (from inside the public namespace directory).
+  /// Files to write (like .json files). Paths are relative (from inside the
+  /// public namespace directory).
   const std::unordered_map<std::filesystem::path, std::string>& fileWrites() const;
 
-  /// Generates the data pack.
+  /// Generates the data pack from all of the file writes.
   /// \throws compilation_error::CodeGenFailure
   /// compilation_error::CouldntOpenFile if something goes wrong.
   void generateDataPack(const std::filesystem::path& outputDirectory) const;
 
 private:
   std::string m_exposedNamespace;
-  LinkedFunctionTable m_functionSymbolTable;
   std::unordered_map<std::filesystem::path, std::string> m_fileWrites;
 };

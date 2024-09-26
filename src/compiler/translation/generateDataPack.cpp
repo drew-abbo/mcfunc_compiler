@@ -26,7 +26,6 @@ static void writeFileToDataPack(const std::filesystem::path& outputPath,
 } // namespace helper
 } // namespace
 
-// TODO: optimize this with multi-threading
 void LinkResult::generateDataPack(const std::filesystem::path& outputDirectory) const {
   assert(outputDirectory == outputDirectory.lexically_normal() && "Output dir isn't clean.");
   assert(outputDirectory.is_absolute() && "Output dir isn't absolute.");
@@ -51,11 +50,8 @@ void LinkResult::generateDataPack(const std::filesystem::path& outputDirectory) 
       outputDirectory / (hiddenNamespacePrefix + m_exposedNamespace);
   helper::createEmptyNamespaceDirectory(hiddenNamespaceDirectory);
 
-  // TODO: write functions
-  // NEED A WAY TO ITERATE OVER m_functionSymbolTable TO GET ALL FUNCTION
-  // SYMBOLS
-
-  // handle all file writes
+  // write everything to files
+  // TODO: optimize this with multi-threading
   for (const auto& [path, contents] : m_fileWrites) {
     helper::writeFileToDataPack(namespaceDirectory / path, namespaceDirectory, contents);
   }
