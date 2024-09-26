@@ -115,9 +115,13 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
       }
       helper::ensureDirectorySuppliedAfterArg(argc, argv, i);
 
+      outputDirectory = std::filesystem::path(argv[i + 1]).lexically_normal();
+      if (!outputDirectory.is_absolute())
+        outputDirectory = std::filesystem::absolute(std::move(outputDirectory));
+
       outputDirectoryAlreadyGiven = true;
-      outputDirectory = argv[i + 1];
       i++;
+
       continue;
     }
 
@@ -203,7 +207,7 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
 
   // the default output directory is "./data"
   if (!outputDirectoryAlreadyGiven)
-    outputDirectory = "data";
+    outputDirectory = std::filesystem::current_path() / "data";
 
   // TODO: ensure no input files are inside of the output directory
 

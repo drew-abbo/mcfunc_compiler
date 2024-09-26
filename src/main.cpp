@@ -5,7 +5,7 @@
 #include <compiler/compile_error.h>
 
 // set to 1 to enable compilation result printing
-#define DO_DEBUG_PRINT_COMPILATION_RESULT 1
+#define DO_DEBUG_PRINT_COMPILATION_RESULT 0
 #if DO_DEBUG_PRINT_COMPILATION_RESULT
 
 #include <cassert>
@@ -163,7 +163,8 @@ int main(int argc, const char** argv) {
   try {
     auto [outputDirectory, sourceFiles, fileWriteSourceFiles] = parseArgs(argc, argv);
     sourceFiles.evaluateAll();
-    sourceFiles.link(fileWriteSourceFiles);
+    LinkResult linkResult = sourceFiles.link(fileWriteSourceFiles);
+    linkResult.generateDataPack(outputDirectory);
 
     DEBUG_PRINT_COMPILATION_RESULT(outputDirectory, sourceFiles, fileWriteSourceFiles);
 

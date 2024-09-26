@@ -1,17 +1,21 @@
 #include <compiler/linking/LinkResult.h>
 
-#include <utility>
+#include <filesystem>
 
 #include <cli/style_text.h>
 #include <compiler/UniqueID.h>
 #include <compiler/compile_error.h>
 
-// LinkedFunctionTable
+// LinkedFunctionTable::FunctionDefinition
 
 LinkedFunctionTable::FunctionDefinition::FunctionDefinition(const symbol::Function* symbolPtr,
                                                             UniqueID sourceFileID,
                                                             std::filesystem::path exposePath)
     : symbolPtr(symbolPtr), sourceFileID(sourceFileID), exposePath(exposePath) {}
+
+bool LinkedFunctionTable::FunctionDefinition::isPublic() const { return symbolPtr->isPublic(); }
+
+// LinkedFunctionTable
 
 void LinkedFunctionTable::merge(const symbol::Function& funcToMerge, UniqueID sourceFileID) {
   // ensure a public function with this name doesn't exist (defined)
@@ -91,6 +95,7 @@ LinkedFunctionTable::FunctionDefinition LinkedFunctionTable::get(const std::stri
 }
 
 // LinkResult
+// generateDataPack() is defined elsewhere
 
 const std::string& LinkResult::exposedNamespace() const { return m_exposedNamespace; }
 

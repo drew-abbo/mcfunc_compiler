@@ -13,9 +13,10 @@
 /// which all other exceptions inherit from.
 ///
 /// \p Generic (superclass)
+/// ├── \p CodeGenFailure
+/// ├── \p NoExposedNamespace
 /// ├── \p CouldntOpenFile
 /// ├── \p ImportError
-/// ├── \p NoExposedNamespace
 /// ├── \p SyntaxError (superclass)
 /// │   ├── \p BadClosingChar
 /// │   ├── \p UnknownChar
@@ -32,6 +33,7 @@ namespace compile_error {
 /// The root \p compile_error exception (shouldn't be thrown).
 class Generic : public std::exception {
 public:
+  explicit Generic(std::string&& msg);
   explicit Generic(const std::string& msg);
 
   /// Returns an error message.
@@ -39,6 +41,13 @@ public:
 
 protected:
   std::string m_msg;
+};
+
+/// Throw when something fails during code (data pack) generation.
+class CodeGenFailure : public Generic {
+public:
+  explicit CodeGenFailure(std::string&& msg);
+  explicit CodeGenFailure(const std::string& msg);
 };
 
 /// Throw when no namespace is ever exposed after linking.
@@ -50,7 +59,10 @@ public:
 /// Throw when an attempt to open a file fails.
 class CouldntOpenFile : public Generic {
 public:
-  explicit CouldntOpenFile(const std::filesystem::path& filePath);
+  enum class Mode { READ, WRITE };
+
+public:
+  explicit CouldntOpenFile(const std::filesystem::path& filePath, Mode mode = Mode::READ);
 };
 
 /// Throw when there's an issue importing.

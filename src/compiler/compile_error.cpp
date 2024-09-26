@@ -14,9 +14,6 @@ using namespace compile_error;
 
 /// Get this:
 ///   Compilatiion Error: This is an error message.
-static std::string basicErrorMessage(const char* msg) {
-  return style_text::styleAsError("Compilatiion Error: ") + msg;
-}
 static std::string basicErrorMessage(const std::string& msg) {
   return style_text::styleAsError("Compilatiion Error: ") + msg;
 }
@@ -185,6 +182,12 @@ static std::string highlightedLineAndPath(const Token& token) {
 const char* Generic::what() const noexcept { return m_msg.c_str(); }
 
 Generic::Generic(const std::string& msg) : m_msg(msg + '\n') {}
+Generic::Generic(std::string&& msg) : m_msg(std::move(msg) + '\n') {}
+
+// CodeGenFailure
+
+CodeGenFailure::CodeGenFailure(std::string&& msg) : Generic(std::move(msg)) {}
+CodeGenFailure::CodeGenFailure(const std::string& msg) : Generic(msg) {}
 
 // NoExposedNamespace
 
@@ -195,8 +198,9 @@ NoExposedNamespace::NoExposedNamespace()
 
 // CouldntOpenFile
 
-CouldntOpenFile::CouldntOpenFile(const std::filesystem::path& filePath)
-    : Generic(basicErrorMessage("Failed to open the following file:\n") +
+CouldntOpenFile::CouldntOpenFile(const std::filesystem::path& filePath, Mode mode)
+    : Generic(basicErrorMessage(std::string("Failed to open the following file (") +
+                                ((mode == Mode::READ) ? "read" : "write") + " fail):\n") +
               style_text::styleAsCode(FullPathStr(filePath)) + '.') {}
 
 // FilePathError

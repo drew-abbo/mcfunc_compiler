@@ -20,6 +20,8 @@ public:
                        std::filesystem::path exposePath);
     FunctionDefinition() = default;
 
+    bool isPublic() const;
+
     const symbol::Function* symbolPtr;
     UniqueID sourceFileID;
     std::filesystem::path exposePath;
@@ -73,8 +75,13 @@ public:
   const LinkedFunctionTable& functionSymbolTable() const;
 
   /// The non-mcfunction files to write (like .json files). Paths are relative
-  /// (from inside the output directory).
+  /// (from inside the public namespace directory).
   const std::unordered_map<std::filesystem::path, std::string>& fileWrites() const;
+
+  /// Generates the data pack.
+  /// \throws compilation_error::CodeGenFailure
+  /// compilation_error::CouldntOpenFile if something goes wrong.
+  void generateDataPack(const std::filesystem::path& outputDirectory) const;
 
 private:
   std::string m_exposedNamespace;

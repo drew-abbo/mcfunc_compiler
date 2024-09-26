@@ -1,8 +1,11 @@
-# Manual compiler testing file
-test.mcfunc
-foo.mcfunc
-bar.mcfunc
-baz.mcfunc
+# Manual compiler testing files and directories
+*.mcfunc
+data/
+*.json
+*.jsonc
+
+# Don't ignore .mcfunc files in the `tests` directory
+!tests/**/*.mcfunc
 
 # Personal todo lists
 TODO
