@@ -20,8 +20,10 @@ bug-prone.
   - [Changing the Output Directory](#changing-the-output-directory)
   - [Adding an Input Directory](#adding-an-input-directory)
   - [Hot Reloading](#hot-reloading)
-  - [Build System](#build-system)
+  - [Additional Flags](#additional-flags)
 - [Recommended Workflow](#recommended-workflow)
+  - [Project Structure](#project-structure)
+  - [Build System (Make)](#build-system-make)
 - [Building This Project From Source](#building-this-project-from-source)
   - [Requirements](#requirements)
   - [Python Build Script](#python-build-script)
@@ -250,13 +252,13 @@ void myFunction() {
 
 The function we defined above will not appear in-game as
 `my_namespace:myFunction`. Instead, it will appear under the namespace
-`zzz__.my_namespace` with an arbitrary name (like `zzz__.my_namespace:f_0`).
-This is done because it hides implementation details and makes it less likely
-that the end-user runs functions they shouldn't.
+`zzz__.my_namespace` with an arbitrary name. This is done because it hides your
+implementation details from the user, making it less likely that someone runs
+functions they shouldn't.
 
 To give our function a name in-game we have to use the `expose` keyword after
 the parenthesis `()` with a function path. We'll expose our function as
-`hello_world`. The function we'll see in game will now be called
+`hello_world`. The function we'll see in-game will now be called
 `my_namespace:hello_world`.
 
 ```mcfunc
@@ -321,7 +323,7 @@ load void loadFunction() {
 
 > [!NOTE]
 > The `tick` and `load` keywords can both be applied to the same function. They
-> must appear before the return type (e.g. `void tick` is invalid). They also
+> must appear before the return type (i.e. `void tick` is invalid). They also
 > must appear on every declaration/definition of a function.
 
 ### Commands and Scopes
@@ -408,7 +410,8 @@ file "loot_table/my_loot_table_1.json" = "my_loot_table_1.json";
 
 > [!NOTE]
 > The file path for a file that's being written starts in the namespace folder
-> (e.g. `data/foo/` if the namespace was set to `foo`).
+> (e.g. `file "loot_tables/my_loot_table_1.json"` would actually write to
+> `foo/loot_tables/my_loot_table_1.json` for a namespace `foo`).
 >
 > Files being copied in must be input files or must exist inside of an input
 > directory or library.
@@ -449,16 +452,26 @@ importing between them) so long as a *public* function `foo` is never declared.
 
 The advantage of this is that you can split a function's declaration from its
 definition and have a clean interface file for a library or API (like a C header
-file):
+file).
 
 ```mcfunc
 // doSomethingComplicated.mcfunc
 
+// This file can be imported and people can look at it to see how the contained
+// functions should be used.
+
+import "src/doSomethingComplicated.mcfunc";
+
+// Does something complicated.
+// Call when you want something complicated to be done.
 public void doSomethingComplicated();
 ```
 
 ```mcfunc
-// doSomethingComplicated_impl.mcfunc
+// src/doSomethingComplicated.mcfunc
+
+// This file can implement the functions in the other file without cluttering it
+// with private helper functions or implementation details.
 
 public void doSomethingComplicated() {
   // big complicated implementation goes here
@@ -466,27 +479,13 @@ public void doSomethingComplicated() {
 ```
 
 > [!NOTE]
-> The `private` keyword must appear before the return type (e.g. `void private`
+> The `public` keyword must appear before the return type (i.e. `void public`
 > is invalid). It also must appear on every declaration/definition of a
 > function.
 
 ---
 
 ## CLI App
-
-To get help info you can run `mcfunc` with the `-h` flag.
-
-```sh
-# print help info
-mcfunc -h
-```
-
-To get version info you can run `mcfunc` with the `-v` flag.
-
-```sh
-# print version info
-mcfunc -v
-```
 
 ### Direcly Passing Source Files
 
@@ -498,7 +497,8 @@ Run `mcfunc` followed by a list of source files to generate a data pack in the
 mcfunc ./src/main.mcfunc
 ```
 
-Files passed in this way can be imported by the file name without the path.
+Files passed in this way can be imported by their file name (without the parent
+path).
 
 ```mcfunc
 import "main.mcfunc";
@@ -519,11 +519,12 @@ expose "example";
 file "baz.json" = "bar.json";
 ```
 
+Input files cannot be inside of the output directory.
+
 ### Changing the Output Directory
 
-You can change the output directory with the `-o` flag. If this flag appears
-multiple times its last appearance will be used. If left unspecified `./data`
-will be used.
+You can change the output directory with the `-o` flag. This flag cannot appear
+multiple times. If left unspecified `./data` will be used.
 
 ```sh
 # builds './src/main.mcfunc' into './build'
@@ -538,16 +539,16 @@ passing every file in the directory to the compiler. *This is evaluated*
 files in `./foo/bar` will also be compiled.
 
 ```sh
-# builds files in the current directory into './data'
-mcfunc -i .
+# builds files in the `./src` directory into './data'
+mcfunc -i ./src
 ```
 
 The difference between this and manually passing every file in a directory to
 the compiler is that sub-directories are preserved for the import path (e.g. if
-`./src` was set as an import path `./src/foo/bar.mcfunc` would need to be
-imported with `"foo/bar.mcfunc"` not just `"bar.mcfunc"`).
+there was a file `./src/foo/bar.mcfunc` and you used the flag `-i ./src`, the
+file would need to be imported as `"foo/bar.mcfunc"`, not just `"bar.mcfunc"`).
 
-The output directory will be ignored if it's inside of/is an input directory.
+The output directory cannot be inside of an input directory.
 
 ### Hot Reloading
 
@@ -560,37 +561,17 @@ This mode can be exited by pressing `Q`.
 mcfunc -i ./src --hot
 ```
 
-### Build System
+### Additional Flags
 
-When you run `mcfunc` it will search for a `build.jsonc` file in the current
-directory. This file should contain an array of arguments that should be
-prepended to the build command. The `build.jsonc` file removes the need to
-manually type out a long command every time you want to build.
-
-```sh
-# builds using arguments from a 'build.jsonc' file
-mcfunc
-```
-
-```sh
-# builds using arguments from a 'build.jsonc' file in "hot reload" mode
-mcfunc --hot
-```
-
-Here is an example of a `build.jsonc` file that will build a data pack from the
-files in `./src` into `./data`:
-
-```jsonc
-// build.jsonc
-[ "-i", "./src" ]
-```
-
-> [!NOTE]
-> A `build.json` file will not be looked for, only `build.jsonc`. The main
-> difference between `json` and `jsonc` files is that `jsonc` files allow
-> C-style comments.
+| Flag             | Purpose                                        |
+| ---------------- | ---------------------------------------------- |
+| `-v` `--version` | Print version info.                            |
+| `-h` `--help`    | Print help info.                               |
+| `--no-color`     | Disable styled output (no color or bold text). |
 
 ## Recommended Workflow
+
+### Project Structure
 
 The recommended directory structure for MCFunc projects is this:
 
@@ -599,7 +580,7 @@ The recommended directory structure for MCFunc projects is this:
 ├── data/
 ├── libs/
 ├── src/
-├── build.jsonc
+├── Makefile
 └── pack.mcmeta
 ```
 
@@ -608,7 +589,7 @@ The recommended directory structure for MCFunc projects is this:
   need this for simple projects.
 - `src` is where all of your `.mcfunc` files and any resource files (e.g. loot
   tables) should go.
-- `build.jsonc` so that you can just run `mcfunc` to compile.
+- `Makefile` lets you just run `make` to compile ([more info](#build-system-make)).
 - `pack.mcmeta` holds info about your data pack for the game
   ([here's a generator](https://misode.github.io/pack-mcmeta/)).
 
@@ -616,32 +597,34 @@ Ideally you're directly working inside of a data pack folder in the `datapacks`
 directory of a Minecraft save. That way you can take advantage of things like
 hot reloading for testing.
 
-To send your data pack folder to a friend just zip the contents of the project
-(only `data` and `pack.mcmeta` if they don't need the source code) and send it
-to them.
+### Build System (Make)
 
-As for your `build.jsonc` file, you can use this if you don't need any libraries
-(this also means you don't need the `libs` folder):
+If you don't want to manually write out a long build command every time you want
+to compile your data pack you'll need a build system. I'd recommend
+[Make](https://www.gnu.org/software/make/)
+([Windows download here](https://gnuwin32.sourceforge.net/packages/make.htm)).
 
-```jsonc
-// build.jsonc
-[ "-i", "./src" ]
+To use Make (once you have it installed), create a file called `Makefile` and
+give it some basic targets:
+
+```Makefile
+# set the build command to build './src' into './data'
+BUILD_CMD = mcfunc -i ./src
+
+# runs the build command when you run `make`
+all:
+	${BUILD_CMD}
+
+# runs the build command in "hot reload" mode when you run `make hot`
+hot:
+	${BUILD_CMD} --hot
 ```
 
-If you have libraries you'll need to add each of them separately:
+> [!WARNING]
+> Make sure the `Makefile` is using tabs (not spaces) for indentation.
 
-```jsonc
-// build.jsonc
-[
-  "-i", "./src",
-  "-i", "./libs/my_library_1",  // my_library_1
-  "-i", "./libs/my_library_2",  // my_library_2
-]
-```
-
-For more complicated projects with multiple namespaces you may want to write
-your own build script since you'll need to compile each namespace with a
-separate build command (I'd recommend Python for cross platform compatibility).
+Once you have this set up you should just be able to just run `make` and your
+data pack should build.
 
 ## Building This Project From Source
 

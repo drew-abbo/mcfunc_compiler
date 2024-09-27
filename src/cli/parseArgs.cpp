@@ -63,13 +63,6 @@ static void warnAboutFileSuppliedMoreThanOnce(const std::filesystem::path& path)
 // parseArgs
 
 ParseArgsResult parseArgs(int argc, const char** argv) {
-  // TODO: read arguments from build.jsonc
-  if (std::filesystem::exists("build.jsonc")) {
-    helper::printWarningPrefix();
-    std::cerr << style_text::styleAsWarning("(NOT IMPLEMENTED)") << " The "
-              << style_text::styleAsCode("build.json") << " file will be ignored.\n";
-  }
-
   SourceFiles sourceFiles;
   std::vector<FileWriteSourceFile> fileWriteSourceFiles;
 
@@ -79,11 +72,18 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
   for (int i = 1; i < argc; i++) {
     std::string_view arg = argv[i];
 
+    // --no-color
+    if (arg == "--no-color") {
+      style_text::doColor = false;
+
+      continue;
+    }
+
     // -v, --version
     if (arg == "-v" || arg == "--version") {
       helper::ensureArgIsOnlyArg(argc, argv, i);
 
-      std::cout << "MCFunc version " MCFUNC_VERSION "\n";
+      std::cout << MCFUNC_BUILD_INFO_MSG << '\n';
 
       exit(EXIT_SUCCESS);
     }
@@ -94,13 +94,15 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
 
       std::cout << // clang-format off
       // -------------------------------------------------------------------------------- (80 chars)
+        MCFUNC_BUILD_INFO_MSG "\n\n"
         "Usage: " << argv[0] << " [files] [arguments]\n"
         "Options:\n"
         "  -o <DIRECTORY>              Set the output directory (defaults to './data').\n"
         "  -i <DIRECTORY>              Recursively add files from an input directory.\n"
         "  --hot                       Enter an interactive hot-reloading mode.\n"
         "  -v, --version               Print version info.\n"
-        "  -h, --help                  Print this message.\n";
+        "  -h, --help                  Print help info.\n"
+        "  --no-color                  Disable styled output (no color or bold text).\n";
       // clang-format on
 
       exit(EXIT_SUCCESS);

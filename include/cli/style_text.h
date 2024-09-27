@@ -6,9 +6,13 @@
 
 namespace style_text {
 
-extern const char* reset;
-extern const char* error;
-extern const char* warning;
+/// Whether or not the functions in this file use color.
+extern bool doColor;
+
+const char* reset();
+const char* error();
+const char* warning();
+const char* bold();
 
 std::string styleAsCode(std::string&& s);
 std::string styleAsCode(const std::string& s);

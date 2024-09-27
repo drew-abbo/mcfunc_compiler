@@ -116,7 +116,7 @@ LinkResult SourceFiles::link(const std::vector<FileWriteSourceFile>& fileWriteSo
   if (unresolvedFileWrites.size()) {
     const symbol::FileWrite& fileWrite = *unresolvedFileWrites.begin()->second;
     throw compile_error::UnresolvedSymbol(
-        "File write " + style_text::styleAsCode(fileWrite.relativeOutPath()) + " is never defined.",
+        "File write " + style_text::styleAsCode(fileWrite.relativeOutPath()) + " was never defined.",
         fileWrite.relativeOutPathToken());
   }
 

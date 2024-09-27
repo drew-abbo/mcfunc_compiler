@@ -238,7 +238,7 @@ void UnresolvedFunctionNames::ensureTableIsEmpty() const {
       continue;
 
     throw compile_error::UnresolvedSymbol(
-        "Function " + style_text::styleAsCode(token->contents()) + " is never defined.", *token);
+        "Function " + style_text::styleAsCode(token->contents()) + " was never defined.", *token);
   }
 
   assert(false && "This point should never be reached");

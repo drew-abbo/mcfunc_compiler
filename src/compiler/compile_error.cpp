@@ -81,9 +81,9 @@ static std::string highlightOnLine(std::string&& line, size_t ln, size_t col,
 
   // highlight the selected section in red
   if ((col - 1) + numChars <= line.size())
-    line.insert((col - 1) + numChars, style_text::reset);
+    line.insert((col - 1) + numChars, style_text::reset());
   else
-    line += style_text::reset;
+    line += style_text::reset();
   if ((col - 1) <= line.size())
     line.insert(((col - 1) <= line.size()) ? col - 1 : 0, highlightStr);
 
@@ -101,7 +101,7 @@ static std::string highlightOnLine(std::string&& line, size_t ln, size_t col,
   arrowLine += highlightStr;
   arrowLine.push_back('^');
   arrowLine.append(numChars - 1, '~');
-  arrowLine += style_text::reset;
+  arrowLine += style_text::reset();
 
   return lineNumberStr + " | " + std::move(line) + arrowLine;
 }
@@ -124,7 +124,8 @@ static std::string highlightedLineAndPath(const std::filesystem::path& filePath,
   const std::string lnStr = std::to_string(lnCol.ln);
   const std::string colStr = std::to_string(lnCol.col);
 
-  return highlightOnLine(std::move(lnCol.line), lnCol.ln, lnCol.col, style_text::error, numChars) +
+  return highlightOnLine(std::move(lnCol.line), lnCol.ln, lnCol.col, style_text::error(),
+                         numChars) +
          '\n' + style_text::styleAsCode(fullFilePathStr + ':' + lnStr + ':' + colStr) + " (ln " +
          lnStr + ", col " + colStr + ").";
 }

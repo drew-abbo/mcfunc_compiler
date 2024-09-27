@@ -18,8 +18,8 @@ bool LinkedFunctionTable::FunctionDefinition::isPublic() const { return symbolPt
 // LinkedFunctionTable
 
 void LinkedFunctionTable::merge(const symbol::Function& funcToMerge, UniqueID sourceFileID) {
-  // ensure a public function with this name doesn't exist (defined)
-  if (has(funcToMerge.name()) && get(funcToMerge.name()).symbolPtr->isDefined()) {
+  // ensure a public function with this name doesn't exist (both defined)
+  if (has(funcToMerge.name()) && funcToMerge.isDefined() && get(funcToMerge.name()).symbolPtr->isDefined()) {
     throw compile_error::DeclarationConflict(
         "Function " + style_text::styleAsCode(funcToMerge.name()) +
             " is already defined in another file " +
