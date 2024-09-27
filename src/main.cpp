@@ -1,8 +1,6 @@
-#include "cli/style_text.h"
 #include <cstdlib>
 #include <iostream>
 
-#include <cli/outputIsTerminal.h>
 #include <cli/parseArgs.h>
 #include <compiler/compile_error.h>
 
@@ -162,11 +160,6 @@ void printFullCompilationResult(const std::filesystem::path& outputDirectory,
 #endif
 
 int main(int argc, const char** argv) {
-  // disable color/styled printing if we're outputting to a file or piping to
-  // another process
-  if (!outputIsTerminal())
-    style_text::doColor = false;
-
   try {
     auto [outputDirectory, sourceFiles, fileWriteSourceFiles] = parseArgs(argc, argv);
 
