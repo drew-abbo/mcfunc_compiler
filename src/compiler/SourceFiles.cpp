@@ -15,6 +15,7 @@
 #include <compiler/linking/LinkResult.h>
 #include <compiler/syntax_analysis/symbol.h>
 #include <compiler/tokenization/Token.h>
+#include <compiler/translation/compileSourceFile.h>
 
 // NOTE: SourceFile::tokenize(), SourceFile::analyzeSyntax(), and
 // SourceFiles::link() are defined in separate files.
@@ -61,9 +62,9 @@ const symbol::NamespaceExpose& SourceFile::namespaceExposeSymbol() const {
 
 // SourceFiles
 
-void SourceFiles::evaluateAll() {
+std::vector<CompiledSourceFile> SourceFiles::evaluateAll() {
   if (!size())
-    return;
+    return {};
 
   const unsigned threadCount =
       std::max(1u, std::min(static_cast<unsigned>(size()), std::thread::hardware_concurrency()));
@@ -71,7 +72,7 @@ void SourceFiles::evaluateAll() {
   // Each thread we spawn here needs a promise because they all can throw and we
   // need the first of those exceptions to propagate outwards onto the main
   // thread.
-  std::vector<std::promise<void>> promises(threadCount);
+  std::vector<std::promise<std::vector<CompiledSourceFile>>> promises(threadCount);
 
   // We're spawning the number of threads equal to the number of hardware
   // threads (or less if we don't have that many source files to evaluate,
@@ -96,13 +97,15 @@ void SourceFiles::evaluateAll() {
     assert(end <= size() && "end cannot be > the number of source files");
 
     threads.emplace_back(
-        [this](std::promise<void>& promise, size_t start, size_t end) {
+        [this](std::promise<std::vector<CompiledSourceFile>>& promise, size_t start, size_t end) {
           try {
+            std::vector<CompiledSourceFile> compiledSourceFiles;
             for (size_t j = start; j < end; j++) {
               this->at(j).tokenize();
               this->at(j).analyzeSyntax(*this);
+              compiledSourceFiles.emplace_back(compileSourceFile(this->at(j)));
             }
-            promise.set_value();
+            promise.set_value(std::move(compiledSourceFiles));
           } catch (...) {
             promise.set_exception(std::current_exception());
           }
@@ -118,11 +121,19 @@ void SourceFiles::evaluateAll() {
     t.join();
   }
 
+  std::vector<CompiledSourceFile> ret;
+
   // Doing it like this ensures that the exception that is thrown is
   // reproducible because the promise we throw from (if any) will be the one
   // that contained the source file with the lowest index, not the one from the
-  // first thread that threw an exception.
-  for (std::promise<void>& p : promises) {
-    p.get_future().get();
+  // first thread that threw an exception. It also ensures that the order of the
+  // compiled source files is the same as the order of the source files.
+  for (std::promise<std::vector<CompiledSourceFile>>& p : promises) {
+    std::vector<CompiledSourceFile> compiledFiles = p.get_future().get();
+
+    ret.insert(ret.end(), std::make_move_iterator(compiledFiles.begin()),
+               std::make_move_iterator(compiledFiles.end()));
   }
+
+  return ret;
 }

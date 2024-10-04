@@ -1,3 +1,4 @@
+#include "compiler/UniqueID.h"
 #include <compiler/syntax_analysis/symbol.h>
 
 #include <cassert>
@@ -39,7 +40,10 @@ Function::Function(const Token* nameTokenPtr, const Token* publicTokenPtr,
       m_exposeAddressPath((exposeAddressTokenPtr == nullptr)
                               ? ""
                               : filePathFromToken(exposeAddressTokenPtr, false, false)),
-      m_definition(std::move(definition)) {
+      m_definition(std::move(definition)),
+      m_functionID((m_definition.has_value())
+                       ? std::optional<UniqueID>(UniqueID(UniqueID::Kind::FUNCTION))
+                       : std::nullopt) {
 
   assert(nameTokenPtr != nullptr && "Name token can't be 'nullptr'.");
   assert(nameTokenPtr->contents().size() > 0 && "Name token can't lack contents.");
@@ -113,6 +117,13 @@ const statement::Scope& Function::definition() const {
 void Function::setDefinition(std::optional<statement::Scope>&& definition) {
   assert(!isDefined() && "Overriding non-null definition.");
   m_definition = std::move(definition);
+  m_functionID = UniqueID(UniqueID::Kind::FUNCTION);
+}
+
+UniqueID Function::functionID() const {
+  assert(isDefined() && "Only defined functions have an ID.");
+  assert(m_functionID.has_value() && "functionID doesn't have value but it should.");
+  return m_functionID.value();
 }
 
 // FunctionTable
@@ -186,6 +197,20 @@ void FunctionTable::merge(Function&& newSymbol) {
         "Function " + style_text::styleAsCode(existing.name()) +
             " has multiple expose address definitions.",
         existing.exposeAddressToken(), newSymbol.exposeAddressToken());
+  }
+
+  // ensure that no other functons use the same expose address as this one
+  if (!newSymbol.isExposed()) {
+    for (const Function& existingSymbol : m_symbolsVec) {
+      if (existingSymbol.isExposed() &&
+          existingSymbol.exposeAddress() == newSymbol.exposeAddress()) {
+        throw compile_error::DeclarationConflict(
+            "Function " + style_text::styleAsCode(newSymbol.name()) +
+                " has the same expose address as function " +
+                style_text::styleAsCode(existingSymbol.name()),
+            newSymbol.exposeAddressToken(), existingSymbol.exposeAddressToken());
+      }
+    }
   }
 
   // merge in expose address and definition if new

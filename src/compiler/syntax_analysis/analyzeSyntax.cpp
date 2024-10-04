@@ -128,12 +128,21 @@ void SourceFile::analyzeSyntax(const SourceFiles& sourceFiles) {
       i += 3; // set to index of definition, ending semicolon, or 'expose'
       helper::forceMatchToken(m_tokens, i, {Token::L_BRACE, Token::SEMICOLON, Token::EXPOSE_KW});
 
-      // function is exposed (e.g. 'void foo() expose "foo";')
+      // function is exposed (e.g. 'void foo() expose "foo" {')
       if (m_tokens[i].kind() == Token::EXPOSE_KW) {
         helper::forceMatchToken(m_tokens, i + 1, {Token::STRING});
         thisSymbol.setExposeAddressToken(&m_tokens[i + 1]);
         i += 2; // set to index of definition or ending semicolon
-        helper::forceMatchToken(m_tokens, i, {Token::L_BRACE, Token::SEMICOLON});
+        // give a better error message if there's a semicolon
+        if (helper::tryMatchPattern(m_tokens, i, {Token::SEMICOLON})) {
+          throw compile_error::UnexpectedToken(
+              "Expected " + helper::tokenKindName(Token::L_BRACE) + " but got " +
+                  helper::tokenKindName(Token::SEMICOLON) +
+                  " (the expose address of a function can only exist for the definition of a "
+                  "function).",
+              m_tokens[i]);
+        }
+        helper::forceMatchToken(m_tokens, i, {Token::L_BRACE});
       }
 
       // function has definition (e.g. 'void foo() { /say hi; }')

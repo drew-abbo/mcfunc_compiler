@@ -277,15 +277,7 @@ void myFunction() expose "hello_world" {
 > be named `.` or `..`. Every slash `/` must have an element on either side of
 > it.
 >
-> The `expose` keyword can only appear on one of a function's declarations:
-> 
-> ```mcfunc
-> void myFunction() expose "hello_world";
-> 
-> void myFunction() {
->   /say Hello world!;
-> }
-> ```
+> The `expose` keyword can only appear on a function's definition.
 
 To call a function you just put the name of the function with parenthesis `()`
 as a statement.

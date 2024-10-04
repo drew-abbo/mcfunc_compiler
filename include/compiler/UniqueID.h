@@ -10,7 +10,7 @@ public:
   enum class Kind : char {
     SOURCE_FILE = 's',
     FUNCTION = 'f',
-    FILE_WRITE = 'w',
+    SCOPE_FILE_WRITE = 'w',
   };
 
 public:

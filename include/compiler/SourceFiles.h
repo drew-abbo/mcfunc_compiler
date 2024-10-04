@@ -4,11 +4,12 @@
 #include <filesystem>
 #include <vector>
 
+#include <compiler/FileWriteSourceFile.h>
 #include <compiler/UniqueID.h>
 #include <compiler/linking/LinkResult.h>
 #include <compiler/syntax_analysis/symbol.h>
 #include <compiler/tokenization/Token.h>
-#include <compiler/FileWriteSourceFile.h>
+#include <compiler/translation/CompiledSourceFile.h>
 
 /// Represents a single source file.
 /// Anything that this class does may throw (including construction).
@@ -83,12 +84,13 @@ private:
 /// methods attached for linking and compiling.
 class SourceFiles : public std::vector<SourceFile> {
 public:
-  /// Evaluates every source file by tokenizing, performing syntax analysis, and
-  /// generating symbol tables. Source files are evaluated in parallel. This
-  /// sets up the object for the linking stage.
+  /// Evaluates every source file by tokenizing, performing syntax analysis,
+  /// generating symbol tables, and compiling into a new vector of compiled
+  /// source files. Source files are evaluated in parallel. After this the
+  /// linking stage can begin.
   /// \throws compile_error::Generic (or a subclass of it) if anything goes
   /// wrong.
-  void evaluateAll();
+  std::vector<CompiledSourceFile> evaluateAll();
 
   /// Links all source files together, returns a \p LinkResult object.
   /// \throws compile_error::Generic (or a subclass of it) if anything goes

@@ -2,6 +2,7 @@
 /// \file Holds classes that represent symbols (like a function) and symbol
 /// tables (like a collection of function symbols).
 
+#include "compiler/UniqueID.h"
 #include <filesystem>
 #include <optional>
 #include <string>
@@ -60,6 +61,9 @@ public:
 
   void setDefinition(std::optional<statement::Scope>&& definition);
 
+  /// \warning only defined functions have a UID.
+  UniqueID functionID() const;
+
 private:
   const Token* m_nameTokenPtr;
   const Token* m_publicTokenPtr;
@@ -68,6 +72,7 @@ private:
   const Token* m_exposeAddressTokenPtr;
   std::filesystem::path m_exposeAddressPath;
   std::optional<statement::Scope> m_definition;
+  std::optional<UniqueID> m_functionID;
 
 private:
   friend class FunctionTable;
