@@ -2,7 +2,6 @@
 /// \file Contains the \p FileWriteSourceFile class.
 
 #include <filesystem>
-#include <optional>
 
 /// Represents a file that was passed to the compiler but isn't a source file
 /// (doesn't end with `.mcfunc`).

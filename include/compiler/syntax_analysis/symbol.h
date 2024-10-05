@@ -2,13 +2,13 @@
 /// \file Holds classes that represent symbols (like a function) and symbol
 /// tables (like a collection of function symbols).
 
-#include "compiler/UniqueID.h"
 #include <filesystem>
 #include <optional>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 
+#include <compiler/UniqueID.h>
 #include <compiler/syntax_analysis/statement.h>
 #include <compiler/tokenization/Token.h>
 
@@ -81,7 +81,7 @@ private:
 /// A collection of \p symbol::Function objects.
 class FunctionTable {
 public:
-  FunctionTable() = default;
+  FunctionTable();
 
   /// Whether a symbol with the name \param symbolName is in the table.
   bool hasSymbol(const std::string& symbolName) const;
@@ -108,6 +108,18 @@ public:
   /// Empties the table.
   void clear();
 
+  /// The number of elements in the table.
+  size_t size() const;
+
+  /// The number of public symbols in the table.
+  size_t publicSymbolCount() const;
+
+  /// The number of private symbols in the table.
+  size_t privateSymbolCount() const;
+
+  /// The number of exposed symbols in the table.
+  size_t exposedSymbolCount() const;
+
   /// Enables iteration.
   auto begin() { return m_symbolsVec.begin(); }
   auto begin() const { return m_symbolsVec.cbegin(); }
@@ -117,6 +129,8 @@ public:
 private:
   std::vector<Function> m_symbolsVec;
   std::unordered_map<std::string, size_t> m_indexMap;
+  size_t m_publicSymbolCount;
+  size_t m_exposedSymbolCount;
 };
 
 /// A set of functions that have been called but have yet to be declared or
@@ -140,6 +154,9 @@ public:
 
   /// Empties the table.
   void clear();
+
+  /// The number of elements in the table.
+  size_t size() const;
 
   /// Throws an error if the table isn't empty, highlighting the first function
   /// call of an undefined function.
@@ -208,6 +225,9 @@ public:
   /// Empties the table.
   void clear();
 
+  /// The number of elements in the table.
+  size_t size() const;
+
   /// Enables iteration.
   auto begin() { return m_symbolsVec.begin(); }
   auto begin() const { return m_symbolsVec.cbegin(); }
@@ -269,6 +289,9 @@ public:
 
   /// Empties the table.
   void clear();
+
+  /// The number of elements in the table.
+  size_t size() const;
 
   /// Enables iteration.
   auto begin() { return m_symbolsVec.begin(); }

@@ -1,4 +1,3 @@
-#include "compiler/UniqueID.h"
 #include <compiler/syntax_analysis/symbol.h>
 
 #include <cassert>
@@ -9,6 +8,7 @@
 
 #include <cli/style_text.h>
 #include <compiler/SourceFiles.h>
+#include <compiler/UniqueID.h>
 #include <compiler/compile_error.h>
 #include <compiler/generateImportPath.h>
 #include <compiler/syntax_analysis/filePathFromToken.h>
@@ -128,6 +128,8 @@ UniqueID Function::functionID() const {
 
 // FunctionTable
 
+FunctionTable::FunctionTable() : m_publicSymbolCount(0), m_exposedSymbolCount(0) {}
+
 bool FunctionTable::hasSymbol(const std::string& symbolName) const {
   return m_indexMap.count(symbolName) > 0;
 }
@@ -151,6 +153,9 @@ const Function& FunctionTable::getSymbol(const Function& symbol) const {
 
 void FunctionTable::merge(Function&& newSymbol) {
   if (!hasSymbol(newSymbol)) {
+    if (newSymbol.isPublic())
+      m_publicSymbolCount++;
+
     m_indexMap[newSymbol.name()] = m_symbolsVec.size();
     m_symbolsVec.emplace_back(std::move(newSymbol));
     return;
@@ -184,48 +189,37 @@ void FunctionTable::merge(Function&& newSymbol) {
         (newSymbol.isLoadFunc()) ? newSymbol.loadKWToken() : newSymbol.nameToken());
   }
 
+  if (!newSymbol.isDefined())
+    return;
+
   // ensure only 1 symbol is defined
-  if (existing.isDefined() && newSymbol.isDefined()) {
+  if (existing.isDefined()) {
     throw compile_error::DeclarationConflict(
         "Function " + style_text::styleAsCode(existing.name()) + " has multiple definitions.",
         existing.nameToken(), newSymbol.nameToken());
   }
 
-  // ensure only 1 symbol has an exposed address defined
-  if (existing.isExposed() && newSymbol.isExposed()) {
-    throw compile_error::DeclarationConflict(
-        "Function " + style_text::styleAsCode(existing.name()) +
-            " has multiple expose address definitions.",
-        existing.exposeAddressToken(), newSymbol.exposeAddressToken());
-  }
-
-  // ensure that no other functons use the same expose address as this one
-  if (!newSymbol.isExposed()) {
-    for (const Function& existingSymbol : m_symbolsVec) {
-      if (existingSymbol.isExposed() &&
-          existingSymbol.exposeAddress() == newSymbol.exposeAddress()) {
-        throw compile_error::DeclarationConflict(
-            "Function " + style_text::styleAsCode(newSymbol.name()) +
-                " has the same expose address as function " +
-                style_text::styleAsCode(existingSymbol.name()),
-            newSymbol.exposeAddressToken(), existingSymbol.exposeAddressToken());
-      }
-    }
-  }
-
   // merge in expose address and definition if new
-  if (!existing.isExposed() && newSymbol.isExposed()) {
+  existing.m_definition = std::move(newSymbol.m_definition);
+  if (newSymbol.isExposed()) {
     existing.m_exposeAddressTokenPtr = newSymbol.m_exposeAddressTokenPtr;
     existing.m_exposeAddressPath = std::move(newSymbol.m_exposeAddressPath);
+    m_exposedSymbolCount++;
   }
-  if (!existing.isDefined() && newSymbol.isDefined())
-    existing.m_definition = std::move(newSymbol.m_definition);
 }
 
 void FunctionTable::clear() {
   m_symbolsVec.clear();
   m_indexMap.clear();
 }
+
+size_t FunctionTable::size() const { return m_symbolsVec.size(); }
+
+size_t FunctionTable::publicSymbolCount() const { return m_publicSymbolCount; }
+
+size_t FunctionTable::privateSymbolCount() const { return size() - m_publicSymbolCount; }
+
+size_t FunctionTable::exposedSymbolCount() const { return m_exposedSymbolCount; }
 
 // UnresolvedFunctionNames
 
@@ -248,6 +242,8 @@ void UnresolvedFunctionNames::remove(const std::string& symbolName) {
 bool UnresolvedFunctionNames::empty() const { return m_symbolNames.size() == 0; }
 
 void UnresolvedFunctionNames::clear() { m_symbolNames.clear(); }
+
+size_t UnresolvedFunctionNames::size() const { return m_symbolNames.size(); }
 
 void UnresolvedFunctionNames::ensureTableIsEmpty() const {
   if (empty())
@@ -338,6 +334,8 @@ void FileWriteTable::clear() {
   m_indexMap.clear();
 }
 
+size_t FileWriteTable::size() const { return m_symbolsVec.size(); }
+
 // Import
 
 /// \todo This could be optimized a lot by maybe using a hashset or hashmap idk.
@@ -414,6 +412,8 @@ void ImportTable::clear() {
   m_symbolsVec.clear();
   m_indexMap.clear();
 }
+
+size_t ImportTable::size() const { return m_symbolsVec.size(); }
 
 // NamespaceExpose
 

@@ -6,7 +6,6 @@
 
 #include <compiler/FileWriteSourceFile.h>
 #include <compiler/UniqueID.h>
-#include <compiler/linking/LinkResult.h>
 #include <compiler/syntax_analysis/symbol.h>
 #include <compiler/tokenization/Token.h>
 #include <compiler/translation/CompiledSourceFile.h>
@@ -54,7 +53,8 @@ public:
   const symbol::FunctionTable& functionSymbolTable() const;
 
   /// A set of function names that haven't been declared or defined yet.
-  const symbol::UnresolvedFunctionNames unresolvedFunctionNames() const;
+  const symbol::UnresolvedFunctionNames& unresolvedFunctionNames() const;
+  symbol::UnresolvedFunctionNames& unresolvedFunctionNames();
 
   /// The file write symbol table.
   const symbol::FileWriteTable& fileWriteSymbolTable() const;
@@ -64,6 +64,11 @@ public:
 
   /// The namespace expose symbol.
   const symbol::NamespaceExpose& namespaceExposeSymbol() const;
+
+  /// Clears all fields of the source file so that memory is deallocated. This
+  /// puts the source file in a somewhat invalid state, do not use the source
+  /// file after doing this.
+  void fullyClearEverything();
 
 private:
   std::filesystem::path m_filePath;
@@ -91,9 +96,4 @@ public:
   /// \throws compile_error::Generic (or a subclass of it) if anything goes
   /// wrong.
   std::vector<CompiledSourceFile> evaluateAll();
-
-  /// Links all source files together, returns a \p LinkResult object.
-  /// \throws compile_error::Generic (or a subclass of it) if anything goes
-  /// wrong.
-  LinkResult link(const std::vector<FileWriteSourceFile>& fileWriteSourceFiles);
 };

@@ -69,6 +69,7 @@ public:
 class ImportError : public Generic {
 public:
   explicit ImportError(const std::string& msg, const std::filesystem::path& filePath);
+  explicit ImportError(const std::string& msg, const std::filesystem::path& filePath1, const std::filesystem::path& filePath2);
 
   explicit ImportError(const std::string& msg, const Token& token);
 };

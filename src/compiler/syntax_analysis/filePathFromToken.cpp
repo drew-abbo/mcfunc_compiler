@@ -26,9 +26,6 @@ std::filesystem::path filePathFromToken(const Token* pathTokenPtr, bool allowUpp
   assert(pathTokenPtr != nullptr && "Called 'filePathFromToken()' with nullptr");
   assert(pathTokenPtr->kind() == Token::STRING && "File path token must be of 'STRING' kind.");
 
-  if (allowDotDir)
-    allowDotDir = true;
-
   const std::string& path = pathTokenPtr->contents();
 
   if (path.empty())
@@ -95,7 +92,7 @@ std::filesystem::path filePathFromToken(const Token* pathTokenPtr, bool allowUpp
   if (path == ".." || (path.size() >= 3 && std::strncmp(&path[path.size() - 3], "/..", 3) == 0))
     throwNoBacktrackingException(pathTokenPtr, path.size() - 1);
 
-  // can't obviously end w/ directory
+  // obviously can't end w/ directory
   if (path.back() == '/' || path == "." ||
       (path.size() >= 2 && std::strncmp(&path[path.size() - 2], "/.", 2) == 0)) {
     throw compile_error::BadFilePath("File path cannot end with a directory.",

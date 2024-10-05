@@ -45,11 +45,16 @@ public:
   void addToTextContents(char additionalTextContents);
 
   /// Only call for \p FUNCTION sections.
+  /// \warning This relies on an existing source file, be careful.
   const Token* funcNameSourceToken() const;
+
+  /// Only call for \p FUNCTION sections.
+  /// \note This does NOT rely on an existing source file, this is always safe.
+  const std::string& funcName() const;
 
 private:
   Kind m_kind;
-  std::string m_textContents;
+  std::string m_contents;
   const Token* m_funcNameSourceToken;
 };
 
@@ -57,11 +62,9 @@ private:
 /// \p TEXT should be resolved to create a single string.
 class UnlinkedText {
 public:
-  UnlinkedText(bool belongsInHiddenNamespace);
+  UnlinkedText() = default;
 
   const std::vector<UnlinkedTextSection>& sections() const;
-
-  bool belongsInHiddenNamespace() const;
 
   void addText(std::string&& textContents);
   void addText(const std::string& textContents);
@@ -71,12 +74,8 @@ public:
 
   void addUnlinkedNamespace();
 
-  /// don't use this function it's only here for unordered_map
-  UnlinkedText() = default;
-
 private:
   std::vector<UnlinkedTextSection> m_sections;
-  bool m_belongsInHiddenNamespace;
 };
 
 /// Represents a compiled source file where all functions and scopes have an
@@ -84,15 +83,20 @@ private:
 /// be retrieved through the source file reference that it holds.
 class CompiledSourceFile {
 public:
-  using FileWriteMap = std::unordered_map<std::filesystem::path, UnlinkedText>;
+  struct FuncFileWrite {
+    UnlinkedText unlinkedText;
+    bool belongsInHiddenNamespace;
+  };
+  using FileWriteMap = std::unordered_map<std::filesystem::path, FuncFileWrite>;
 
 public:
-  CompiledSourceFile(const SourceFile& sourceFile);
+  CompiledSourceFile(SourceFile& sourceFile);
 
   /// Adds a file write to the compiled source file.
-  void addFileWrite(std::filesystem::path&& outPath, UnlinkedText&& unlinkedFileWrite);
+  void addFileWrite(std::filesystem::path&& outPath, FuncFileWrite&& unlinkedFileWrite);
 
   const SourceFile& sourceFile() const;
+  SourceFile& sourceFile();
 
   const FileWriteMap& unlinkedFileWrites() const;
   FileWriteMap& unlinkedFileWrites();
@@ -104,7 +108,7 @@ public:
   std::vector<UnlinkedText>& loadFunctions();
 
 private:
-  const SourceFile* m_sourceFile;
+  SourceFile* m_sourceFile;
   FileWriteMap m_unlinkedFileWriteMap;
   std::vector<UnlinkedText> m_tickFunctions;
   std::vector<UnlinkedText> m_loadFunctions;

@@ -12,13 +12,12 @@
 #include <compiler/UniqueID.h>
 #include <compiler/compile_error.h>
 #include <compiler/generateImportPath.h>
-#include <compiler/linking/LinkResult.h>
 #include <compiler/syntax_analysis/symbol.h>
 #include <compiler/tokenization/Token.h>
 #include <compiler/translation/compileSourceFile.h>
 
-// NOTE: SourceFile::tokenize(), SourceFile::analyzeSyntax(), and
-// SourceFiles::link() are defined in separate files.
+// NOTE: SourceFile::tokenize() and SourceFile::analyzeSyntax(), and are defined
+// in separate files.
 
 // SourceFile
 
@@ -46,7 +45,10 @@ const symbol::FunctionTable& SourceFile::functionSymbolTable() const {
   return m_functionSymbolTable;
 }
 
-const symbol::UnresolvedFunctionNames SourceFile::unresolvedFunctionNames() const {
+const symbol::UnresolvedFunctionNames& SourceFile::unresolvedFunctionNames() const {
+  return m_unresolvedFunctionNames;
+}
+symbol::UnresolvedFunctionNames& SourceFile::unresolvedFunctionNames() {
   return m_unresolvedFunctionNames;
 }
 
@@ -58,6 +60,19 @@ const symbol::ImportTable& SourceFile::importSymbolTable() const { return m_impo
 
 const symbol::NamespaceExpose& SourceFile::namespaceExposeSymbol() const {
   return m_namespaceExpose;
+}
+
+void SourceFile::fullyClearEverything() {
+  m_filePath.clear();
+  m_importFilePath.clear();
+  // m_fileID has no allocated memory
+  m_tokens.clear();
+  m_functionSymbolTable.clear();
+  m_functionSymbolTable.clear();
+  m_unresolvedFunctionNames.clear();
+  m_fileWriteSymbolTable.clear();
+  m_importSymbolTable.clear();
+  m_namespaceExpose = symbol::NamespaceExpose();
 }
 
 // SourceFiles

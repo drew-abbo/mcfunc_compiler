@@ -1,7 +1,5 @@
 #include <compiler/translation/compileSourceFile.h>
 
-#include <memory>
-
 #include <compiler/UniqueID.h>
 #include <compiler/syntax_analysis/statement.h>
 #include <compiler/syntax_analysis/symbol.h>
@@ -12,13 +10,10 @@
 namespace {
 namespace helper {
 
-const std::filesystem::path funcSubFolder = "function";
-
 /// Compiles the scope as a new scope without a known name and returns the scope
 /// as an unlinked file write. Any unlinked file writes that are generated as a
 /// result of any sub-scopes are added to \param ret.
-static UnlinkedText compileScope(const statement::Scope& scope, CompiledSourceFile& ret,
-                                 bool belongsInHiddenNamespace = true);
+static UnlinkedText compileScope(const statement::Scope& scope, CompiledSourceFile& ret);
 
 /// Compiles the function's scope as using it's expose address if known. Adds
 /// the unlinked file write to ret, along with any sub-scopes.
@@ -32,7 +27,7 @@ static void addFuncNameToUnlinkedText(const symbol::Function& function,
 } // namespace helper
 } // namespace
 
-CompiledSourceFile compileSourceFile(const SourceFile& sourceFile) {
+CompiledSourceFile compileSourceFile(SourceFile& sourceFile) {
   CompiledSourceFile ret(sourceFile);
   for (const symbol::Function& func : sourceFile.functionSymbolTable()) {
     // skip externally defined functions
@@ -59,11 +54,12 @@ CompiledSourceFile compileSourceFile(const SourceFile& sourceFile) {
   return ret;
 }
 
-// compileSourceFile helper functions
+// ---------------------------------------------------------------------------//
+// Helper function definitions beyond this point.
+// ---------------------------------------------------------------------------//
 
-static UnlinkedText helper::compileScope(const statement::Scope& scope, CompiledSourceFile& ret,
-                                         bool belongsInHiddenNamespace) {
-  UnlinkedText resultFileWrite(belongsInHiddenNamespace);
+static UnlinkedText helper::compileScope(const statement::Scope& scope, CompiledSourceFile& ret) {
+  UnlinkedText resultFileWrite;
   resultFileWrite.addText("# " MCFUNC_BUILD_INFO_MSG "\n\n");
 
   for (const std::unique_ptr<statement::Generic>& stmntUPtr : scope.statements()) {
@@ -83,8 +79,9 @@ static UnlinkedText helper::compileScope(const statement::Scope& scope, Compiled
       resultFileWrite.addText(funcID.str());
       resultFileWrite.addText('\n');
 
-      ret.addFileWrite(funcSubFolder / funcID.str(),
-                       compileScope(*reinterpret_cast<const statement::Scope*>(stmntPtr), ret));
+      ret.addFileWrite(
+          funcSubFolder / (std::string(funcID.str()) + funcFileExt),
+          {compileScope(*reinterpret_cast<const statement::Scope*>(stmntPtr), ret), true});
     } break;
 
     case statement::Kind::COMMAND: {
@@ -132,13 +129,18 @@ static UnlinkedText helper::compileScope(const statement::Scope& scope, Compiled
 static void helper::compileFunction(const symbol::Function& function, CompiledSourceFile& ret) {
   assert(function.isDefined() && "can't compile a function that isn't defined");
 
-  if (!function.isExposed()) {
-    auto path = funcSubFolder / function.exposeAddressPath();
-    ret.addFileWrite(std::move(path), compileScope(function.definition(), ret, false));
+  std::filesystem::path path = funcSubFolder;
+  bool belongsInHiddenNamespace;
+  if (function.isExposed()) {
+    path /= function.exposeAddressPath();
+    belongsInHiddenNamespace = false;
   } else {
-    auto path = funcSubFolder / function.functionID().str();
-    ret.addFileWrite(std::move(path), compileScope(function.definition(), ret));
+    path /= function.functionID().str();
+    belongsInHiddenNamespace = true;
   }
+  path.concat(funcFileExt);
+  ret.addFileWrite(std::move(path),
+                   {compileScope(function.definition(), ret), belongsInHiddenNamespace});
 }
 
 static void helper::addFuncNameToUnlinkedText(const symbol::Function& function,
