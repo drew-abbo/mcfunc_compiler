@@ -35,7 +35,8 @@ static void ensurePublicFuncQualifiersMatch(const symbol::Function& existingFunc
 /// all public functions are defined and unshadowed.
 static std::unordered_map<std::string, std::string> generateAllPublicFuncCallStrings(
     std::unordered_map<std::string, const symbol::Function*> allPublicFuncs,
-    std::unordered_map<std::string, const symbol::Function*> allPrivateFuncs);
+    std::unordered_map<std::string, const symbol::Function*> allPrivateFuncs,
+    const std::string& exposedNamespace);
 
 /// Replaces all unlinked text sections in unlinked text assuming
 /// \param funcCallStrings contains everything needed.
@@ -124,15 +125,16 @@ static void helper::saveFuncExposePathIfFuncExposed(
   if (!func.isExposed())
     return;
 
-  if (allFuncExposePaths.count(func.name())) {
+  if (allFuncExposePaths.count(func.exposeAddress())) {
     const symbol::Function& existing = *allFuncExposePaths[func.name()];
     throw compile_error::DeclarationConflict(
         "Function " + style_text::styleAsCode(existing.name()) +
-            " has the same expose path as function " + style_text::styleAsCode(func.name()) + '.',
-        existing.nameToken(), func.nameToken());
+            " has the same expose path as function " + style_text::styleAsCode(func.name()) +
+            " from another source file.",
+        existing.exposeAddressToken(), func.exposeAddressToken());
   }
 
-  allFuncExposePaths[func.name()] = &func;
+  allFuncExposePaths[func.exposeAddress()] = &func;
 }
 
 static void helper::ensurePublicFuncQualifiersMatch(const symbol::Function& existingFunc,
@@ -160,7 +162,8 @@ static void helper::ensurePublicFuncQualifiersMatch(const symbol::Function& exis
 
 static std::unordered_map<std::string, std::string> helper::generateAllPublicFuncCallStrings(
     std::unordered_map<std::string, const symbol::Function*> allPublicFuncs,
-    std::unordered_map<std::string, const symbol::Function*> allPrivateFuncs) {
+    std::unordered_map<std::string, const symbol::Function*> allPrivateFuncs,
+    const std::string& exposedNamespace) {
   std::unordered_map<std::string, std::string> ret;
 
   for (const auto& [funcName, func] : allPublicFuncs) {
@@ -182,7 +185,7 @@ static std::unordered_map<std::string, std::string> helper::generateAllPublicFun
     }
 
     // generate a function call name for this function
-    ret[funcName] = std::string((func->isExposed()) ? "" : hiddenNamespacePrefix) + ':' +
+    ret[funcName] = ((func->isExposed()) ? "" : hiddenNamespacePrefix) + exposedNamespace + ':' +
                     ((func->isExposed()) ? func->exposeAddress() : func->functionID().str());
   }
 
@@ -325,7 +328,7 @@ static helper::FuncCallNameMapAndNamespace helper::getFuncCallNameMapAndNamespac
   // finish validating functions (all defined, nothing shadowed) and generate
   // the call names for all public functions (e.g. creating the string
   // "my_namespace:foo/bar")
-  return {helper::generateAllPublicFuncCallStrings(allPublicFuncs, allPrivateFuncs),
+  return {helper::generateAllPublicFuncCallStrings(allPublicFuncs, allPrivateFuncs, exposedNamespaceToken->contents()),
           exposedNamespaceToken->contents()};
 }
 

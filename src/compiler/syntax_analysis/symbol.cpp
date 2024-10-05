@@ -199,8 +199,13 @@ void FunctionTable::merge(Function&& newSymbol) {
         existing.nameToken(), newSymbol.nameToken());
   }
 
-  // merge in expose address and definition if new
+  // merge data from the defined symbol (prefer to keep data from the function's
+  // definition)
+  existing.m_nameTokenPtr = newSymbol.m_nameTokenPtr;
+  existing.m_loadTokenPtr = newSymbol.m_loadTokenPtr;
+  existing.m_tickTokenPtr = newSymbol.m_tickTokenPtr;
   existing.m_definition = std::move(newSymbol.m_definition);
+  existing.m_functionID = std::move(newSymbol.m_functionID);
   if (newSymbol.isExposed()) {
     existing.m_exposeAddressTokenPtr = newSymbol.m_exposeAddressTokenPtr;
     existing.m_exposeAddressPath = std::move(newSymbol.m_exposeAddressPath);
