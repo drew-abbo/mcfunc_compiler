@@ -182,7 +182,7 @@ static void helper::ensureStrMatchesToken(const std::string& str, size_t i, std:
   const char *a, *b;
   for (a = &str[i], b = &token[0]; a && b && *a == *b; a++, b++)
     ;
-  size_t matchingCharCount = a - &str[i];
+  size_t matchingCharCount = size_t(a - &str[i]);
 
   if (matchingCharCount != token.size()) {
     throw compile_error::SharedFuncTagParseError(

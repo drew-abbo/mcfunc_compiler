@@ -51,7 +51,7 @@ if(MSVC)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU|MSYS|MinGW")
     # More warnings (C++ specific warnings on 2nd line)
     set(GENERAL_COMP_OPTIONS -Wall -Wextra -Wconversion
-        -Woverloaded-virtual -Wuseless-cast -Wdeprecated -Wdelete-non-virtual-dtor)
+        -Woverloaded-virtual -Wdeprecated -Wdelete-non-virtual-dtor)
 
     # Sanitizers, debug info, and no optimization in debug mode
     set(DEBUG_MODE_COMP_OPTIONS ${GENERAL_COMP_OPTIONS} -fsanitize=address,undefined -g -O0)
