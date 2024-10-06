@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <iostream>
 #include <string_view>
+#include <system_error>
 
 #include <cli/style_text.h>
 #include <version.h>
@@ -43,13 +44,59 @@ static void ensureArgIsOnlyArg(int argc, const char** argv, int i) {
   }
 }
 
-/// Ensures that the argument at index \param i is followed by another argument.
-static void ensureDirectorySuppliedAfterArg(int argc, const char** argv, int i) {
-  if (i + 1 == argc) {
+/// Returns whether one path is a sub-path of a base path (assumes both are
+/// lexically normal and absolute).
+static bool isSubpath(const std::filesystem::path& path, const std::filesystem::path& base) {
+  auto p = path.begin();
+  auto b = base.begin();
+  for (; p != path.end() && b != base.end(); p++, b++) {
+    if (*p == "" || *b == "")
+      return true;
+    if (*p == *b)
+      continue;
+    return false;
+  }
+  return p == path.end();
+}
+
+/// Ensures that the argument at index \param i is followed by another argument
+/// that is a valid directory and returns that directory cleaned and made
+/// absolute.
+static std::filesystem::path directorySuppliedAfterArg(int argc, const char** argv, int i) {
+  if (i + 1 >= argc) {
     printErrorPrefix();
     std::cerr << "No directory was supplied after " << style_text::styleAsCode(argv[i]) << ".\n\n";
     exitWithHelpPageInfo(argv[0]);
   }
+
+  std::filesystem::path ret = argv[i + 1];
+  std::error_code ec;
+
+  if (!ret.is_absolute())
+    ret = std::filesystem::absolute(std::move(ret), ec);
+  if (ec || ret.empty()) {
+    printErrorPrefix();
+    std::cerr << "The directory " << style_text::styleAsCode(argv[i + 1]) << " is invalid.\n\n";
+    exitWithHelpPageInfo(argv[0]);
+  }
+
+  ret = ret.lexically_normal();
+
+  // remove trailing slash (e.g. "foo/" -> "foo")
+  if (!ret.has_filename())
+    ret = ret.parent_path();
+
+  std::cout << "cur=" << std::filesystem::current_path() << std::endl;
+  std::cout << "ret=" << ret << std::endl;
+
+  if (isSubpath(ret, std::filesystem::current_path())) {
+    helper::printErrorPrefix();
+    std::cerr << "The directory " << style_text::styleAsCode(argv[i + 1])
+              << " contains or matches the working directory.\n\n";
+    helper::exitWithHelpPageInfo(argv[0]);
+  }
+
+  return ret;
 }
 
 static void warnAboutFileSuppliedMoreThanOnce(const std::filesystem::path& path) {
@@ -115,11 +162,7 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
         std::cerr << "Multiple output directories were supplied.\n\n";
         helper::exitWithHelpPageInfo(argv[0]);
       }
-      helper::ensureDirectorySuppliedAfterArg(argc, argv, i);
-
-      outputDirectory = std::filesystem::path(argv[i + 1]).lexically_normal();
-      if (!outputDirectory.is_absolute())
-        outputDirectory = std::filesystem::absolute(std::move(outputDirectory));
+      outputDirectory = helper::directorySuppliedAfterArg(argc, argv, i);
 
       outputDirectoryAlreadyGiven = true;
       i++;
