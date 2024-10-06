@@ -112,10 +112,9 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
         "Options:\n"
         "  -o <DIRECTORY>              Set the output directory (defaults to './data').\n"
         "  -i <DIRECTORY>              Recursively add files from an input directory.\n"
-        "  --hot                       Enter an interactive hot-reloading mode.\n"
         "  -v, --version               Print version info.\n"
         "  -h, --help                  Print help info.\n"
-        "  --no-color                  Disable styled output (no color or bold text).\n"
+        "  --no-color                  Disable styled printing (no color or bold text).\n"
         "  --fresh                     Clear the output directory before compiling.\n";
       // clang-format on
 
@@ -142,15 +141,6 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
       inputDirectories.emplace_back(helper::directorySuppliedAfterArg(argc, argv, i, true));
 
       i++;
-      continue;
-    }
-
-    // TODO: --hot
-    if (arg == "--hot") {
-      helper::printErrorPrefix();
-      std::cerr << style_text::styleAsError("(NOT IMPLEMENTED)") << " The "
-                << style_text::styleAsCode(arg.data()) << " flag cannot be used yet.\n";
-      exit(EXIT_FAILURE);
       continue;
     }
 
@@ -354,8 +344,6 @@ static void helper::addSourceFileGivenPath(std::filesystem::path&& path,
                                            std::filesystem::path&& pathPrefixToRemove,
                                            SourceFiles& sourceFiles,
                                            std::vector<FileWriteSourceFile>& fileWriteSourceFiles) {
-  std::cout << "srcfile: " << path << std::endl;
-
   // if it's a *source* file
   if (path.extension() == ".mcfunc") {
 

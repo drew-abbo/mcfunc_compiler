@@ -2,8 +2,8 @@
 
 MCFunc is a language and compiler for Minecraft Java Edition data packs. MCFunc
 offers major improvements on the vanilla `.mcfunction` syntax in an attempt to
-make the data pack creation process easier, faster, more modular, and less
-bug-prone.
+make the data pack creation process easier, faster, more modular, less verbose,
+and less bug-prone.
 
 <details open><summary>Table of Contents</summary>
 
@@ -19,7 +19,6 @@ bug-prone.
   - [Direcly Passing Source Files](#direcly-passing-source-files)
   - [Changing the Output Directory](#changing-the-output-directory)
   - [Adding an Input Directory](#adding-an-input-directory)
-  - [Hot Reloading](#hot-reloading)
   - [All Flags](#all-flags)
 - [Recommended Workflow](#recommended-workflow)
   - [Project Structure](#project-structure)
@@ -154,11 +153,20 @@ void initializeAllVillagers() {
 
 ## Installation
 
-*todo...*
+Start by [building the project from source](#building-this-project-from-source).
+Assuming you're on MacOS/Linux you can then move your compiled `mcfunc` binary
+into a directory on your `PATH` (e.g. `/usr/local/bin`) so you can invoke it
+from anywhere.
+
+> [!NOTE]
+> Future versions will have release binaries to download but MCFunc is currently
+> in beta so this hasn't been set up yet.
 
 ---
 
 ## Language
+
+This section describes the MCFunc programming language in its entirety.
 
 ### Syntax Basics
 
@@ -479,6 +487,8 @@ public void doSomethingComplicated() {
 
 ## CLI App
 
+This section desribes how to use the `mcfunc` compiler via the CLI/terminal.
+
 ### Direcly Passing Source Files
 
 Run `mcfunc` followed by a list of source files to generate a data pack in the
@@ -540,27 +550,15 @@ the compiler is that sub-directories are preserved for the import path (e.g. if
 there was a file `./src/foo/bar.mcfunc` and you used the flag `-i ./src`, the
 file would need to be imported as `"foo/bar.mcfunc"`, not just `"bar.mcfunc"`).
 
-### Hot Reloading
-
-The `--hot` flag will make the compiler enter an interactive mode that tries to
-re-compile the data pack every 2.5 seconds if any source files have changed.
-This mode can be exited by pressing `Q`.
-
-```sh
-# builds './src' into './data' in "hot reload" mode
-mcfunc -i ./src --hot
-```
-
 ### All Flags
 
 | Flag             | Purpose                                          |
 | ---------------- | ------------------------------------------------ |
 | `-o <DIRECTORY>` | Set the output directory (defaults to './data'). |
 | `-i <DIRECTORY>` | Recursively add files from an input directory.   |
-| `--hot`          | Enter an interactive hot-reloading mode.         |
 | `-v, --version`  | Print version info.                              |
 | `-h, --help`     | Print help info.                                 |
-| `--no-color`     | Disable styled output (no color or bold text).   |
+| `--no-color`     | Disable styled printing (no color or bold text). |
 | `--fresh`        | Clear the output directory before compiling.     |
 
 ## Recommended Workflow
@@ -572,15 +570,12 @@ The recommended directory structure for MCFunc projects is this:
 ```
 .
 ├── data/
-├── libs/
 ├── src/
 ├── Makefile
 └── pack.mcmeta
 ```
 
 - `data` is your output directory (where the compiled data pack will go).
-- `libs` should contain sub-directories for libraries or APIs. You likely don't
-  need this for simple projects.
 - `src` is where all of your `.mcfunc` files and any resource files (e.g. loot
   tables) should go.
 - `Makefile` lets you just run `make` to compile ([more info](#build-system-make)).
@@ -588,8 +583,7 @@ The recommended directory structure for MCFunc projects is this:
   ([here's a generator](https://misode.github.io/pack-mcmeta/)).
 
 Ideally you're directly working inside of a data pack folder in the `datapacks`
-directory of a Minecraft save. That way you can take advantage of things like
-hot reloading for testing.
+directory of a Minecraft save so you can easily reload and test.
 
 ### Build System (Make)
 
@@ -602,32 +596,37 @@ To use Make (once you have it installed), create a file called `Makefile` and
 give it some basic targets:
 
 ```Makefile
-# set the build command to build './src' into './data'
-BUILD_CMD = mcfunc -i ./src
-
-# runs the build command when you run `make`
+# build from './src' into './data' when you run `make`
 all:
-	${BUILD_CMD}
-
-# runs the build command in "hot reload" mode when you run `make hot`
-hot:
-	${BUILD_CMD} --hot
+	mcfunc -i ./src
 ```
 
 > [!WARNING]
 > Make sure the `Makefile` is using tabs (not spaces) for indentation.
 
 Once you have this set up you should just be able to just run `make` and your
-data pack should build.
+data pack should compile.
 
 ## Building This Project From Source
+
+> [!IMPORTANT]
+> Compilation on Windows has not been well tested and likely doesn't work. You
+> might be able to get it to work with MinGW but you'll probably have more luck
+> compiling and using MCFunc through
+> [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) if you're on
+> Windows.
+>
+> Compilation has mostly been tested on x64 Linux using `g++`, compilation on
+> other platforms and with other compilers hasn't been thoroughly tested.
+>
+> These problems will be resolved sometime before MCFunc leaves its beta.
 
 ### Requirements
 
 Ensure you have [CMake](https://cmake.org) (make sure it's on the path, i.e.
 `cmake --version` works in your terminal), a CMake
 [generator](https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html),
-and a C/C++ compiler supported by CMake and your generator.
+and a C++17 compiler supported by CMake and your generator.
 
 Once you have the repository cloned you can build with the
 [Python build script](#python-build-script), or you can

@@ -59,8 +59,8 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU|MSYS|MinGW")
 
     # Strip debug symbols, and do high optimization, do link time optimization,
     # and aggressively inline functions in release mode
-    set(RELEASE_MODE_COMP_OPTIONS ${GENERAL_COMP_OPTIONS} -s -O3 -flto -finline-functions)
-
+    set(RELEASE_MODE_COMP_OPTIONS ${GENERAL_COMP_OPTIONS} -O3 -flto -finline-functions)
+    set(DEBUG_MODE_LINK_OPTIONS ${GENERAL_LINK_OPTIONS} -s -flto -Wl,--gc-sections -Wl,--strip-all)
 else()
     message(WARNING "Compiler is not directly supported (expected MSVC, Clang, GNU, MSYS or MinGW)")
 endif()
