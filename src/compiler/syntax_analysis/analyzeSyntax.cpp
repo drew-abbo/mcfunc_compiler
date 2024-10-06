@@ -11,6 +11,7 @@
 #include <compiler/syntax_analysis/statement.h>
 #include <compiler/syntax_analysis/symbol.h>
 #include <compiler/tokenization/Token.h>
+#include <compiler/translation/constants.h>
 
 namespace {
 namespace helper {
@@ -67,9 +68,23 @@ void SourceFile::analyzeSyntax(const SourceFiles& sourceFiles) {
     // Namespace expose (e.g. 'expose "foo";')
     case Token::EXPOSE_KW:
       helper::forceMatchTokenPattern(m_tokens, i + 1, {Token::STRING, Token::SEMICOLON});
+
+      // can't overwrite the shared namespace
+      if (m_tokens[i + 1].contents() == sharedNamespace) {
+        throw compile_error::NameError(
+            "You cannot expose the namespace " + style_text::styleAsCode(sharedNamespace) +
+                " because it's reserved as a shared namespace that "
+                "multiple other namespaces can work with (e.g. the " +
+                style_text::styleAsCode(std::string(sharedNamespace) + ":tick") + " and " +
+                style_text::styleAsCode(std::string(sharedNamespace) + ":load") +
+                " function tags are a resource shared between namespaces).",
+            m_tokens[i + 1]);
+      }
+
       m_namespaceExpose.set(&m_tokens[i + 1]);
       i += 2;
       break;
+
     // Import statement (e.g. 'import "foo.mcfunc";')
     case Token::IMPORT_KW:
       helper::forceMatchTokenPattern(m_tokens, i + 1, {Token::STRING, Token::SEMICOLON});

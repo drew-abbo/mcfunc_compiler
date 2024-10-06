@@ -9,6 +9,7 @@
 #include <cli/style_text.h>
 #include <compiler/SourceFiles.h>
 #include <compiler/tokenization/Token.h>
+#include <compiler/translation/constants.h>
 
 using namespace compile_error;
 
@@ -221,6 +222,18 @@ SyntaxError::SyntaxError(const std::string& msg, size_t indexInFile,
 
 SyntaxError::SyntaxError(const std::string& msg, const Token& token)
     : Generic(basicErrorMessage(msg) + '\n' + highlightedLineAndPath(token)) {}
+
+// SharedFuncTagParseError
+
+SharedFuncTagParseError::SharedFuncTagParseError(bool isTickTag, const std::string& msg,
+                                                 const size_t indexInFile,
+                                                 const std::filesystem::path& filePath,
+                                                 size_t numChars)
+    : SyntaxError("Failed to parse an existing function tag file for " +
+                      style_text::styleAsCode(sharedNamespace +
+                                              std::string((isTickTag) ? ":tick" : ":load")) +
+                      ": " + msg,
+                  indexInFile, filePath, numChars) {}
 
 // DeclarationConflict
 

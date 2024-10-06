@@ -4,11 +4,20 @@
 #include <filesystem>
 
 /// This string prepended to the exposed namespace is used as the namespace for
-/// anything that is not explicitly exposed.
+/// anything that is not explicitly exposed ("zzz__.").
 extern const char* const hiddenNamespacePrefix;
 
-/// The name of the sub-folder that all functons are written into.
+/// The name of the sub-folder that all functons are written into ("function").
 extern const std::filesystem::path funcSubFolder;
 
-/// The file extension for generated function files
+/// The file extension for generated function files (".mcfunction").
 extern const char* const funcFileExt;
+
+/// The name of the namespace all data packs share ("minecraft").
+extern const char* const sharedNamespace;
+
+/// The minecraft:tick function tag file ("minecraft/tags/function/tick.json").
+extern const std::filesystem::path tickFuncTagPath;
+
+/// The minecraft:load function tag file ("minecraft/tags/function/load.json").
+extern const std::filesystem::path loadFuncTagPath;

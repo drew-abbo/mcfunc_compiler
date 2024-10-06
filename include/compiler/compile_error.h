@@ -25,6 +25,7 @@
 /// │   ├── \p UnexpectedToken
 /// │   ├── \p NameError
 /// │   └── \p UnresolvedSymbol
+/// │   ├── \p SharedFuncTagParseError
 /// └── \p DeclarationConflict
 ///
 /// A newline is added to the end of all \p msg parameters.
@@ -69,7 +70,8 @@ public:
 class ImportError : public Generic {
 public:
   explicit ImportError(const std::string& msg, const std::filesystem::path& filePath);
-  explicit ImportError(const std::string& msg, const std::filesystem::path& filePath1, const std::filesystem::path& filePath2);
+  explicit ImportError(const std::string& msg, const std::filesystem::path& filePath1,
+                       const std::filesystem::path& filePath2);
 
   explicit ImportError(const std::string& msg, const Token& token);
 };
@@ -106,6 +108,14 @@ using NameError = SyntaxError;
 
 /// Throw when something is used and is never declared or defined.
 using UnresolvedSymbol = SyntaxError;
+
+/// Throw when parsing a shared function tag goes wrong (like when attempting to
+/// read "minecraft:tick" or "minecraft:load").
+class SharedFuncTagParseError : public SyntaxError {
+public:
+  explicit SharedFuncTagParseError(bool isTickTag, const std::string& msg, const size_t indexInFile,
+                                   const std::filesystem::path& filePath, size_t numChars = 1);
+};
 
 /// Throw when 2 declarations do not match or when something is redefined.
 class DeclarationConflict : public Generic {
