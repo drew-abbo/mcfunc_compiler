@@ -13,9 +13,11 @@ struct ParseArgsResult {
   std::filesystem::path outputDirectory;
   SourceFiles sourceFiles;
   std::vector<FileWriteSourceFile> fileWriteSourceFiles;
+  bool clearOutputDirectory;
 
   ParseArgsResult(std::filesystem::path&& outputDirectory, SourceFiles&& sourceFiles,
-                  std::vector<FileWriteSourceFile>&& fileWriteSourceFiles);
+                  std::vector<FileWriteSourceFile>&& fileWriteSourceFiles,
+                  bool clearOutputDirectory);
 };
 
 /// Parses all of the passed arguments, updating the source files list.

@@ -1,6 +1,7 @@
 #include <cli/parseArgs.h>
 
 #include <cstdlib>
+#include <cstring>
 #include <exception>
 #include <filesystem>
 #include <iostream>
@@ -13,9 +14,11 @@
 // ParseArgsResult
 
 ParseArgsResult::ParseArgsResult(std::filesystem::path&& outputDirectory, SourceFiles&& sourceFiles,
-                                 std::vector<FileWriteSourceFile>&& fileWriteSourceFiles)
+                                 std::vector<FileWriteSourceFile>&& fileWriteSourceFiles,
+                                 bool clearOutputDirectory)
     : outputDirectory(std::move(outputDirectory)), sourceFiles(std::move(sourceFiles)),
-      fileWriteSourceFiles(std::move(fileWriteSourceFiles)) {}
+      fileWriteSourceFiles(std::move(fileWriteSourceFiles)),
+      clearOutputDirectory(clearOutputDirectory) {}
 
 // parseArgs helper functions
 
@@ -115,14 +118,26 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
 
   std::filesystem::path outputDirectory;
   bool outputDirectoryAlreadyGiven = false;
+  bool clearOutputDirectory = false;
+
+  // pre-scan for the "--no-color" option in case there's an error parsing
+  // arguments before we get to it
+  for (int i = 1; i < argc; i++) {
+    if (std::strcmp(argv[i], "--no-color") == 0) {
+      style_text::doColor = false;
+      break;
+    }
+  }
 
   for (int i = 1; i < argc; i++) {
     std::string_view arg = argv[i];
 
-    // --no-color
-    if (arg == "--no-color") {
-      style_text::doColor = false;
+    // --fresh (we already dealt with this)
+    if (arg == "--no-color")
+      continue;
 
+    if (arg == "--fresh") {
+      clearOutputDirectory = true;
       continue;
     }
 
@@ -149,7 +164,8 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
         "  --hot                       Enter an interactive hot-reloading mode.\n"
         "  -v, --version               Print version info.\n"
         "  -h, --help                  Print help info.\n"
-        "  --no-color                  Disable styled output (no color or bold text).\n";
+        "  --no-color                  Disable styled output (no color or bold text).\n"
+        "  --fresh                     Clear the output directory before compiling.\n";
       // clang-format on
 
       exit(EXIT_SUCCESS);
@@ -257,5 +273,5 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
   // TODO: ensure no input files are inside of the output directory
 
   return ParseArgsResult(std::move(outputDirectory), std::move(sourceFiles),
-                         std::move(fileWriteSourceFiles));
+                         std::move(fileWriteSourceFiles), clearOutputDirectory);
 }

@@ -18,12 +18,16 @@ static void removeDirectoryIfItExists(const std::filesystem::path& dir);
 
 void generateDataPack(const std::filesystem::path& outputDirectory,
                       const std::string& exposedNamespace,
-                      const std::unordered_map<std::filesystem::path, std::string>& fileWriteMap) {
+                      const std::unordered_map<std::filesystem::path, std::string>& fileWriteMap,
+                      bool clearOutputDirectory) {
   assert(outputDirectory == outputDirectory.lexically_normal() && "Output dir isn't clean.");
   assert(outputDirectory.is_absolute() && "Output dir isn't absolute.");
   assert(outputDirectory != std::filesystem::current_path() && "Output dir == working dir.");
 
   std::error_code ec;
+
+  if (clearOutputDirectory)
+    helper::removeDirectoryIfItExists(outputDirectory);
 
   // create the output directory if it doesn't exist
   std::filesystem::create_directories(outputDirectory, ec);

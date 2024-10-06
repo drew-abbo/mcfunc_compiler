@@ -20,7 +20,7 @@ bug-prone.
   - [Changing the Output Directory](#changing-the-output-directory)
   - [Adding an Input Directory](#adding-an-input-directory)
   - [Hot Reloading](#hot-reloading)
-  - [Additional Flags](#additional-flags)
+  - [All Flags](#all-flags)
 - [Recommended Workflow](#recommended-workflow)
   - [Project Structure](#project-structure)
   - [Build System (Make)](#build-system-make)
@@ -553,13 +553,17 @@ This mode can be exited by pressing `Q`.
 mcfunc -i ./src --hot
 ```
 
-### Additional Flags
+### All Flags
 
-| Flag             | Purpose                                        |
-| ---------------- | ---------------------------------------------- |
-| `-v` `--version` | Print version info.                            |
-| `-h` `--help`    | Print help info.                               |
-| `--no-color`     | Disable styled output (no color or bold text). |
+| Flag             | Purpose                                          |
+| ---------------- | ------------------------------------------------ |
+| `-o <DIRECTORY>` | Set the output directory (defaults to './data'). |
+| `-i <DIRECTORY>` | Recursively add files from an input directory.   |
+| `--hot`          | Enter an interactive hot-reloading mode.         |
+| `-v, --version`  | Print version info.                              |
+| `-h, --help`     | Print help info.                                 |
+| `--no-color`     | Disable styled output (no color or bold text).   |
+| `--fresh`        | Clear the output directory before compiling.     |
 
 ## Recommended Workflow
 

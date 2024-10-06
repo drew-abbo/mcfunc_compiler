@@ -11,12 +11,13 @@
 int main(int argc, const char** argv) {
   try {
 
-    auto [outputDirectory, sourceFiles, fileWriteSourceFiles] = parseArgs(argc, argv);
+    auto [outputDirectory, sourceFiles, fileWriteSourceFiles, clearOutputDirectory] =
+        parseArgs(argc, argv);
 
     auto [fileWriteMap, tickFuncCallNames, loadFuncCallNames, exposedNamespace] =
         link(sourceFiles.evaluateAll(), std::move(sourceFiles), std::move(fileWriteSourceFiles));
 
-    generateDataPack(outputDirectory, exposedNamespace, fileWriteMap);
+    generateDataPack(outputDirectory, exposedNamespace, fileWriteMap, clearOutputDirectory);
     addTickAndLoadFuncsToSharedTag(outputDirectory, tickFuncCallNames, loadFuncCallNames,
                                    exposedNamespace);
 
