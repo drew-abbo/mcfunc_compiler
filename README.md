@@ -540,8 +540,6 @@ the compiler is that sub-directories are preserved for the import path (e.g. if
 there was a file `./src/foo/bar.mcfunc` and you used the flag `-i ./src`, the
 file would need to be imported as `"foo/bar.mcfunc"`, not just `"bar.mcfunc"`).
 
-The output directory cannot be inside of an input directory.
-
 ### Hot Reloading
 
 The `--hot` flag will make the compiler enter an interactive mode that tries to

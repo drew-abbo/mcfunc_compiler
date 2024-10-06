@@ -1,7 +1,8 @@
 # Manual compiler build/test files and directories
 *.mcfunc
-data/
 *.json
+data/
+mcfunc_src/
 Makefile
 
 # Don't ignore .mcfunc files in the `tests` directory

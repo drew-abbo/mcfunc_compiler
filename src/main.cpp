@@ -17,9 +17,9 @@ int main(int argc, const char** argv) {
     auto [fileWriteMap, tickFuncCallNames, loadFuncCallNames, exposedNamespace] =
         link(sourceFiles.evaluateAll(), std::move(sourceFiles), std::move(fileWriteSourceFiles));
 
-    generateDataPack(outputDirectory, exposedNamespace, fileWriteMap, clearOutputDirectory);
     addTickAndLoadFuncsToSharedTag(outputDirectory, tickFuncCallNames, loadFuncCallNames,
                                    exposedNamespace);
+    generateDataPack(outputDirectory, exposedNamespace, fileWriteMap, clearOutputDirectory);
 
   } catch (const compile_error::Generic& e) {
     std::cerr << e.what();

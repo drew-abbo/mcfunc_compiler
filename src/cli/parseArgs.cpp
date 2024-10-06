@@ -25,87 +25,35 @@ ParseArgsResult::ParseArgsResult(std::filesystem::path&& outputDirectory, Source
 namespace {
 namespace helper {
 
-static void printErrorPrefix() { std::cerr << style_text::styleAsError("CLI Error: "); }
+static void printErrorPrefix();
 
-static void printWarningPrefix() { std::cerr << style_text::styleAsWarning("CLI Warning: "); }
+static void printWarningPrefix();
 
 /// Prints a message about running the program with the help flag to
 /// \p std::cerr and exits with \p EXIT_FAILURE as the exit code.
-static void exitWithHelpPageInfo(const char* arg0) {
-  std::cerr << "Try running " << style_text::styleAsCode(std::string(arg0) + " -h")
-            << " for help info.\n";
-
-  std::exit(EXIT_FAILURE);
-}
+static void exitWithHelpPageInfo(const char* arg0);
 
 /// Ensures the argument at index \param i is the only argument.
-static void ensureArgIsOnlyArg(int argc, const char** argv, int i) {
-  if (argc != 2) {
-    printErrorPrefix();
-    std::cerr << style_text::styleAsCode(argv[i]) << "must be the only argument.\n\n";
-    exitWithHelpPageInfo(argv[0]);
-  }
-}
+static void ensureArgIsOnlyArg(int argc, const char** argv, int i);
 
 /// Returns whether one path is a sub-path of a base path (assumes both are
 /// lexically normal and absolute).
-static bool isSubpath(const std::filesystem::path& path, const std::filesystem::path& base) {
-  auto p = path.begin();
-  auto b = base.begin();
-  for (; p != path.end() && b != base.end(); p++, b++) {
-    if (*p == "" || *b == "")
-      return true;
-    if (*p == *b)
-      continue;
-    return false;
-  }
-  return p == path.end();
-}
+static bool isSubpath(const std::filesystem::path& path, const std::filesystem::path& base);
 
 /// Ensures that the argument at index \param i is followed by another argument
 /// that is a valid directory and returns that directory cleaned and made
 /// absolute.
-static std::filesystem::path directorySuppliedAfterArg(int argc, const char** argv, int i) {
-  if (i + 1 >= argc) {
-    printErrorPrefix();
-    std::cerr << "No directory was supplied after " << style_text::styleAsCode(argv[i]) << ".\n\n";
-    exitWithHelpPageInfo(argv[0]);
-  }
+static std::filesystem::path directorySuppliedAfterArg(int argc, const char** argv, int i,
+                                                       bool allowWorkingDirToBeContained = false);
 
-  std::filesystem::path ret = argv[i + 1];
-  std::error_code ec;
+static void warnAboutFileSuppliedMoreThanOnce(const std::filesystem::path& path);
 
-  if (!ret.is_absolute())
-    ret = std::filesystem::absolute(std::move(ret), ec);
-  if (ec || ret.empty()) {
-    printErrorPrefix();
-    std::cerr << "The directory " << style_text::styleAsCode(argv[i + 1]) << " is invalid.\n\n";
-    exitWithHelpPageInfo(argv[0]);
-  }
-
-  ret = ret.lexically_normal();
-
-  // remove trailing slash (e.g. "foo/" -> "foo")
-  if (!ret.has_filename())
-    ret = ret.parent_path();
-
-  std::cout << "cur=" << std::filesystem::current_path() << std::endl;
-  std::cout << "ret=" << ret << std::endl;
-
-  if (isSubpath(ret, std::filesystem::current_path())) {
-    helper::printErrorPrefix();
-    std::cerr << "The directory " << style_text::styleAsCode(argv[i + 1])
-              << " contains or matches the working directory.\n\n";
-    helper::exitWithHelpPageInfo(argv[0]);
-  }
-
-  return ret;
-}
-
-static void warnAboutFileSuppliedMoreThanOnce(const std::filesystem::path& path) {
-  helper::printWarningPrefix();
-  std::cerr << "The file " << style_text::styleAsCode(path) << " was supplied twice.\n";
-}
+/// Add a source file or file write source file given a new path and the prefix
+/// to remove for it's import path.
+static void addSourceFileGivenPath(std::filesystem::path&& path,
+                                   std::filesystem::path&& pathPrefixToRemove,
+                                   SourceFiles& sourceFiles,
+                                   std::vector<FileWriteSourceFile>& fileWriteSourceFiles);
 
 } // namespace helper
 } // namespace
@@ -119,6 +67,9 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
   std::filesystem::path outputDirectory;
   bool outputDirectoryAlreadyGiven = false;
   bool clearOutputDirectory = false;
+
+  std::vector<std::filesystem::path> inputDirectories;
+  std::vector<std::string_view> inputFileArgs;
 
   // pre-scan for the "--no-color" option in case there's an error parsing
   // arguments before we get to it
@@ -181,13 +132,21 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
       outputDirectory = helper::directorySuppliedAfterArg(argc, argv, i);
 
       outputDirectoryAlreadyGiven = true;
-      i++;
 
+      i++;
       continue;
     }
 
-    // TODO: -i, --hot
-    if (arg == "-i" || arg == "--hot") {
+    // -i
+    if (arg == "-i") {
+      inputDirectories.emplace_back(helper::directorySuppliedAfterArg(argc, argv, i, true));
+
+      i++;
+      continue;
+    }
+
+    // TODO: --hot
+    if (arg == "--hot") {
       helper::printErrorPrefix();
       std::cerr << style_text::styleAsError("(NOT IMPLEMENTED)") << " The "
                 << style_text::styleAsCode(arg.data()) << " flag cannot be used yet.\n";
@@ -210,53 +169,96 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
     }
 
     // a file path
+    inputFileArgs.emplace_back(arg);
+  }
 
-    std::filesystem::path newFilePath = arg;
-    std::filesystem::path newFilePathPrefixToRemove;
-    bool newFilePathIsSourceFile;
+  // the default output directory is "./data"
+  if (!outputDirectoryAlreadyGiven)
+    outputDirectory = std::filesystem::current_path() / "data";
+
+  // handle input file arguments
+  for (const std::string_view inputFileArg : inputFileArgs) {
+    std::filesystem::path inputFile = inputFileArg;
+    std::filesystem::path inputFilePrefixToRemove;
 
     try {
-      newFilePath = std::filesystem::absolute(newFilePath.lexically_normal());
-      newFilePathPrefixToRemove = newFilePath;
-      newFilePathPrefixToRemove.remove_filename();
-      newFilePathIsSourceFile = newFilePath.extension() == ".mcfunc";
+      inputFile = std::filesystem::absolute(inputFile.lexically_normal());
+      inputFilePrefixToRemove = inputFile;
+      inputFilePrefixToRemove.remove_filename();
     } catch (const std::exception&) {
       helper::printErrorPrefix();
-      std::cerr << style_text::styleAsCode(arg.data()) << " is not a valid file path.\n\n";
+      std::cerr << style_text::styleAsCode(inputFileArg.data())
+                << " is not a valid input file path.\n\n";
       helper::exitWithHelpPageInfo(argv[0]);
     }
 
-    // if it's a source file
-    if (newFilePathIsSourceFile) {
-
-      // warn about the same file being added twice
-      // Note: this does not handle the case where the same file is added twice
-      // via symlink
-      for (const SourceFile& sourceFile : sourceFiles) {
-        if (sourceFile.path() == newFilePath) {
-          helper::warnAboutFileSuppliedMoreThanOnce(newFilePath);
-          break;
-        }
-      }
-
-      sourceFiles.emplace_back(std::move(newFilePath), std::move(newFilePathPrefixToRemove));
+    // ensure the file isn't inside the output directory
+    if (helper::isSubpath(inputFile, outputDirectory)) {
+      helper::printErrorPrefix();
+      std::cerr << "The output directory path " << style_text::styleAsCode(outputDirectory)
+                << " contains or matches the source file path "
+                << style_text::styleAsCode(inputFile) << ".\n\n";
+      helper::exitWithHelpPageInfo(argv[0]);
     }
 
-    // if it's a file write source file
-    else {
+    helper::addSourceFileGivenPath(std::move(inputFile), std::move(inputFilePrefixToRemove),
+                                   sourceFiles, fileWriteSourceFiles);
+  }
 
-      // warn about the same file being added twice
-      // Note: this does not handle the case where the same file is added twice
-      // via symlink
-      for (const FileWriteSourceFile& fileWriteSourceFile : fileWriteSourceFiles) {
-        if (fileWriteSourceFile.path() == newFilePath) {
-          helper::warnAboutFileSuppliedMoreThanOnce(newFilePath);
-          break;
-        }
+  // handle input directory arguments
+  for (const std::filesystem::path& inputDir : inputDirectories) {
+
+    // ensure the input directory isn't inside the output directory
+    if (helper::isSubpath(inputDir, outputDirectory)) {
+      helper::printErrorPrefix();
+      std::cerr << "The output directory path " << style_text::styleAsCode(outputDirectory)
+                << " contains or matches the input directory path "
+                << style_text::styleAsCode(inputDir) << ".\n\n";
+      helper::exitWithHelpPageInfo(argv[0]);
+    }
+    // ensure the output directory isn't inside the input directory
+    if (helper::isSubpath(outputDirectory, inputDir)) {
+      helper::printErrorPrefix();
+      std::cerr << "The output directory path " << style_text::styleAsCode(outputDirectory)
+                << " is contained by or matches the input directory path "
+                << style_text::styleAsCode(inputDir) << ".\n\n";
+      helper::exitWithHelpPageInfo(argv[0]);
+    }
+
+    std::error_code ec;
+    if (!std::filesystem::exists(inputDir, ec) || ec ||
+        !std::filesystem::is_directory(inputDir, ec) || ec) {
+      helper::printWarningPrefix();
+      std::cerr << "Ignoring input directory " << style_text::styleAsCode(inputDir)
+                << " because it doesn't exist or isn't a directory.\n";
+      continue;
+    }
+
+    // go through and recursively add all files
+    for (const auto& entry : std::filesystem::recursive_directory_iterator(inputDir, ec)) {
+      if (ec) {
+        helper::printErrorPrefix();
+        std::cerr << "Something went wrong with recursive directory iteration for input directory "
+                  << style_text::styleAsCode(inputDir) << ".\n";
+        std::exit(EXIT_FAILURE);
       }
 
-      fileWriteSourceFiles.emplace_back(std::move(newFilePath),
-                                        std::move(newFilePathPrefixToRemove));
+      std::filesystem::path entryPath = entry.path();
+
+      if (std::filesystem::is_directory(entryPath, ec))
+        continue;
+
+      if (ec || !std::filesystem::is_regular_file(entryPath, ec) || ec) {
+        helper::printWarningPrefix();
+        std::cerr << "Ignoring file " << style_text::styleAsCode(entryPath.c_str())
+                  << " from input directory " << style_text::styleAsCode(inputDir)
+                  << " (file is not regular).\n";
+        ec.clear();
+        continue;
+      }
+
+      helper::addSourceFileGivenPath(inputDir / entryPath, std::filesystem::path(inputDir),
+                                     sourceFiles, fileWriteSourceFiles);
     }
   }
 
@@ -266,12 +268,123 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
     helper::exitWithHelpPageInfo(argv[0]);
   }
 
-  // the default output directory is "./data"
-  if (!outputDirectoryAlreadyGiven)
-    outputDirectory = std::filesystem::current_path() / "data";
-
-  // TODO: ensure no input files are inside of the output directory
-
   return ParseArgsResult(std::move(outputDirectory), std::move(sourceFiles),
                          std::move(fileWriteSourceFiles), clearOutputDirectory);
+}
+
+// ---------------------------------------------------------------------------//
+// Helper function definitions beyond this point.
+// ---------------------------------------------------------------------------//
+
+static void helper::printErrorPrefix() { std::cerr << style_text::styleAsError("CLI Error: "); }
+
+static void helper::printWarningPrefix() {
+  std::cerr << style_text::styleAsWarning("CLI Warning: ");
+}
+
+static void helper::exitWithHelpPageInfo(const char* arg0) {
+  std::cerr << "Try running " << style_text::styleAsCode(std::string(arg0) + " -h")
+            << " for help info.\n";
+
+  std::exit(EXIT_FAILURE);
+}
+
+static void helper::ensureArgIsOnlyArg(int argc, const char** argv, int i) {
+  if (argc != 2) {
+    printErrorPrefix();
+    std::cerr << style_text::styleAsCode(argv[i]) << "must be the only argument.\n\n";
+    exitWithHelpPageInfo(argv[0]);
+  }
+}
+
+static bool helper::isSubpath(const std::filesystem::path& path,
+                              const std::filesystem::path& base) {
+  auto pathIt = path.begin();
+  auto baseIt = base.begin();
+  for (; baseIt != base.end() && *baseIt != ""; ++baseIt, ++pathIt) {
+    if (pathIt == path.end() || *pathIt == "" || *baseIt != *pathIt)
+      return false;
+  }
+  return true;
+}
+
+static std::filesystem::path helper::directorySuppliedAfterArg(int argc, const char** argv, int i,
+                                                               bool allowWorkingDirToBeContained) {
+  if (i + 1 >= argc) {
+    printErrorPrefix();
+    std::cerr << "No directory was supplied after " << style_text::styleAsCode(argv[i]) << ".\n\n";
+    exitWithHelpPageInfo(argv[0]);
+  }
+
+  std::filesystem::path ret = argv[i + 1];
+  std::error_code ec;
+
+  if (!ret.is_absolute())
+    ret = std::filesystem::absolute(std::move(ret), ec);
+  if (ec || ret.empty()) {
+    printErrorPrefix();
+    std::cerr << "The directory " << style_text::styleAsCode(argv[i + 1]) << " is invalid.\n\n";
+    exitWithHelpPageInfo(argv[0]);
+  }
+
+  ret = ret.lexically_normal();
+
+  // remove trailing slash (e.g. "foo/" -> "foo")
+  if (!ret.has_filename())
+    ret = ret.parent_path();
+
+  if (!allowWorkingDirToBeContained) {
+    if (isSubpath(ret, std::filesystem::current_path())) {
+      helper::printErrorPrefix();
+      std::cerr << "The directory " << style_text::styleAsCode(std::filesystem::current_path())
+                << " contains or matches the working directory.\n\n";
+      helper::exitWithHelpPageInfo(argv[0]);
+    }
+  }
+
+  return ret;
+}
+
+static void helper::warnAboutFileSuppliedMoreThanOnce(const std::filesystem::path& path) {
+  helper::printWarningPrefix();
+  std::cerr << "The file " << style_text::styleAsCode(path) << " was supplied twice.\n";
+}
+
+static void helper::addSourceFileGivenPath(std::filesystem::path&& path,
+                                           std::filesystem::path&& pathPrefixToRemove,
+                                           SourceFiles& sourceFiles,
+                                           std::vector<FileWriteSourceFile>& fileWriteSourceFiles) {
+  std::cout << "srcfile: " << path << std::endl;
+
+  // if it's a *source* file
+  if (path.extension() == ".mcfunc") {
+
+    // warn about the same file being added twice
+    // Note: this does not handle the case where the same file is added twice
+    // via symlink
+    for (const SourceFile& sourceFile : sourceFiles) {
+      if (sourceFile.path() == path) {
+        helper::warnAboutFileSuppliedMoreThanOnce(path);
+        break;
+      }
+    }
+
+    sourceFiles.emplace_back(std::move(path), std::move(pathPrefixToRemove));
+  }
+
+  // if it's a file write source file
+  else {
+
+    // warn about the same file being added twice
+    // Note: this does not handle the case where the same file is added twice
+    // via symlink
+    for (const FileWriteSourceFile& fileWriteSourceFile : fileWriteSourceFiles) {
+      if (fileWriteSourceFile.path() == path) {
+        helper::warnAboutFileSuppliedMoreThanOnce(path);
+        break;
+      }
+    }
+
+    fileWriteSourceFiles.emplace_back(std::move(path), std::move(pathPrefixToRemove));
+  }
 }
