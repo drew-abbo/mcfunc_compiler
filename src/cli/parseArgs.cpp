@@ -96,7 +96,7 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
     if (arg == "-v" || arg == "--version") {
       helper::ensureArgIsOnlyArg(argc, argv, i);
 
-      std::cout << MCFUNC_BUILD_INFO_MSG << '\n';
+      std::cout << MCFUNC_VERSION << '\n';
 
       exit(EXIT_SUCCESS);
     }
