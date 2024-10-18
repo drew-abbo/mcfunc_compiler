@@ -328,7 +328,8 @@ static helper::FuncCallNameMapAndNamespace helper::getFuncCallNameMapAndNamespac
   // finish validating functions (all defined, nothing shadowed) and generate
   // the call names for all public functions (e.g. creating the string
   // "my_namespace:foo/bar")
-  return {helper::generateAllPublicFuncCallStrings(allPublicFuncs, allPrivateFuncs, exposedNamespaceToken->contents()),
+  return {helper::generateAllPublicFuncCallStrings(allPublicFuncs, allPrivateFuncs,
+                                                   exposedNamespaceToken->contents()),
           exposedNamespaceToken->contents()};
 }
 
@@ -397,9 +398,9 @@ static std::unordered_map<std::filesystem::path, std::string> helper::collectAll
                     style_text::styleAsCode(funcSubFolder.string()) +
                     " directory because it's reserved for exposed functions.",
                 fileWrite.relativeOutPathToken().indexInFile() +
-                    fileWrite.relativeOutPathToken().contents().find(funcSubFolder.c_str()) + 1,
+                    fileWrite.relativeOutPathToken().contents().find(funcSubFolder.string()) + 1,
                 fileWrite.relativeOutPathToken().sourceFile().path(),
-                std::strlen(funcSubFolder.c_str()));
+                funcSubFolder.string().size());
           }
           break;
         }
@@ -419,7 +420,7 @@ static std::unordered_map<std::filesystem::path, std::string> helper::collectAll
       // file write can't be defined twice
       if (existingFileWrite.hasContents()) {
         throw compile_error::DeclarationConflict(
-            "File write " + style_text::styleAsCode(fileWrite.relativeOutPath().c_str()) +
+            "File write " + style_text::styleAsCode(fileWrite.relativeOutPath().string()) +
                 " is defined in multiple source files.",
             existingFileWrite.relativeOutPathToken(), fileWrite.relativeOutPathToken());
       }
@@ -432,7 +433,7 @@ static std::unordered_map<std::filesystem::path, std::string> helper::collectAll
   // ensure all file writes are defined
   for (const auto& [path, fileWrite] : allFileWrites) {
     if (!fileWrite->hasContents()) {
-      throw compile_error::UnresolvedSymbol("File write " + style_text::styleAsCode(path.c_str()) +
+      throw compile_error::UnresolvedSymbol("File write " + style_text::styleAsCode(path.string()) +
                                                 " was never defined.",
                                             fileWrite->relativeOutPathToken());
     }

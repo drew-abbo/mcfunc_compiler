@@ -3,12 +3,11 @@
 #include <cassert>
 #include <fstream>
 
-#include <compiler/compile_error.h>
 #include <cli/style_text.h>
+#include <compiler/compile_error.h>
 
 void writeFileToDataPack(const std::filesystem::path& outputDir,
-                                const std::filesystem::path& outputPath,
-                                const std::string& contents) {
+                         const std::filesystem::path& outputPath, const std::string& contents) {
   assert(outputDir.is_absolute() && "outputDir must be absolute (it's a prefix to outputPath)");
   assert(outputPath.is_relative() && "outputPath must be relative (it's a suffix to outputDir)");
   assert(std::filesystem::exists(outputDir) && std::filesystem::is_directory(outputDir) &&
@@ -28,7 +27,7 @@ void writeFileToDataPack(const std::filesystem::path& outputDir,
     if (ec) {
       throw compile_error::CodeGenFailure(
           "Failed to generate parent directories " +
-          style_text::styleAsCode(outputPath.lexically_relative(parentPathToCreate)) +
+          style_text::styleAsCode(outputPath.lexically_relative(parentPathToCreate).string()) +
           " for output file " + style_text::styleAsCode(fullFilePath.string()) + '.');
     }
   }

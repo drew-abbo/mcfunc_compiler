@@ -48,21 +48,27 @@ if(MSVC)
     # Runtime checks in debug mode
     set(DEBUG_MODE_COMP_OPTIONS /RTC1)
 
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU|MSYS|MinGW")
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     # More warnings (C++ specific warnings on 2nd line)
     set(GENERAL_COMP_OPTIONS -Wall -Wextra -Wconversion
         -Woverloaded-virtual -Wdeprecated -Wdelete-non-virtual-dtor)
 
-    # Sanitizers, debug info, and no optimization in debug mode
-    set(DEBUG_MODE_COMP_OPTIONS ${GENERAL_COMP_OPTIONS} -fsanitize=address,undefined -g -O0)
-    set(DEBUG_MODE_LINK_OPTIONS ${GENERAL_LINK_OPTIONS} -fsanitize=address,undefined)
+    # Debug info and no optimization in debug mode
+    set(DEBUG_MODE_COMP_OPTIONS ${GENERAL_COMP_OPTIONS} -g -O0)
+    set(DEBUG_MODE_LINK_OPTIONS ${GENERAL_LINK_OPTIONS})
+
+    # Sanitizers in debug mode (when not on MinGW)
+    if(NOT(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND WIN32))
+        set(DEBUG_MODE_COMP_OPTIONS ${DEBUG_MODE_COMP_OPTIONS} -fsanitize=address,undefined)
+        set(DEBUG_MODE_LINK_OPTIONS ${DEBUG_MODE_LINK_OPTIONS} -fsanitize=address,undefined)
+    endif()
 
     # Strip debug symbols, and do high optimization, do link time optimization,
     # and aggressively inline functions in release mode
     set(RELEASE_MODE_COMP_OPTIONS ${GENERAL_COMP_OPTIONS} -O3 -flto -finline-functions)
     set(RELEASE_MODE_LINK_OPTIONS ${GENERAL_LINK_OPTIONS} -s -flto -Wl,--gc-sections -Wl,--strip-all)
 else()
-    message(WARNING "Compiler is not directly supported (expected MSVC, Clang, GNU, MSYS or MinGW)")
+    message(WARNING "Compiler is not directly supported (expected Clang, GNU, or MSVC)")
 endif()
 
 # Set options for mult-configuration generators (e.g. Visual Studio)

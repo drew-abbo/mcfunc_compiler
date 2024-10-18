@@ -325,7 +325,7 @@ void FileWriteTable::merge(FileWrite&& newSymbol) {
   // ensure only 1 symbol is defined
   if (existing.hasContents() && newSymbol.hasContents()) {
     throw compile_error::DeclarationConflict(
-        "File write " + style_text::styleAsCode(existing.relativeOutPath()) +
+        "File write " + style_text::styleAsCode(existing.relativeOutPath().string()) +
             " has multiple definitions.",
         existing.relativeOutPathToken(), newSymbol.relativeOutPathToken());
   }

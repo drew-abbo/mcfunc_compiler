@@ -4,6 +4,7 @@
 
 #include <cli/style_text.h>
 #include <compiler/compile_error.h>
+#include <compiler/generation/addTickAndLoadFuncsToSharedTag.h>
 #include <compiler/generation/writeFileToDataPack.h>
 #include <compiler/translation/constants.h>
 
@@ -19,7 +20,8 @@ static void removeDirectoryIfItExists(const std::filesystem::path& dir);
 void generateDataPack(const std::filesystem::path& outputDirectory,
                       const std::string& exposedNamespace,
                       const std::unordered_map<std::filesystem::path, std::string>& fileWriteMap,
-                      bool clearOutputDirectory) {
+                      bool clearOutputDirectory, const std::vector<std::string>& tickFuncCallNames,
+                      const std::vector<std::string>& loadFuncCallNames) {
   assert(outputDirectory == outputDirectory.lexically_normal() && "Output dir isn't clean.");
   assert(outputDirectory.is_absolute() && "Output dir isn't absolute.");
   assert(outputDirectory != std::filesystem::current_path() && "Output dir == working dir.");
@@ -35,6 +37,9 @@ void generateDataPack(const std::filesystem::path& outputDirectory,
     throw compile_error::CodeGenFailure("Failed to create output directory " +
                                         style_text::styleAsCode(outputDirectory.string()) + '.');
   }
+
+  addTickAndLoadFuncsToSharedTag(outputDirectory, tickFuncCallNames, loadFuncCallNames,
+                                 exposedNamespace);
 
   // remove the namespace directories if they exist
   helper::removeDirectoryIfItExists(outputDirectory / exposedNamespace);

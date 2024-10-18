@@ -185,9 +185,9 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
     // ensure the file isn't inside the output directory
     if (helper::isSubpath(inputFile, outputDirectory)) {
       helper::printErrorPrefix();
-      std::cerr << "The output directory path " << style_text::styleAsCode(outputDirectory)
+      std::cerr << "The output directory path " << style_text::styleAsCode(outputDirectory.string())
                 << " contains or matches the source file path "
-                << style_text::styleAsCode(inputFile) << ".\n\n";
+                << style_text::styleAsCode(inputFile.string()) << ".\n\n";
       helper::exitWithHelpPageInfo(argv[0]);
     }
 
@@ -201,17 +201,17 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
     // ensure the input directory isn't inside the output directory
     if (helper::isSubpath(inputDir, outputDirectory)) {
       helper::printErrorPrefix();
-      std::cerr << "The output directory path " << style_text::styleAsCode(outputDirectory)
+      std::cerr << "The output directory path " << style_text::styleAsCode(outputDirectory.string())
                 << " contains or matches the input directory path "
-                << style_text::styleAsCode(inputDir) << ".\n\n";
+                << style_text::styleAsCode(inputDir.string()) << ".\n\n";
       helper::exitWithHelpPageInfo(argv[0]);
     }
     // ensure the output directory isn't inside the input directory
     if (helper::isSubpath(outputDirectory, inputDir)) {
       helper::printErrorPrefix();
-      std::cerr << "The output directory path " << style_text::styleAsCode(outputDirectory)
+      std::cerr << "The output directory path " << style_text::styleAsCode(outputDirectory.string())
                 << " is contained by or matches the input directory path "
-                << style_text::styleAsCode(inputDir) << ".\n\n";
+                << style_text::styleAsCode(inputDir.string()) << ".\n\n";
       helper::exitWithHelpPageInfo(argv[0]);
     }
 
@@ -219,7 +219,7 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
     if (!std::filesystem::exists(inputDir, ec) || ec ||
         !std::filesystem::is_directory(inputDir, ec) || ec) {
       helper::printWarningPrefix();
-      std::cerr << "Ignoring input directory " << style_text::styleAsCode(inputDir)
+      std::cerr << "Ignoring input directory " << style_text::styleAsCode(inputDir.string())
                 << " because it doesn't exist or isn't a directory.\n";
       continue;
     }
@@ -229,7 +229,7 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
       if (ec) {
         helper::printErrorPrefix();
         std::cerr << "Something went wrong with recursive directory iteration for input directory "
-                  << style_text::styleAsCode(inputDir) << ".\n";
+                  << style_text::styleAsCode(inputDir.string()) << ".\n";
         std::exit(EXIT_FAILURE);
       }
 
@@ -240,8 +240,8 @@ ParseArgsResult parseArgs(int argc, const char** argv) {
 
       if (ec || !std::filesystem::is_regular_file(entryPath, ec) || ec) {
         helper::printWarningPrefix();
-        std::cerr << "Ignoring file " << style_text::styleAsCode(entryPath.c_str())
-                  << " from input directory " << style_text::styleAsCode(inputDir)
+        std::cerr << "Ignoring file " << style_text::styleAsCode(entryPath.string())
+                  << " from input directory " << style_text::styleAsCode(inputDir.string())
                   << " (file is not regular).\n";
         ec.clear();
         continue;
@@ -326,7 +326,8 @@ static std::filesystem::path helper::directorySuppliedAfterArg(int argc, const c
   if (!allowWorkingDirToBeContained) {
     if (isSubpath(ret, std::filesystem::current_path())) {
       helper::printErrorPrefix();
-      std::cerr << "The directory " << style_text::styleAsCode(std::filesystem::current_path())
+      std::cerr << "The directory "
+                << style_text::styleAsCode(std::filesystem::current_path().string())
                 << " contains or matches the working directory.\n\n";
       helper::exitWithHelpPageInfo(argv[0]);
     }
@@ -337,7 +338,7 @@ static std::filesystem::path helper::directorySuppliedAfterArg(int argc, const c
 
 static void helper::warnAboutFileSuppliedMoreThanOnce(const std::filesystem::path& path) {
   helper::printWarningPrefix();
-  std::cerr << "The file " << style_text::styleAsCode(path) << " was supplied twice.\n";
+  std::cerr << "The file " << style_text::styleAsCode(path.string()) << " was supplied twice.\n";
 }
 
 static void helper::addSourceFileGivenPath(std::filesystem::path&& path,

@@ -106,19 +106,15 @@ def __get_cmds(build_in_parallel: bool, release_mode: bool) -> tuple[str, str]:
     build_cmd = "cmake --build ."
 
     if __ON_WINDOWS:
-        # Assume we're using Visual Studio (MSVC) on windows
-        config_cmd += ' -G "Visual Studio 17 2022"'
+        # Assume we're using MinGW Makefiles on windows
+        config_cmd += ' -G "MinGW Makefiles"'
     else:
         # Assume we're using Make on MacOS/Linux/else
         config_cmd += ' -G "Unix Makefiles"'
 
     if release_mode:
-        if __ON_WINDOWS:
-            # Release mode needs to be specified on build for MSVC
-            build_cmd += " --config Release"
-        else:
-            # Release mode needs to be specified on config for Make
-            config_cmd += " -DCMAKE_BUILD_TYPE=Release"
+        # Release mode needs to be specified on config for Make
+        config_cmd += " -DCMAKE_BUILD_TYPE=Release"
 
     if build_in_parallel:
         CPU_COUNT = os.cpu_count()
@@ -164,7 +160,9 @@ def __run_regen_build_files_cmd() -> None:
     START_TIME = time.time()
     Print.status("Regenerating build files...")
     run_cmd("cmake . -Wno-dev", BUILD_DIR)
-    Print.status(f"Regenerating build files done ({time.time() - START_TIME:.3f} seconds).")
+    Print.status(
+        f"Regenerating build files done ({time.time() - START_TIME:.3f} seconds)."
+    )
 
 
 def __run_build_cmd(build_cmd: str, release_mode: bool) -> None:
@@ -173,11 +171,7 @@ def __run_build_cmd(build_cmd: str, release_mode: bool) -> None:
     run_cmd(build_cmd, BUILD_DIR)
     Print.status(f"Building done ({time.time() - START_TIME:.3f} seconds).")
 
-    if __ON_WINDOWS:
-        built_exe_folder = BUILD_DIR / ("Release" if release_mode else "Debug")
-    else:
-        built_exe_folder = BUILD_DIR
-    Print.info(f"Executables are in '{built_exe_folder}'")
+    Print.info(f"Executables are in '{BUILD_DIR}'")
 
 
 # Returns the path to the folder where the executables are.
