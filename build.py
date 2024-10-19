@@ -29,7 +29,8 @@ class Print:
             "  -h, --help           Prints this help info.\n"
             "  -p, --parallel       Builds in parallel using all CPU cores.\n"
             "  --release            Builds or configures in release mode.\n"
-            "  --debug              Builds or configures in debug mode (default)."
+            "  --debug              Builds or configures in debug mode (default).\n"
+            "  --static-std         Statically link the standard library."
         )
 
     @staticmethod
@@ -67,6 +68,7 @@ def __parse_cli_args() -> tuple[bool, bool]:
     build_in_parallel = False
     release_mode_set = False
     debug_mode_set = False
+    static_linking = False
 
     for arg in args:
         if arg in ("-h", "--help"):
@@ -77,31 +79,33 @@ def __parse_cli_args() -> tuple[bool, bool]:
             Print.help_info()
             sys.exit(0)
 
-        if arg in ("-p", "--parallel"):
+        elif arg in ("-p", "--parallel"):
             build_in_parallel = True
-            continue
 
-        if arg == "--release":
+        elif arg == "--release":
             if debug_mode_set:
                 Print.fatal_error("Conflicting flags '--debug' and '--release'.")
             release_mode_set = True
-            continue
 
-        if arg == "--debug":
+        elif arg == "--debug":
             if release_mode_set:
                 Print.fatal_error("Conflicting flags '--release' and '--debug'.")
             debug_mode_set = True
-            continue
+
+        elif arg == "--static-std":
+            static_linking = True
 
         else:
             Print.fatal_error(f"Unknown argument '{arg}'.")
 
-    return (build_in_parallel, release_mode_set)
+    return (build_in_parallel, release_mode_set, static_linking)
 
 
 # 1st return str is the config command
 # 2nd return str is the build command
-def __get_cmds(build_in_parallel: bool, release_mode: bool) -> tuple[str, str]:
+def __get_cmds(
+    build_in_parallel: bool, release_mode: bool, static_linking: bool
+) -> tuple[str, str]:
     config_cmd = "cmake .. -Wno-dev"
     build_cmd = "cmake --build ."
 
@@ -123,6 +127,9 @@ def __get_cmds(build_in_parallel: bool, release_mode: bool) -> tuple[str, str]:
         else:
             build_cmd += f" --parallel {CPU_COUNT}"
             Print.info(f"Parallel build will use {CPU_COUNT} cores.")
+
+    if static_linking:
+        config_cmd += ' -DCMAKE_CXX_FLAGS="-static-libgcc -static-libstdc++" -DCMAKE_EXE_LINKER_FLAGS="-static"'
 
     return (config_cmd, build_cmd)
 
@@ -175,12 +182,12 @@ def __run_build_cmd(build_cmd: str, release_mode: bool) -> None:
 
 
 # Returns the path to the folder where the executables are.
-def build(build_in_parallel: bool, release_mode: bool) -> Path:
+def build(build_in_parallel: bool, release_mode: bool, static_linking: bool) -> Path:
     # Make sure cmake is callable
     if run_cmd("cmake --version", allow_fail=True, print_cmd_output=False) != 0:
         Print.fatal_error("CMake is not on the path ('cmake' is not callable).")
 
-    config_cmd, build_cmd = __get_cmds(build_in_parallel, release_mode)
+    config_cmd, build_cmd = __get_cmds(build_in_parallel, release_mode, static_linking)
 
     BUILD_JSON_CONTENTS = {
         "config_cmd": config_cmd,
