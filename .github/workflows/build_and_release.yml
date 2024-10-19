@@ -1,0 +1,179 @@
+name: Build and Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      # build every time there's a push on any branch
+      - "**"
+
+permissions:
+  contents: write
+
+jobs:
+  build_linux:
+    runs-on: "ubuntu-latest"
+    strategy:
+      matrix:
+        arch: [x86_64, arm64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get build-essential
+        run: sudo apt-get install -y build-essential
+
+      - name: Validate Python, CMake, and GCC
+        run: |
+          python3 --version
+          cmake --version
+          g++ --version
+
+      - name: Build
+        run: python3 ./build.py -p --release
+
+      - name: Zip Result
+        run: |
+          mv ./build/mcfunc ./mcfunc
+          tar -czf mcfunc-linux-${{ matrix.arch }}.tar.gz mcfunc README.md LICENSE
+
+      - name: Upload Release Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcfunc-linux-${{ matrix.arch }}.tar.gz
+          path: mcfunc-linux-${{ matrix.arch }}.tar.gz
+
+  build_darwin:
+    runs-on: "macos-latest"
+    strategy:
+      matrix:
+        arch: [x86_64, arm64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Python, CMake, and Clang
+        run: |
+          python3 --version
+          cmake --version
+          clang++ --version
+
+      - name: Build
+        run: python3 ./build.py -p --release
+
+      - name: Zip Result
+        run: |
+          mv ./build/mcfunc ./mcfunc
+          tar -czf mcfunc-darwin-${{ matrix.arch }}.tar.gz mcfunc README.md LICENSE
+
+      - name: Upload Release Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcfunc-darwin-${{ matrix.arch }}.tar.gz
+          path: mcfunc-darwin-${{ matrix.arch }}.tar.gz
+
+  build_windows:
+    runs-on: "windows-latest"
+    strategy:
+      matrix:
+        arch: [x86_64, arm64]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Validate Python, CMake, and MinGW
+        run: |
+          python3 --version
+          cmake --version
+          g++ --version
+
+      - name: Build
+        run: python3 ./build.py -p --release --static-std
+
+      - name: Run Tests
+        run: ./build/run_tests.exe
+
+      - name: Create Installer
+        uses: Minionguyjpro/Inno-Setup-Action@v1.2.5
+        with:
+          path: win_installer_setup.iss
+
+      - name: Rename Installer
+        shell: bash
+        run: mv mcfunc_installer mcfunc-windows-install-${{ matrix.arch }}.exe
+
+      - name: Upload Release Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcfunc-windows-install-${{ matrix.arch }}.exe
+          path: mcfunc-windows-install-${{ matrix.arch }}.exe
+
+  release:
+    # releases are only created on a push to the main branch
+    if: github.ref == 'refs/heads/main'
+    needs:
+      - build_linux
+      - build_darwin
+      - build_windows
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download x86_64 Linux Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: mcfunc-linux-x86_64.tar.gz
+
+      - name: Download arm64 Linux Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: mcfunc-linux-arm64.tar.gz
+
+      - name: Download x86_64 Darwin Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: mcfunc-darwin-x86_64.tar.gz
+
+      - name: Download arm64 Darwin Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: mcfunc-darwin-arm64.tar.gz
+
+      - name: Download x86_64 Windows Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: mcfunc-windows-install-x86_64.exe
+
+      - name: Download arm64 Windows Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: mcfunc-windows-install-arm64.exe
+
+      # - unzip linux binary so we can run it with --version (for version name)
+      # - 'include/version.h' needs to be updated for this to work
+      # - greate github release
+      - name: Create Release
+        run: |
+          tar -xzf mcfunc-linux-x86_64.tar.gz mcfunc
+          chmod +x ./mcfunc
+          VERSION=$(./mcfunc --version)
+          echo "Creating release for version: v$VERSION"
+
+          gh release create v$VERSION                                          \
+            mcfunc-linux-x86_64.tar.gz                                         \
+            mcfunc-linux-arm64.tar.gz                                          \
+            mcfunc-darwin-x86_64.tar.gz                                        \
+            mcfunc-darwin-arm64.tar.gz                                         \
+            mcfunc-windows-install-x86_64.exe                                  \
+            mcfunc-windows-install-arm64.exe
+
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

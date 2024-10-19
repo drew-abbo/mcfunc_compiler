@@ -8,6 +8,8 @@ and less bug-prone.
 <details open><summary>Table of Contents</summary>
 
 - [Installation](#installation)
+  - [Windows](#windows)
+  - [MacOS or Linux](#macos-or-linux)
 - [Language](#language)
   - [Syntax Basics](#syntax-basics)
   - [Expose a Namespace](#expose-a-namespace)
@@ -153,14 +155,46 @@ void initializeAllVillagers() {
 
 ## Installation
 
-Start by [building the project from source](#building-this-project-from-source).
-Assuming you're on MacOS/Linux you can then move your compiled `mcfunc` binary
-into a directory on your `PATH` (e.g. `/usr/local/bin`) so you can invoke it
-from anywhere.
+### Windows
+
+Download and run the installer for the
+[latest release](https://github.com/drew-abbo/mcfunc_compiler/releases/latest)
+for your platform and architecture.
+
+You may need to restart your computer before the `mcfunc` command will work.
+
+### MacOS or Linux
+
+Start by downloading the
+[latest release](https://github.com/drew-abbo/mcfunc_compiler/releases/latest)
+for your platform (`darwin` for MacOS) and architecture.
+
+Next, open your terminal and navigate to where your installation is (this
+example is for if the file was downloaded to the `Downloads` folder).
+
+```sh
+cd ~/Downloads
+```
+
+Still in the terminal, extract the `mcfunc` binary from the downloaded `tar.bz`
+file (this example is for x86-64 Linux).
+
+```sh
+tar -xzf mcfunc-linux-x64_64.tar.gz mcfunc
+```
+
+Finally, move the `mcfunc` binary to your `/usr/local/bin` directory.
+
+```sh
+sudo mv ./mcfunc /usr/local/bin/mcfunc
+```
+
+You'll need to restart your shell before the `mcfunc` command will work.
 
 > [!NOTE]
-> Future versions will have release binaries to download but MCFunc is currently
-> in beta so this hasn't been set up yet.
+> If the command is recognized but doesn't work, ensure you have a recent
+> version of the C++ standard library installed (`libstdc++` for linux, `libc++`
+> for MacOS).
 
 ---
 
@@ -628,6 +662,10 @@ Ensure you have [CMake](https://cmake.org) (make sure it's on the path, i.e.
 [generator](https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html),
 and a C++17 compiler supported by CMake and your generator.
 
+> [!WARNING]
+> This project does not support compilation with MSVC. If you're on Windows, use
+> MinGW.
+
 Once you have the repository cloned you can build with the
 [Python build script](#python-build-script), or you can
 [build manually with CMake](#building-with-cmake). Check out
@@ -666,11 +704,11 @@ python3 build.py -p
 For more help info run the script with `-h` or `--help`.
 
 > [!NOTE]
-> If you are on Windows the script will use
-> [`Visual Studio 17 2022`](https://visualstudio.microsoft.com/) as it's
-> generator. Otherwise it will use
-> [`Unix Makefiles`](https://www.gnu.org/software/make/). If you want to use
-> the Python script make sure you have the correct generator installed.
+> If you are on Windows the script will use the
+> [`MinGW Makefiles`](https://winlibs.com/#download-release) generator,
+> Otherwise it will use [`Unix Makefiles`](https://www.gnu.org/software/make/).
+> If you want to use the Python script make sure you have the correct generator
+> installed.
 
 ### Building With CMake
 
