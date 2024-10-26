@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      # build every time there's a push on any branch
+      # build & test every time there's a push on any branch
       - "**"
 
 permissions:
@@ -32,12 +32,19 @@ jobs:
       - name: Build
         run: python3 ./build.py -p --release
 
+      - name: Run Tests
+        run: ./build/run_tests
+
       - name: Zip Result
+        # only for a push to the main branch
+        if: github.ref == 'refs/heads/main'
         run: |
           mv ./build/mcfunc ./mcfunc
           tar -czf mcfunc-linux-${{ matrix.arch }}.tar.gz mcfunc README.md LICENSE
 
       - name: Upload Release Artifact
+        # only for a push to the main branch
+        if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: mcfunc-linux-${{ matrix.arch }}.tar.gz
@@ -61,12 +68,19 @@ jobs:
       - name: Build
         run: python3 ./build.py -p --release
 
+      - name: Run Tests
+        run: ./build/run_tests
+
       - name: Zip Result
+        # only for a push to the main branch
+        if: github.ref == 'refs/heads/main'
         run: |
           mv ./build/mcfunc ./mcfunc
           tar -czf mcfunc-darwin-${{ matrix.arch }}.tar.gz mcfunc README.md LICENSE
 
       - name: Upload Release Artifact
+        # only for a push to the main branch
+        if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: mcfunc-darwin-${{ matrix.arch }}.tar.gz
@@ -100,15 +114,21 @@ jobs:
         run: ./build/run_tests.exe
 
       - name: Create Installer
+        # only for a push to the main branch
+        if: github.ref == 'refs/heads/main'
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.5
         with:
           path: win_installer_setup.iss
 
       - name: Rename Installer
+        # only for a push to the main branch
+        if: github.ref == 'refs/heads/main'
         shell: bash
         run: mv mcfunc_installer mcfunc-windows-install-${{ matrix.arch }}.exe
 
       - name: Upload Release Artifact
+        # only for a push to the main branch
+        if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: mcfunc-windows-install-${{ matrix.arch }}.exe
